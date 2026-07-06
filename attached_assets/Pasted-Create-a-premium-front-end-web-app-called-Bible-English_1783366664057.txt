@@ -1,0 +1,286 @@
+Create a premium front-end web app called Bible English.
+
+The goal is to help me learn English by studying the Bible every day.
+
+This is not a commercial product yet. Do not create pricing, ads, marketplace, or monetization. This is a personal study platform first.
+
+Design Reference
+
+Use the visual style of manuscrito.ai as the main inspiration.
+
+Do not copy it exactly, but capture the same premium, clean, elegant, calm, minimal feeling.
+
+The app should feel like opening a luxury Bible study edition combined with a modern Apple/Notion-style learning app.
+
+Visual Style
+
+Use a clean premium interface with:
+
+deep burgundy red inspired by manuscrito.ai
+warm cream background
+parchment paper tones
+dark leather brown
+muted antique gold details
+ink-black text
+lots of spacing
+thin borders
+soft elegant cards
+no emojis
+no childish design
+no loud gradients
+
+Use serif typography for scripture and headings, and a clean sans-serif for interface text.
+
+Suggested fonts:
+
+Headings / scripture: Cormorant Garamond, EB Garamond, Libre Baskerville, or similar
+Interface: Inter, SF Pro, Source Sans, or similar
+
+Main Experience
+
+Build a navigable front-end prototype with mock data.
+
+Focus on the Reader / Study Page first.
+
+The main screen should include:
+
+left sidebar navigation
+center Bible reader
+right study panel
+top minimal navigation
+search icon
+notes icon
+bookmark icon
+chapter selector
+
+Sidebar
+
+Include:
+
+logo: Bible English
+tagline: Learn English Through the Bible
+Home
+Library
+Search
+Vocabulary
+Notes
+Favorites
+Journey
+Settings
+user area: Wilson
+
+Use custom-looking line icons. Do not use emojis.
+
+Reader Page
+
+Create a reader for John 1.
+
+At the top of the reader, include three modes:
+
+English Only
+Bilingual
+Study Mode
+
+The selected mode should be Bilingual.
+
+Show John 1 verses in English with the Portuguese translation below each verse.
+
+Example:
+
+English:
+In the beginning was the Word, and the Word was with God, and the Word was God.
+
+Portuguese:
+No princípio era o Verbo, e o Verbo estava com Deus, e o Verbo era Deus.
+
+The English text should be larger and darker.
+
+The Portuguese text should be smaller, elegant, and in a warm brown tone.
+
+Highlight the word Word in the first verse as if the user clicked it.
+
+Right Study Panel
+
+When the user selects John 1:1 or the word “Word”, show a right panel with:
+
+Title: John 1:1
+
+Tabs/actions:
+
+Study
+Note
+Cross Ref.
+Audio
+
+Sections:
+
+English Verse
+
+Show the verse in English.
+
+Português
+
+Show the Portuguese translation.
+
+Context
+
+Explain briefly in Portuguese:
+
+João apresenta Jesus como o Logos, a Palavra eterna de Deus. Ele existia desde o princípio e é Deus.
+
+Vocabulary
+
+Show:
+
+Word — Verbo, Palavra
+Beginning — princípio, começo
+God — Deus
+
+Each vocabulary item should have a small save icon.
+
+Grammar
+
+Show:
+
+Past tense: “was” indica ação ou estado no passado.
+Word order: subject + verb + complement.
+Article: “the Word” refers to something specific.
+
+My Note
+
+Show a sample note:
+
+Jesus é apresentado como eterno, Deus e fonte de tudo.
+
+Bottom Actions
+
+At the bottom of the reader, include:
+
+previous chapter button
+play audio button
+next chapter button
+“Mark as Completed” button
+
+Other Pages
+
+Also create simple placeholder pages for:
+
+Home
+Library
+Search
+Vocabulary
+Notes
+Favorites
+Journey
+Settings
+
+Each page should look designed, not empty.
+
+Home Page
+
+Show:
+
+Good morning, Wilson
+
+Continue your journey
+
+Current study: John 1
+
+Progress cards:
+
+Words learned: 12
+Verses studied: 4
+Study time: 18 min
+Daily streak: 7 days
+
+Search Page
+
+Minimal search bar:
+
+Search Scripture, words, phrases, or topics…
+
+Show suggestions:
+
+Grace
+Faith
+Fear not
+Kingdom of God
+Present Perfect
+David
+Forgiveness
+
+Vocabulary Page
+
+Show saved words:
+
+Word
+Light
+Grace
+Truth
+Believe
+Witness
+Flesh
+
+Each word should have:
+
+meaning
+status: New, Learning, or Mastered
+source chapter
+
+Settings Page
+
+Include reading preferences:
+
+Classic Parchment
+Oxford Paper
+Scholar
+Night Study
+Study Notebook
+
+Also include:
+
+font size
+line height
+audio speed
+English level: Beginner, Intermediate, Advanced
+
+Interactions
+
+Add simple interactive behavior:
+
+clicking sidebar changes pages
+clicking English Only / Bilingual / Study Mode changes the display
+clicking a verse opens the study panel
+clicking a word highlights it
+clicking save/bookmark shows a selected state
+Mark as Completed changes state
+
+Tech
+
+Use React.
+
+Use clean reusable components.
+
+Use CSS or Tailwind if available.
+
+Make it responsive for desktop and mobile.
+
+Use mock data only.
+
+No backend yet.
+
+No authentication yet.
+
+No payments.
+
+No ads.
+
+Quality Bar
+
+This should feel like a real premium product prototype, not a generic dashboard.
+
+The final result should feel calm, elegant, and deeply polished.
+
+The user should feel:
+
+“I want to open this every morning and study English through the Bible.”
