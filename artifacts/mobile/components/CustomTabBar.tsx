@@ -10,7 +10,6 @@ import {
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { Feather } from '@expo/vector-icons';
@@ -32,13 +31,6 @@ const H      = 62;
 const RADIUS = 20;
 const MARGIN = 16;
 
-// Pill is narrow — just wide enough for the icon + padding
-const PILL_H = 34;
-const PILL_W = 44;
-
-// Smooth, over-damped spring so the pill glides rather than bounces
-const SPRING = { damping: 30, stiffness: 160, mass: 0.8 };
-
 export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const colors    = useColors();
   const { isDark } = useTheme();
@@ -50,36 +42,8 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const BAR_W  = SCREEN_W - MARGIN * 2;
   const SLOT_W = BAR_W / TABS.length;
 
-  // Center the small pill within the active slot
-  const pillX = useSharedValue(state.index * SLOT_W + (SLOT_W - PILL_W) / 2);
-
-  useEffect(() => {
-    pillX.value = withSpring(
-      state.index * SLOT_W + (SLOT_W - PILL_W) / 2,
-      SPRING,
-    );
-  }, [state.index, SLOT_W]);
-
-  const pillStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: pillX.value }],
-  }));
-
   const bar = (
     <View style={[styles.bar, { height: H, borderRadius: RADIUS }]}>
-
-      {/* ── Subtle sliding pill (icon-sized, light tint) ── */}
-      <Animated.View
-        style={[
-          styles.pill,
-          {
-            width:  PILL_W,
-            height: PILL_H,
-            borderRadius: PILL_H / 2,
-            backgroundColor: colors.primary + '1A', // ~10% opacity
-          },
-          pillStyle,
-        ]}
-      />
 
       {/* ── Tabs ── */}
       {TABS.map((tab, idx) => {
@@ -179,6 +143,8 @@ function TabItem({
           { color: isActive ? activeColor : inactiveColor },
         ]}
         numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.75}
       >
         {tab.label}
       </Text>
@@ -214,10 +180,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     overflow: 'hidden',
-  },
-  pill: {
-    position: 'absolute',
-    top: (H - PILL_H) / 2,
   },
   tabItem: {
     alignItems: 'center',

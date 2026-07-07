@@ -508,9 +508,9 @@ const styles = StyleSheet.create({
   innerLabel:   { fontSize: 12, fontFamily: 'Inter_500Medium', letterSpacing: 0.3 },
 
   pillRow:      { flexDirection: 'row', gap: 6 },
-  pill:         { flex: 1, alignItems: 'center', paddingVertical: 8 },
-  pillText:     { fontSize: 13, fontFamily: 'Inter_500Medium' },
-  levelPill:    { paddingVertical: 7, gap: 2 },
+  pill:         { flex: 1, alignItems: 'center', paddingVertical: 8, paddingHorizontal: 4, minWidth: 0 },
+  pillText:     { fontSize: 13, fontFamily: 'Inter_500Medium', textAlign: 'center' },
+  levelPill:    { paddingVertical: 8, gap: 2 },
   cefrCode:     { fontSize: 10, fontFamily: 'Inter_700Bold', letterSpacing: 0.5 },
 
   copyBtn:      { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6 },
