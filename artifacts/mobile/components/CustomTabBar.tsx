@@ -13,13 +13,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useColors } from '@/hooks/useColors';
 import { useTheme } from '@/context/ThemeContext';
+import { useLanguage } from '@/context/LanguageContext';
+import type { I18nKey } from '@/constants/i18n';
 
-const TABS = [
-  { name: 'index',     icon: 'book-open' as const, label: 'Leitura'      },
-  { name: 'vocab',     icon: 'layers'    as const, label: 'Vocabulário'  },
-  { name: 'search',    icon: 'search'    as const, label: 'Buscar'       },
-  { name: 'bookmarks', icon: 'bookmark'  as const, label: 'Favoritos'    },
-  { name: 'settings',  icon: 'settings'  as const, label: 'Config.'      },
+const TAB_DEFS: { name: string; icon: 'book-open' | 'layers' | 'search' | 'bookmark' | 'settings'; labelKey: I18nKey }[] = [
+  { name: 'index',     icon: 'book-open', labelKey: 'tab_home'      },
+  { name: 'vocab',     icon: 'layers',    labelKey: 'tab_vocab'     },
+  { name: 'search',    icon: 'search',    labelKey: 'tab_search'    },
+  { name: 'bookmarks', icon: 'bookmark',  labelKey: 'tab_bookmarks' },
+  { name: 'settings',  icon: 'settings',  labelKey: 'tab_settings'  },
 ];
 
 const H      = 62;
@@ -29,24 +31,24 @@ const MARGIN = 16;
 export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const colors    = useColors();
   const { isDark } = useTheme();
+  const { t }     = useLanguage();
   const insets    = useSafeAreaInsets();
   const isWeb     = Platform.OS === 'web';
   const isIOS     = Platform.OS === 'ios';
 
   const { width: SCREEN_W } = Dimensions.get('window');
   const BAR_W  = SCREEN_W - MARGIN * 2;
-  const SLOT_W = BAR_W / TABS.length;
+  const SLOT_W = BAR_W / TAB_DEFS.length;
 
   const bar = (
     <View style={[styles.bar, { height: H, borderRadius: RADIUS }]}>
-
-      {/* ── Tabs ── */}
-      {TABS.map((tab, idx) => {
+      {TAB_DEFS.map((tab, idx) => {
         const isActive = state.index === idx;
         return (
           <TabItem
             key={tab.name}
-            tab={tab}
+            icon={tab.icon}
+            label={t(tab.labelKey)}
             isActive={isActive}
             width={SLOT_W}
             activeColor={colors.primary}
@@ -98,9 +100,10 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 
 // ── TabItem ────────────────────────────────────────────────────────────────────
 function TabItem({
-  tab, isActive, width, activeColor, inactiveColor, onPress,
+  icon, label, isActive, width, activeColor, inactiveColor, onPress,
 }: {
-  tab: typeof TABS[number];
+  icon: string;
+  label: string;
   isActive: boolean;
   width: number;
   activeColor: string;
@@ -114,21 +117,17 @@ function TabItem({
       hitSlop={{ top: 8, bottom: 8 }}
     >
       <Feather
-        name={tab.icon}
+        name={icon as any}
         size={20}
         color={isActive ? activeColor : inactiveColor}
       />
-
       <Text
-        style={[
-          styles.tabLabel,
-          { color: isActive ? activeColor : inactiveColor },
-        ]}
+        style={[styles.tabLabel, { color: isActive ? activeColor : inactiveColor }]}
         numberOfLines={1}
         adjustsFontSizeToFit
         minimumFontScale={0.75}
       >
-        {tab.label}
+        {label}
       </Text>
     </Pressable>
   );

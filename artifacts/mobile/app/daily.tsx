@@ -112,7 +112,7 @@ function DevotionalModal({
       `"${verseEn}"`,
     ];
     if (!isEn) parts.push(versePt);
-    parts.push('', '— BíbliaEN');
+    parts.push('', '— Bread&Light');
     try { await Share.share({ message: parts.join('\n') }); } catch {}
   }, [hasText, lang, activeText, verseRef, verseEn, versePt, dateStr]);
 

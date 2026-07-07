@@ -21,6 +21,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { BibleProvider } from '@/context/BibleContext';
 import { ThemeProvider } from '@/context/ThemeContext';
+import { LanguageProvider } from '@/context/LanguageContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -82,11 +83,13 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <GestureHandlerRootView style={{ flex: 1 }}>
             <KeyboardProvider>
-              <ThemeProvider>
-                <BibleProvider>
-                  <RootLayoutNav />
-                </BibleProvider>
-              </ThemeProvider>
+              <LanguageProvider>
+                <ThemeProvider>
+                  <BibleProvider>
+                    <RootLayoutNav />
+                  </BibleProvider>
+                </ThemeProvider>
+              </LanguageProvider>
             </KeyboardProvider>
           </GestureHandlerRootView>
         </QueryClientProvider>

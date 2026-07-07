@@ -25,6 +25,7 @@ import { useColors } from '@/hooks/useColors';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useBible } from '@/context/BibleContext';
 import { useTheme } from '@/context/ThemeContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { BACKGROUND_TEMPLATES } from '@/constants/colors';
 import type { ReadingTheme, AccentColor, BackgroundTemplate } from '@/constants/colors';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -89,7 +90,7 @@ function DonationModal({ visible, onClose }: { visible: boolean; onClose: () => 
               <View style={[styles.donateIconCircle, { backgroundColor: colors.primary + '16' }]}>
                 <Feather name="heart" size={24} color={colors.primary} />
               </View>
-              <Text style={[styles.donateTitle, { color: colors.foreground }]}>Apoiar o BíbliaEN</Text>
+              <Text style={[styles.donateTitle, { color: colors.foreground }]}>Apoiar o Bread{'&'}Light</Text>
               <Text style={[styles.donateSub, { color: colors.mutedForeground }]}>
                 Cada doação mantém o app gratuito e nos ajuda a crescer. 🙏
               </Text>
@@ -181,7 +182,7 @@ function AmbassadorModal({ visible, onClose }: { visible: boolean; onClose: () =
     try {
       if (Platform.OS !== 'web') Haptics.selectionAsync();
       await Share.share({
-        message: '📖 Estou aprendendo inglês com o BíbliaEN — gratuito e incrível! Confira: bibleenglish.app',
+        message: '📖 Estou aprendendo inglês com o Bread&Light — gratuito e incrível! Confira: bibleenglish.app',
         url: 'https://bibleenglish.app',
       });
     } catch {}
@@ -202,7 +203,7 @@ function AmbassadorModal({ visible, onClose }: { visible: boolean; onClose: () =
             <View style={[styles.ambassadorCrown, { backgroundColor: colors.accent + '18' }]}>
               <Feather name="award" size={28} color={colors.accent} />
             </View>
-            <Text style={[styles.ambassadorTitle, { color: colors.foreground }]}>Embaixador BíbliaEN</Text>
+            <Text style={[styles.ambassadorTitle, { color: colors.foreground }]}>Bread{'&'}Light Ambassador</Text>
             <View style={styles.ambassadorPriceRow}>
               <Text style={[styles.ambassadorPrice, { color: colors.primary }]}>R$9,90</Text>
               <Text style={[styles.ambassadorPer,   { color: colors.mutedForeground }]}>/mês</Text>
@@ -628,6 +629,7 @@ export default function SettingsScreen() {
   const [avatarUri,   setAvatarUri]   = useState<string | null>(null);
 
   const { readingTheme, setReadingTheme, accentColor, setAccentColor, backgroundTemplate, setBackgroundTemplate } = useTheme();
+  const { lang, setLang, t: tl } = useLanguage();
 
   useEffect(() => {
     AsyncStorage.getItem(LEVEL_KEY)
@@ -720,7 +722,7 @@ export default function SettingsScreen() {
             <Feather name="menu" size={22} color={colors.foreground} />
           </TouchableOpacity>
         </View>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Configurações</Text>
+        <Text style={[styles.headerTitle, { color: colors.foreground }]}>{tl('settings_title')}</Text>
       </View>
 
       <ScrollView
@@ -756,9 +758,9 @@ export default function SettingsScreen() {
           </View>
           <View style={[styles.statsRow, { borderTopColor: colors.border }]}>
             {[
-              { label: 'Favoritos', value: bookmarks.length },
-              { label: 'Palavras',  value: vocabulary.length },
-              { label: 'Dominadas', value: vocabulary.filter(v => v.mastered).length },
+              { label: tl('drawer_stat_favorites'), value: bookmarks.length },
+              { label: tl('drawer_stat_words'),     value: vocabulary.length },
+              { label: tl('drawer_stat_mastered'),  value: vocabulary.filter(v => v.mastered).length },
             ].map((s, i) => (
               <React.Fragment key={s.label}>
                 {i > 0 && <View style={[styles.statDivider, { backgroundColor: colors.border }]} />}
@@ -771,12 +773,44 @@ export default function SettingsScreen() {
           </View>
         </SettingsCard>
 
+        {/* ── Idioma ── */}
+        <SectionLabel title={tl('section_language')} />
+        <SettingsCard>
+          <View style={styles.innerSection}>
+            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>{tl('app_language')}</Text>
+            <View style={styles.pillRow}>
+              {(['pt', 'en'] as const).map(l => {
+                const active = lang === l;
+                return (
+                  <TouchableOpacity
+                    key={l}
+                    onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); setLang(l); }}
+                    activeOpacity={0.8}
+                    style={[
+                      styles.pill,
+                      {
+                        backgroundColor: active ? colors.primary : 'transparent',
+                        borderColor:     active ? colors.primary : colors.border,
+                        borderRadius:    colors.radius / 1.5,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.pillText, { color: active ? colors.primaryForeground : colors.mutedForeground }]}>
+                      {l === 'pt' ? '🇧🇷  Português' : '🇺🇸  English'}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        </SettingsCard>
+
         {/* ── Aparência ── */}
-        <SectionLabel title="Aparência" />
+        <SectionLabel title={tl('section_appearance')} />
         <SettingsCard>
           {/* Reading theme grid */}
           <View style={[styles.innerSection, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
-            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>Tema de Leitura</Text>
+            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>{tl('reading_theme')}</Text>
             <View style={styles.themeGrid}>
               {READING_THEMES.map(t => {
                 const active = readingTheme === t.id;
@@ -828,7 +862,7 @@ export default function SettingsScreen() {
 
           {/* Accent color circles */}
           <View style={[styles.innerSection, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
-            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>Cor de Destaque</Text>
+            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>{tl('accent_color')}</Text>
             <View style={styles.accentRow}>
               {ACCENT_COLORS.map(c => {
                 const active = accentColor === c.id;
@@ -853,7 +887,7 @@ export default function SettingsScreen() {
 
           {/* Background templates */}
           <View style={styles.innerSection}>
-            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>Fundo da Leitura</Text>
+            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>{tl('reading_bg')}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -898,42 +932,42 @@ export default function SettingsScreen() {
         </SettingsCard>
 
         {/* ── Aprendizado ── */}
-        <SectionLabel title="Aprendizado" />
+        <SectionLabel title={tl('section_learning')} />
         <SettingsCard>
           <View style={[styles.innerSection, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
-            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>Nível de Inglês</Text>
+            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>{tl('english_level')}</Text>
             <LevelPillSelector value={level} onChange={handleLevelChange} />
           </View>
           <View style={styles.innerSection}>
-            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>Modo de Exibição</Text>
+            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>{tl('display_mode')}</Text>
             <PillSelector options={['EN', 'EN+PT', 'PT']} value={displayMode} onChange={setDisplayMode} />
           </View>
         </SettingsCard>
 
         <SettingsCard>
-          <ToggleRow icon="type"  label="Pronúncia (IPA)"        sub="Mostrar fonética ao tocar palavras" value={showIPA}     onChange={setShowIPA} />
-          <ToggleRow icon="globe" label="Tradução automática"     sub="Traduzir palavras tocadas"          value={autoTr}      onChange={setAutoTr} />
-          <ToggleRow icon="bell"  label="Lembrete de vocabulário" sub="Revisar palavras diariamente"       value={vocabRemind} onChange={setVocabRemind} border={false} />
+          <ToggleRow icon="type"  label={tl('ipa')}            sub={tl('ipa_sub')}          value={showIPA}     onChange={setShowIPA} />
+          <ToggleRow icon="globe" label={tl('auto_translate')} sub={tl('auto_tr_sub')}      value={autoTr}      onChange={setAutoTr} />
+          <ToggleRow icon="bell"  label={tl('vocab_reminder')} sub={tl('vocab_rem_sub')}    value={vocabRemind} onChange={setVocabRemind} border={false} />
         </SettingsCard>
 
         {/* ── Áudio ── */}
-        <SectionLabel title="Áudio" />
+        <SectionLabel title={tl('section_audio')} />
         <SettingsCard>
           <View style={styles.innerSection}>
-            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>Velocidade de Reprodução</Text>
+            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>{tl('playback_speed')}</Text>
             <PillSelector options={['0.75×', 'Normal', '1.25×', '1.5×']} value={audioSpeed} onChange={setAudioSpeed} />
           </View>
         </SettingsCard>
 
         {/* ── Compartilhar ── */}
-        <SectionLabel title="Compartilhar" />
+        <SectionLabel title={tl('section_share')} />
         <SettingsCard>
-          <SettingsRow icon="share-2"   label="Compartilhar versículo" sub="Enviar como imagem ou texto" onPress={() => {}} />
-          <SettingsRow icon="user-plus" label="Convidar um amigo"      sub="30 dias grátis de Premium"  onPress={() => {}} border={false} />
+          <SettingsRow icon="share-2"   label={tl('share_verse')}   sub={tl('share_verse_sub')} onPress={() => {}} />
+          <SettingsRow icon="user-plus" label={tl('invite_friend')} sub={tl('invite_sub')}       onPress={() => {}} border={false} />
         </SettingsCard>
 
         {/* ── Apoio ── */}
-        <SectionLabel title="Apoio" />
+        <SectionLabel title={tl('section_support')} />
         <SettingsCard>
           {/* Mission header */}
           <View style={[styles.supportHeader, { borderBottomColor: colors.border }]}>
@@ -942,37 +976,38 @@ export default function SettingsScreen() {
               borderColor:     colors.primary + '28',
             }]}>
               <Text style={[styles.supportBadgeText, { color: colors.primary }]}>
-                GRATUITO PARA SEMPRE
+                {tl('free_forever').toUpperCase()}
               </Text>
             </View>
-            <Text style={[styles.supportTitle, { color: colors.foreground }]}>BíbliaEN</Text>
+            <Text style={[styles.supportTitle, { color: colors.foreground }]}>Bread{'&'}Light</Text>
             <Text style={[styles.supportDesc, { color: colors.mutedForeground }]}>
-              Uma missão simples: ajudar pessoas a aprender inglês através da Bíblia.
-              Gratuito agora e sempre.
+              {lang === 'pt'
+                ? 'Uma missão simples: ajudar pessoas a aprender inglês através da Bíblia. Gratuito agora e sempre.'
+                : 'A simple mission: helping people learn English through the Bible. Free now and always.'}
             </Text>
           </View>
 
           <SettingsRow
             icon="heart"
-            label="Fazer uma doação"
-            sub="Apoie o desenvolvimento do app"
+            label={tl('donate')}
+            sub={tl('donate_sub')}
             onPress={handleDonate}
           />
           <SettingsRow
             icon="star"
-            label="Ser Embaixador"
-            sub="Plano mensal com benefícios exclusivos"
+            label={tl('ambassador')}
+            sub={tl('ambassador_sub')}
             onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); setAmbassadorVisible(true); }}
             border={false}
           />
         </SettingsCard>
 
         {/* ── Dados ── */}
-        <SectionLabel title="Dados" />
+        <SectionLabel title={tl('section_data')} />
         <SettingsCard>
           <SettingsRow
             icon="trash-2"
-            label="Limpar vocabulário"
+            label={tl('clear_vocab')}
             sub={`${vocabulary.length} palavra${vocabulary.length !== 1 ? 's' : ''} salva${vocabulary.length !== 1 ? 's' : ''}`}
             onPress={handleClearVocab}
             border={false}
@@ -980,13 +1015,13 @@ export default function SettingsScreen() {
         </SettingsCard>
 
         {/* ── Sobre ── */}
-        <SectionLabel title="Sobre" />
+        <SectionLabel title={tl('section_about')} />
         <SettingsCard>
-          <SettingsRow icon="info" label="Versão" sub="1.1.26" />
+          <SettingsRow icon="info"      label={tl('version_label')} sub="1.1.26" />
           <SettingsRow
             icon="life-buoy"
-            label="Suporte"
-            sub="Reporte um problema ou erro"
+            label={tl('support_label')}
+            sub={tl('support_sub')}
             onPress={() => setSupportVisible(true)}
             border={false}
           />

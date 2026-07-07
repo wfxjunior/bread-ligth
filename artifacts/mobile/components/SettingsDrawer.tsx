@@ -14,16 +14,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import { useBible } from '@/context/BibleContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 const DRAWER_WIDTH = 290;
-
-const NAV_ITEMS: { icon: string; label: string; section: string }[] = [
-  { icon: 'sun',       label: 'Aparência',    section: 'aparencia'    },
-  { icon: 'book-open', label: 'Aprendizado',  section: 'aprendizado'  },
-  { icon: 'share-2',   label: 'Compartilhar', section: 'compartilhar' },
-  { icon: 'heart',     label: 'Apoio',        section: 'apoio'        },
-  { icon: 'info',      label: 'Sobre',        section: 'sobre'        },
-];
 
 interface SettingsDrawerProps {
   visible:      boolean;
@@ -43,6 +36,7 @@ export default function SettingsDrawer({
   const colors  = useColors();
   const insets  = useSafeAreaInsets();
   const { vocabulary, bookmarks } = useBible();
+  const { t } = useLanguage();
 
   const slideX      = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
   const fadeAnim    = useRef(new Animated.Value(0)).current;
@@ -51,7 +45,6 @@ export default function SettingsDrawer({
   useEffect(() => {
     if (visible) {
       setMounted(true);
-      // Stop any in-flight animation before reversing direction
       slideX.stopAnimation();
       fadeAnim.stopAnimation();
       Animated.parallel([
@@ -71,6 +64,14 @@ export default function SettingsDrawer({
   if (!mounted) return null;
 
   const mastered = vocabulary.filter(v => v.mastered).length;
+
+  const NAV_ITEMS: { icon: string; labelKey: 'drawer_nav_appearance' | 'drawer_nav_learning' | 'drawer_nav_share' | 'drawer_nav_support' | 'drawer_nav_about'; section: string }[] = [
+    { icon: 'sun',       labelKey: 'drawer_nav_appearance', section: 'aparencia'    },
+    { icon: 'book-open', labelKey: 'drawer_nav_learning',   section: 'aprendizado'  },
+    { icon: 'share-2',   labelKey: 'drawer_nav_share',      section: 'compartilhar' },
+    { icon: 'heart',     labelKey: 'drawer_nav_support',    section: 'apoio'        },
+    { icon: 'info',      labelKey: 'drawer_nav_about',      section: 'sobre'        },
+  ];
 
   const handleNavItem = () => {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
@@ -98,7 +99,7 @@ export default function SettingsDrawer({
       >
         {/* Close + Brand */}
         <View style={styles.drawerHeader}>
-          <Text style={[styles.brandText, { color: colors.foreground }]}>BíbliaEN</Text>
+          <Text style={[styles.brandText, { color: colors.foreground }]}>Bread{'&'}Light</Text>
           <TouchableOpacity onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Feather name="x" size={20} color={colors.mutedForeground} />
           </TouchableOpacity>
@@ -140,15 +141,15 @@ export default function SettingsDrawer({
         {/* Stats */}
         <View style={[styles.statsRow, { borderColor: colors.border }]}>
           {[
-            { label: 'Favoritos', value: bookmarks.length },
-            { label: 'Palavras',  value: vocabulary.length },
-            { label: 'Dominadas', value: mastered },
+            { labelKey: 'drawer_stat_favorites' as const, value: bookmarks.length },
+            { labelKey: 'drawer_stat_words'     as const, value: vocabulary.length },
+            { labelKey: 'drawer_stat_mastered'  as const, value: mastered },
           ].map((s, i) => (
-            <React.Fragment key={s.label}>
+            <React.Fragment key={s.labelKey}>
               {i > 0 && <View style={[styles.statDiv, { backgroundColor: colors.border }]} />}
               <View style={styles.stat}>
                 <Text style={[styles.statValue, { color: colors.foreground }]}>{s.value}</Text>
-                <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{s.label}</Text>
+                <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{t(s.labelKey)}</Text>
               </View>
             </React.Fragment>
           ))}
@@ -169,7 +170,7 @@ export default function SettingsDrawer({
               <View style={[styles.navIcon, { backgroundColor: colors.primary + '14' }]}>
                 <Feather name={item.icon as any} size={15} color={colors.primary} />
               </View>
-              <Text style={[styles.navLabel, { color: colors.foreground }]}>{item.label}</Text>
+              <Text style={[styles.navLabel, { color: colors.foreground }]}>{t(item.labelKey)}</Text>
               <Feather name="chevron-right" size={14} color={colors.mutedForeground} />
             </TouchableOpacity>
           ))}
@@ -181,10 +182,10 @@ export default function SettingsDrawer({
         {/* Footer */}
         <View style={[styles.footer, { borderTopColor: colors.border }]}>
           <Text style={[styles.footerText, { color: colors.mutedForeground }]}>
-            BíbliaEN • v1.1.26
+            Bread{'&'}Light • v1.1.26
           </Text>
           <Text style={[styles.footerSub, { color: colors.mutedForeground }]}>
-            Gratuito para sempre 🙏
+            {t('free_forever')}
           </Text>
         </View>
       </Animated.View>

@@ -285,7 +285,7 @@ export default function HomeScreen() {
         styles.header,
         { paddingTop: topPad + 6, borderBottomColor: colors.border },
       ]}>
-        <Text style={[styles.headerName, { color: colors.foreground }]}>BíbliaEN</Text>
+        <Text style={[styles.headerName, { color: colors.foreground }]}>Bread{'&'}Light</Text>
         <View style={styles.headerSubRow}>
           <Text style={[styles.headerGreeting, { color: colors.mutedForeground }]}>
             {greeting}{userName ? `, ${userName}` : ''}
