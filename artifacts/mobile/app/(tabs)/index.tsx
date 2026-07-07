@@ -160,7 +160,7 @@ function DailyPill() {
               />
             </Animated.View>
             <Text style={[styles.pillHeartCount, { color: liked ? '#E8294B' : colors.mutedForeground }]}>
-              {liked ? '125.001' : '125k'}
+              {'125k'}
             </Text>
           </TouchableOpacity>
 

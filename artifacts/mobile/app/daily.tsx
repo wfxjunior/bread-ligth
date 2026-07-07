@@ -443,7 +443,7 @@ export default function DailyScreen() {
               />
             </Animated.View>
             <Text style={[styles.heartCount, { color: hearted ? '#E8294B' : D.whiteLow }]}>
-              {hearted ? '125.001' : '125k'}
+              {'125k'}
             </Text>
           </TouchableOpacity>
         </View>
