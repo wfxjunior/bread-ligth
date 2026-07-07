@@ -1,42 +1,56 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { ReadingTheme, AccentColor } from '@/constants/colors';
 
-export type ThemeMode = 'system' | 'light' | 'dark';
+const THEME_KEY  = '@bibliaeN:readingTheme';
+const ACCENT_KEY = '@bibliaeN:accentColor';
+
+const VALID_THEMES:  ReadingTheme[] = ['classic', 'oxford', 'scholar', 'night', 'notebook'];
+const VALID_ACCENTS: AccentColor[]  = ['royal-blue', 'burgundy', 'forest', 'slate', 'violet', 'amber'];
 
 interface ThemeCtx {
-  themeMode: ThemeMode;
-  setThemeMode: (m: ThemeMode) => void;
-  isDark: boolean;
+  readingTheme:    ReadingTheme;
+  setReadingTheme: (t: ReadingTheme) => void;
+  accentColor:     AccentColor;
+  setAccentColor:  (c: AccentColor) => void;
+  isDark:          boolean;
 }
 
 const ThemeContext = createContext<ThemeCtx>({
-  themeMode: 'system',
-  setThemeMode: () => {},
-  isDark: false,
+  readingTheme:    'classic',
+  setReadingTheme: () => {},
+  accentColor:     'royal-blue',
+  setAccentColor:  () => {},
+  isDark:          false,
 });
 
-const KEY = '@bibliaeN:theme';
-
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const sys = useColorScheme();
-  const [mode, setModeState] = useState<ThemeMode>('system');
+  const [readingTheme, setReadingThemeState] = useState<ReadingTheme>('classic');
+  const [accentColor,  setAccentColorState]  = useState<AccentColor>('royal-blue');
 
   useEffect(() => {
-    AsyncStorage.getItem(KEY)
-      .then(v => { if (v === 'light' || v === 'dark' || v === 'system') setModeState(v as ThemeMode); })
+    AsyncStorage.multiGet([THEME_KEY, ACCENT_KEY])
+      .then(([[, t], [, a]]) => {
+        if (t && VALID_THEMES.includes(t as ReadingTheme))  setReadingThemeState(t as ReadingTheme);
+        if (a && VALID_ACCENTS.includes(a as AccentColor))  setAccentColorState(a as AccentColor);
+      })
       .catch(() => {});
   }, []);
 
-  const setThemeMode = useCallback((m: ThemeMode) => {
-    setModeState(m);
-    AsyncStorage.setItem(KEY, m).catch(() => {});
+  const setReadingTheme = useCallback((t: ReadingTheme) => {
+    setReadingThemeState(t);
+    AsyncStorage.setItem(THEME_KEY, t).catch(() => {});
   }, []);
 
-  const isDark = mode === 'dark' || (mode === 'system' && sys === 'dark');
+  const setAccentColor = useCallback((c: AccentColor) => {
+    setAccentColorState(c);
+    AsyncStorage.setItem(ACCENT_KEY, c).catch(() => {});
+  }, []);
+
+  const isDark = readingTheme === 'night';
 
   return (
-    <ThemeContext.Provider value={{ themeMode: mode, setThemeMode, isDark }}>
+    <ThemeContext.Provider value={{ readingTheme, setReadingTheme, accentColor, setAccentColor, isDark }}>
       {children}
     </ThemeContext.Provider>
   );

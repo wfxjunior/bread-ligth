@@ -19,7 +19,26 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColors } from '@/hooks/useColors';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useBible } from '@/context/BibleContext';
-import { useTheme, type ThemeMode } from '@/context/ThemeContext';
+import { useTheme } from '@/context/ThemeContext';
+import type { ReadingTheme, AccentColor } from '@/constants/colors';
+
+// ── Reading theme data (mirrors web app) ──────────────────────────────────────
+const READING_THEMES: { id: ReadingTheme; name: string; desc: string; bg: string; dark: boolean }[] = [
+  { id: 'classic',  name: 'Pergaminho', desc: 'Quente, suave',   bg: '#F7F3EC', dark: false },
+  { id: 'oxford',   name: 'Oxford',     desc: 'Branco nítido',   bg: '#FFFFFF', dark: false },
+  { id: 'scholar',  name: 'Estudioso',  desc: 'Tom neutro',      bg: '#ECEAE6', dark: false },
+  { id: 'night',    name: 'Noturno',    desc: 'Modo escuro',     bg: '#0D1B2A', dark: true  },
+  { id: 'notebook', name: 'Caderno',    desc: 'Leve e casual',   bg: '#FEF9F0', dark: false },
+];
+
+const ACCENT_COLORS: { id: AccentColor; hex: string; label: string }[] = [
+  { id: 'royal-blue', hex: '#1B3A6B', label: 'Azul Real'  },
+  { id: 'burgundy',   hex: '#6B1E2A', label: 'Bordô'      },
+  { id: 'forest',     hex: '#1E4D2B', label: 'Floresta'   },
+  { id: 'slate',      hex: '#3D4A5C', label: 'Ardósia'    },
+  { id: 'violet',     hex: '#3B1E6B', label: 'Violeta'    },
+  { id: 'amber',      hex: '#7A5C1E', label: 'Âmbar'      },
+];
 
 const AVATAR_KEY = '@bibliaeN:avatar';
 
@@ -200,16 +219,10 @@ export default function SettingsScreen() {
   const [autoTr,      setAutoTr]      = useState(true);
   const [vocabRemind, setVocabRemind] = useState(false);
   const [audioSpeed,  setAudioSpeed]  = useState('Normal');
-  const { themeMode, setThemeMode }   = useTheme();
+  const { readingTheme, setReadingTheme, accentColor, setAccentColor } = useTheme();
   const [waitlisted,  setWaitlisted]  = useState(false);
   const [linkCopied,  setLinkCopied]  = useState(false);
   const [avatarUri,   setAvatarUri]   = useState<string | null>(null);
-
-  const THEME_LABELS: { value: ThemeMode; label: string }[] = [
-    { value: 'system', label: 'Sistema' },
-    { value: 'light',  label: 'Claro'   },
-    { value: 'dark',   label: 'Escuro'  },
-  ];
 
   // Load persisted avatar
   useEffect(() => {
@@ -320,30 +333,70 @@ export default function SettingsScreen() {
         {/* ── Aparência ── */}
         <SectionLabel title="Aparência" />
         <SettingsCard>
-          <View style={styles.innerSection}>
-            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>Tema</Text>
-            <View style={styles.pillRow}>
-              {THEME_LABELS.map(({ value, label }) => {
-                const icon = value === 'system' ? 'monitor' : value === 'light' ? 'sun' : 'moon';
-                const active = themeMode === value;
+          {/* Reading theme grid */}
+          <View style={[styles.innerSection, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
+            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>Tema de Leitura</Text>
+            <View style={styles.themeGrid}>
+              {READING_THEMES.map(t => {
+                const active = readingTheme === t.id;
                 return (
                   <TouchableOpacity
-                    key={value}
-                    onPress={() => {
-                      if (Platform.OS !== 'web') Haptics.selectionAsync();
-                      setThemeMode(value);
-                    }}
+                    key={t.id}
+                    onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); setReadingTheme(t.id); }}
+                    activeOpacity={0.8}
                     style={[
-                      styles.pill,
-                      { backgroundColor: active ? colors.primary : colors.secondary, borderRadius: colors.radius / 2 },
+                      styles.themeCard,
+                      {
+                        backgroundColor: colors.card,
+                        borderColor: active ? colors.accent : colors.border,
+                        borderWidth: active ? 2 : StyleSheet.hairlineWidth,
+                        borderRadius: colors.radius / 1.5,
+                      },
                     ]}
                   >
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                      <Feather name={icon as any} size={13} color={active ? colors.primaryForeground : colors.mutedForeground} />
-                      <Text style={[styles.pillText, { color: active ? colors.primaryForeground : colors.foreground }]}>
-                        {label}
-                      </Text>
+                    {/* Mini preview */}
+                    <View style={[styles.themePreview, { backgroundColor: t.bg }]}>
+                      {([70, 88, 56] as const).map((w, i) => (
+                        <View
+                          key={i}
+                          style={[
+                            styles.themeLine,
+                            { width: `${w}%` as any, backgroundColor: t.dark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.13)' },
+                          ]}
+                        />
+                      ))}
+                      {active && (
+                        <View style={[styles.themeCheck, { backgroundColor: colors.accent }]}>
+                          <Feather name="check" size={8} color="#fff" />
+                        </View>
+                      )}
                     </View>
+                    <Text style={[styles.themeCardName, { color: colors.foreground }]} numberOfLines={1}>{t.name}</Text>
+                    <Text style={[styles.themeCardDesc, { color: colors.mutedForeground }]} numberOfLines={1}>{t.desc}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Accent color circles */}
+          <View style={styles.innerSection}>
+            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>Cor de Destaque</Text>
+            <View style={styles.accentRow}>
+              {ACCENT_COLORS.map(c => {
+                const active = accentColor === c.id;
+                return (
+                  <TouchableOpacity
+                    key={c.id}
+                    onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); setAccentColor(c.id); }}
+                    activeOpacity={0.8}
+                    style={[
+                      styles.accentCircle,
+                      { backgroundColor: c.hex },
+                      active && { borderWidth: 3, borderColor: c.hex + '55' },
+                    ]}
+                  >
+                    {active && <Feather name="check" size={13} color="#fff" />}
                   </TouchableOpacity>
                 );
               })}
@@ -529,4 +582,17 @@ const styles = StyleSheet.create({
   premiumBtn:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, gap: 8 },
   premiumBtnText:{ fontSize: 15, fontFamily: 'Inter_600SemiBold', fontWeight: '600' as const },
   premiumSub:   { fontSize: 11, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.45)', textAlign: 'center' },
+
+  // Reading theme grid (3 cols, 2 rows)
+  themeGrid:     { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  themeCard:     { width: '31%', overflow: 'hidden' },
+  themePreview:  { height: 52, padding: 8, justifyContent: 'flex-end', gap: 4 },
+  themeLine:     { height: 3, borderRadius: 2 },
+  themeCheck:    { position: 'absolute', top: 5, right: 5, width: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  themeCardName: { fontSize: 11, fontFamily: 'Inter_600SemiBold', paddingHorizontal: 6, paddingTop: 5 },
+  themeCardDesc: { fontSize: 9,  fontFamily: 'Inter_400Regular',  paddingHorizontal: 6, paddingBottom: 7, opacity: 0.7 },
+
+  // Accent color circles
+  accentRow:     { flexDirection: 'row', gap: 14, flexWrap: 'wrap' },
+  accentCircle:  { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
 });
