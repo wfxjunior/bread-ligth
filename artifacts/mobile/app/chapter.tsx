@@ -285,7 +285,6 @@ export default function ChapterScreen() {
 
       {/* ── Mode Bar ── */}
       <View style={[styles.modeBar, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <Text style={[styles.modeLabel, { color: colors.mutedForeground }]}>Exibir:</Text>
         <View style={[styles.modeToggle, { backgroundColor: colors.muted, borderRadius: 10 }]}>
           {MODE_LABELS.map(({ key, label }) => (
             <TouchableOpacity
