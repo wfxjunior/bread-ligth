@@ -187,6 +187,29 @@ const BOOK_CATALOGUE: BookMeta[] = [
   { bookId: '1corinthians', gradient: ['#4A1230', '#28091A'] as const, roman: 'VII', testamentPt: 'Novo Testamento'   },
 ];
 
+// ── Study / Learning centre constants ─────────────────────────────────────────
+const GOLD = '#B8921A';                       // antique gold accent
+
+const STUDY_STEPS = [
+  { id: 'read',    icon: 'book-open',  label: 'Read'    },
+  { id: 'listen',  icon: 'headphones', label: 'Listen'  },
+  { id: 'learn',   icon: 'edit-3',     label: 'Learn'   },
+  { id: 'reflect', icon: 'compass',    label: 'Reflect' },
+];
+
+const PROGRESS_STATS = [
+  { icon: 'type',      value: '12',     label: 'Words\nlearned'  },
+  { icon: 'book-open', value: '4',      label: 'Verses\nstudied' },
+  { icon: 'clock',     value: '18',     label: 'Min\nstudy time' },
+  { icon: 'zap',       value: '7',      label: 'Day\nstreak'     },
+];
+
+const VOCAB_PREVIEW = [
+  { word: 'Word',  def: 'Verbo, Palavra' },
+  { word: 'Light', def: 'Luz'            },
+  { word: 'Grace', def: 'Graça'          },
+];
+
 // ── Book grid card ────────────────────────────────────────────────────────────
 function BookGridCard({ meta, cardW }: { meta: BookMeta; cardW: number }) {
   const colors = useColors();
@@ -447,6 +470,195 @@ export default function HomeScreen() {
         )}
       </View>
 
+      {/* ═══════════════════════════════════════════════════════════════════════
+          TODAY'S STUDY
+      ════════════════════════════════════════════════════════════════════════ */}
+      <View style={[styles.section, { marginTop: 36 }]}>
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>ESTUDO</Text>
+        </View>
+
+        {/* Study card */}
+        <View style={[styles.studyCard, {
+          backgroundColor: colors.card,
+          borderColor:     colors.border,
+          borderRadius:    colors.radius + 2,
+        }]}>
+          {/* Antique-gold top rule */}
+          <View style={[styles.studyTopRule, { backgroundColor: GOLD }]} />
+
+          <View style={styles.studyCardInner}>
+
+            {/* Reference + time */}
+            <View style={styles.studyMeta}>
+              <Text style={[styles.studyMetaRef, { color: colors.primary }]}>John 1</Text>
+              <View style={[styles.studyMetaDot, { backgroundColor: colors.border }]} />
+              <Feather name="clock" size={11} color={colors.mutedForeground} />
+              <Text style={[styles.studyMetaTime, { color: colors.mutedForeground }]}>15 min</Text>
+            </View>
+
+            {/* Chapter title */}
+            <Text style={[styles.studyTitle, { color: colors.foreground }]}>
+              The Word{'\n'}Became Flesh
+            </Text>
+
+            {/* Hairline divider */}
+            <View style={[styles.studyDivider, { backgroundColor: colors.border }]} />
+
+            {/* Four steps */}
+            <View style={styles.studySteps}>
+              {STUDY_STEPS.map((step, idx) => {
+                const active = idx === 0;
+                return (
+                  <View key={step.id} style={styles.studyStepRow}>
+                    {/* Step connector dot (left gutter) */}
+                    <View style={styles.studyStepGutter}>
+                      <View style={[styles.studyStepDot,
+                        { backgroundColor: active ? colors.primary : colors.border }]} />
+                      {idx < STUDY_STEPS.length - 1 && (
+                        <View style={[styles.studyStepLine, { backgroundColor: colors.border }]} />
+                      )}
+                    </View>
+
+                    {/* Icon + label */}
+                    <View style={[styles.studyStepIconWrap, {
+                      borderColor:     active ? colors.primary + '38' : colors.border,
+                      backgroundColor: active ? colors.primary + '0C' : 'transparent',
+                    }]}>
+                      <Feather
+                        name={step.icon as any}
+                        size={13}
+                        color={active ? colors.primary : colors.mutedForeground}
+                      />
+                    </View>
+
+                    <Text style={[styles.studyStepLabel, {
+                      color:      active ? colors.foreground : colors.mutedForeground,
+                      fontFamily: active ? 'Inter_600SemiBold' : 'Inter_400Regular',
+                    }]}>
+                      {step.label}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+
+            {/* CTA button */}
+            <TouchableOpacity
+              activeOpacity={0.88}
+              onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); }}
+              style={[styles.studyBtn, { backgroundColor: colors.primary, borderRadius: colors.radius }]}
+            >
+              <Text style={[styles.studyBtnText, { color: colors.primaryForeground }]}>
+                Start Today's Study
+              </Text>
+            </TouchableOpacity>
+
+          </View>
+        </View>
+      </View>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          LEARNING PROGRESS
+      ════════════════════════════════════════════════════════════════════════ */}
+      <View style={[styles.section, { marginTop: 32 }]}>
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>PROGRESSO</Text>
+        </View>
+
+        <View style={styles.progressGrid}>
+          {PROGRESS_STATS.map(stat => (
+            <View key={stat.label} style={[styles.progressCard, {
+              backgroundColor: colors.card,
+              borderColor:     colors.border,
+              borderRadius:    colors.radius,
+              width:           cardW,
+            }]}>
+              <Feather name={stat.icon as any} size={15} color={GOLD} style={{ marginBottom: 8 }} />
+              <Text style={[styles.progressValue, { color: colors.foreground }]}>
+                {stat.value}
+              </Text>
+              <Text style={[styles.progressLabel, { color: colors.mutedForeground }]}>
+                {stat.label}
+              </Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          SAVED VOCABULARY
+      ════════════════════════════════════════════════════════════════════════ */}
+      <View style={[styles.section, { marginTop: 32 }]}>
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>VOCABULÁRIO</Text>
+        </View>
+
+        <View style={[styles.vocabCard, {
+          backgroundColor: colors.card,
+          borderColor:     colors.border,
+          borderRadius:    colors.radius,
+        }]}>
+          {VOCAB_PREVIEW.map((item, idx) => (
+            <View
+              key={item.word}
+              style={[
+                styles.vocabRow,
+                idx > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
+              ]}
+            >
+              <View style={[styles.vocabAccentDot, { backgroundColor: GOLD }]} />
+              <Text style={[styles.vocabWord, { color: colors.foreground }]}>{item.word}</Text>
+              <Text style={[styles.vocabDash, { color: colors.border }]}>—</Text>
+              <Text style={[styles.vocabDef, { color: colors.mutedForeground }]}>{item.def}</Text>
+            </View>
+          ))}
+        </View>
+
+        <TouchableOpacity
+          activeOpacity={0.82}
+          onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); }}
+          style={[styles.outlineBtn, { borderColor: colors.primary, borderRadius: colors.radius, marginTop: 12 }]}
+        >
+          <Text style={[styles.outlineBtnText, { color: colors.primary }]}>Review Vocabulary</Text>
+          <Feather name="arrow-right" size={13} color={colors.primary} />
+        </TouchableOpacity>
+      </View>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          MY NOTES
+      ════════════════════════════════════════════════════════════════════════ */}
+      <View style={[styles.section, { marginTop: 32 }]}>
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>ANOTAÇÕES</Text>
+        </View>
+
+        <View style={[styles.noteCard, {
+          backgroundColor: colors.card,
+          borderColor:     colors.border,
+          borderRadius:    colors.radius,
+        }]}>
+          {/* Burgundy left accent stripe */}
+          <View style={[styles.noteStripe, { backgroundColor: colors.primary }]} />
+
+          <View style={styles.noteBody}>
+            <Text style={[styles.noteRef, { color: colors.primary }]}>John 1:1</Text>
+            <Text style={[styles.noteText, { color: colors.foreground }]}>
+              Jesus is presented as eternal, God, and the source of everything.
+            </Text>
+          </View>
+        </View>
+
+        <TouchableOpacity
+          activeOpacity={0.82}
+          onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); }}
+          style={[styles.outlineBtn, { borderColor: colors.primary, borderRadius: colors.radius, marginTop: 12 }]}
+        >
+          <Text style={[styles.outlineBtnText, { color: colors.primary }]}>Open Notes</Text>
+          <Feather name="arrow-right" size={13} color={colors.primary} />
+        </TouchableOpacity>
+      </View>
+
     </ScrollView>
   );
 }
@@ -670,5 +882,193 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: 'Inter_400Regular',
     color: 'rgba(255,255,255,0.55)',
+  },
+
+  // ── Today's Study card ─────────────────────────────────────────────────────
+  studyCard: {
+    borderWidth:  StyleSheet.hairlineWidth,
+    overflow:     'hidden',
+  },
+  studyTopRule: {
+    height: 3,
+  },
+  studyCardInner: {
+    padding: 24,
+    gap:     20,
+  },
+  studyMeta: {
+    flexDirection: 'row',
+    alignItems:    'center',
+    gap:           7,
+  },
+  studyMetaRef: {
+    fontSize:      12,
+    fontFamily:    'Inter_600SemiBold',
+    letterSpacing: 0.2,
+  },
+  studyMetaDot: {
+    width:        3,
+    height:       3,
+    borderRadius: 2,
+  },
+  studyMetaTime: {
+    fontSize:   12,
+    fontFamily: 'Inter_400Regular',
+  },
+  studyTitle: {
+    fontSize:      26,
+    fontFamily:    'Lora_700Bold',
+    letterSpacing: -0.3,
+    lineHeight:    34,
+  },
+  studyDivider: {
+    height: StyleSheet.hairlineWidth,
+  },
+  studySteps: {
+    gap: 0,
+  },
+  studyStepRow: {
+    flexDirection: 'row',
+    alignItems:    'flex-start',
+    gap:           12,
+    paddingBottom: 4,
+  },
+  studyStepGutter: {
+    width:      14,
+    alignItems: 'center',
+    paddingTop: 10,
+  },
+  studyStepDot: {
+    width:        6,
+    height:       6,
+    borderRadius: 3,
+  },
+  studyStepLine: {
+    width:  1,
+    flex:   1,
+    minHeight: 18,
+    marginTop: 3,
+  },
+  studyStepIconWrap: {
+    width:          36,
+    height:         36,
+    borderRadius:   10,
+    borderWidth:    1,
+    alignItems:     'center',
+    justifyContent: 'center',
+  },
+  studyStepLabel: {
+    flex:       1,
+    fontSize:   14,
+    paddingTop: 10,
+    lineHeight: 20,
+  },
+  studyBtn: {
+    paddingVertical: 15,
+    alignItems:      'center',
+    justifyContent:  'center',
+    marginTop:       2,
+  },
+  studyBtnText: {
+    fontSize:      14,
+    fontFamily:    'Inter_600SemiBold',
+    letterSpacing: 0.15,
+  },
+
+  // ── Learning Progress grid ─────────────────────────────────────────────────
+  progressGrid: {
+    flexDirection: 'row',
+    flexWrap:      'wrap',
+    gap:           GAP,
+  },
+  progressCard: {
+    borderWidth:       StyleSheet.hairlineWidth,
+    paddingHorizontal: 18,
+    paddingVertical:   20,
+  },
+  progressValue: {
+    fontSize:      28,
+    fontFamily:    'Lora_700Bold',
+    letterSpacing: -0.5,
+    lineHeight:    34,
+  },
+  progressLabel: {
+    fontSize:   11,
+    fontFamily: 'Inter_400Regular',
+    lineHeight: 16,
+    marginTop:  2,
+  },
+
+  // ── Saved Vocabulary ───────────────────────────────────────────────────────
+  vocabCard: {
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow:    'hidden',
+  },
+  vocabRow: {
+    flexDirection:     'row',
+    alignItems:        'center',
+    gap:               10,
+    paddingHorizontal: 18,
+    paddingVertical:   15,
+  },
+  vocabAccentDot: {
+    width:        4,
+    height:       4,
+    borderRadius: 2,
+  },
+  vocabWord: {
+    fontSize:   14,
+    fontFamily: 'Inter_600SemiBold',
+    minWidth:   52,
+  },
+  vocabDash: {
+    fontSize:   14,
+    fontFamily: 'Inter_400Regular',
+  },
+  vocabDef: {
+    flex:       1,
+    fontSize:   13,
+    fontFamily: 'Inter_400Regular',
+    lineHeight: 18,
+  },
+
+  // ── My Notes ──────────────────────────────────────────────────────────────
+  noteCard: {
+    borderWidth:   StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    overflow:      'hidden',
+  },
+  noteStripe: {
+    width: 3,
+  },
+  noteBody: {
+    flex:    1,
+    padding: 20,
+    gap:     10,
+  },
+  noteRef: {
+    fontSize:      11,
+    fontFamily:    'Inter_600SemiBold',
+    letterSpacing: 0.5,
+  },
+  noteText: {
+    fontSize:   15,
+    fontFamily: 'Lora_400Regular_Italic',
+    lineHeight: 24,
+  },
+
+  // ── Shared: outline ghost button ───────────────────────────────────────────
+  outlineBtn: {
+    flexDirection:   'row',
+    alignItems:      'center',
+    justifyContent:  'center',
+    gap:             6,
+    borderWidth:     1,
+    paddingVertical: 13,
+  },
+  outlineBtnText: {
+    fontSize:      13,
+    fontFamily:    'Inter_600SemiBold',
+    letterSpacing: 0.15,
   },
 });
