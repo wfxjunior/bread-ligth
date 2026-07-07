@@ -15,6 +15,6 @@ const BREATHING = 20; // extra space so last item isn't flush against bar
 
 export function useTabBarHeight(): number {
   const insets = useSafeAreaInsets();
-  if (Platform.OS === 'web') return 84 + BREATHING;
+  // Same formula on all platforms — web has no bottom safe area so Math.max(0,8)=8
   return TAB_BAR_H + Math.max(insets.bottom, 8) + TAB_OFFSET + BREATHING;
 }

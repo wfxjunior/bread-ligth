@@ -127,6 +127,53 @@ function PillSelector({
   );
 }
 
+// Level pill selector with CEFR codes — value/onChange use the stored key
+const LEVEL_OPTIONS = [
+  { key: 'beginner',     label: 'Iniciante',     code: 'A2' },
+  { key: 'intermediate', label: 'Intermediário',  code: 'B1' },
+  { key: 'advanced',     label: 'Avançado',       code: 'C1' },
+] as const;
+export type LevelKey = typeof LEVEL_OPTIONS[number]['key'];
+const LEVEL_KEY = '@bibliaeN:level';
+
+function LevelPillSelector({ value, onChange }: { value: LevelKey; onChange: (v: LevelKey) => void }) {
+  const colors = useColors();
+  return (
+    <View style={styles.pillRow}>
+      {LEVEL_OPTIONS.map(({ key, label, code }) => {
+        const active = value === key;
+        return (
+          <TouchableOpacity
+            key={key}
+            onPress={() => {
+              if (Platform.OS !== 'web') Haptics.selectionAsync();
+              onChange(key);
+            }}
+            style={[
+              styles.pill,
+              styles.levelPill,
+              {
+                backgroundColor: active ? colors.primary : colors.secondary,
+                borderRadius: colors.radius / 2,
+              },
+            ]}
+          >
+            <Text style={[styles.pillText, { color: active ? colors.primaryForeground : colors.foreground }]}>
+              {label}
+            </Text>
+            <Text style={[
+              styles.cefrCode,
+              { color: active ? colors.primaryForeground + 'CC' : colors.mutedForeground },
+            ]}>
+              {code}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
+
 // ── Main screen ───────────────────────────────────────────────────────────────
 
 export default function SettingsScreen() {
@@ -137,8 +184,17 @@ export default function SettingsScreen() {
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = useTabBarHeight();
 
-  // Preferences state (all local — no backend)
-  const [level,       setLevel]       = useState('Intermediário');
+  // English level — synced with Chapter screen via AsyncStorage
+  const [level, setLevel] = useState<LevelKey>('intermediate');
+  useEffect(() => {
+    AsyncStorage.getItem(LEVEL_KEY)
+      .then(v => { if (v === 'beginner' || v === 'advanced') setLevel(v); })
+      .catch(() => {});
+  }, []);
+  const handleLevelChange = (v: LevelKey) => {
+    setLevel(v);
+    AsyncStorage.setItem(LEVEL_KEY, v).catch(() => {});
+  };
   const [displayMode, setDisplayMode] = useState('EN+PT');
   const [showIPA,     setShowIPA]     = useState(true);
   const [autoTr,      setAutoTr]      = useState(true);
@@ -300,11 +356,7 @@ export default function SettingsScreen() {
         <SettingsCard>
           <View style={[styles.innerSection, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
             <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>Nível de Inglês</Text>
-            <PillSelector
-              options={['Iniciante', 'Intermediário', 'Avançado']}
-              value={level}
-              onChange={setLevel}
-            />
+            <LevelPillSelector value={level} onChange={handleLevelChange} />
           </View>
           <View style={styles.innerSection}>
             <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>Modo de Exibição</Text>
@@ -458,6 +510,8 @@ const styles = StyleSheet.create({
   pillRow:      { flexDirection: 'row', gap: 6 },
   pill:         { flex: 1, alignItems: 'center', paddingVertical: 8 },
   pillText:     { fontSize: 13, fontFamily: 'Inter_500Medium' },
+  levelPill:    { paddingVertical: 7, gap: 2 },
+  cefrCode:     { fontSize: 10, fontFamily: 'Inter_700Bold', letterSpacing: 0.5 },
 
   copyBtn:      { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6 },
   copyText:     { fontSize: 13, fontFamily: 'Inter_500Medium' },

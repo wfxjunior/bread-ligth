@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   FlatList,
   Modal,
@@ -14,11 +14,36 @@ import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColors } from '@/hooks/useColors';
 import { useBible, type DisplayMode } from '@/context/BibleContext';
 import { BIBLE_DATA, type BibleVerse } from '@/constants/bibleData';
 import VerseRow from '@/components/VerseRow';
 import WordModal from '@/components/WordModal';
+
+// ── CEFR level ────────────────────────────────────────────────────────────────
+const CEFR_LEVELS = [
+  { key: 'beginner',     code: 'A2' },
+  { key: 'intermediate', code: 'B1' },
+  { key: 'advanced',     code: 'C1' },
+] as const;
+type EnglishLevel = typeof CEFR_LEVELS[number]['key'];
+const LEVEL_KEY = '@bibliaeN:level';
+
+// Chapter number → English word (covers all chapters in the app's data)
+const CH_WORDS = [
+  'One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten',
+  'Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen',
+  'Eighteen','Nineteen','Twenty','Twenty-One','Twenty-Two','Twenty-Three',
+];
+
+// Chapter action bar items
+const ACTIONS = [
+  { icon: 'zap'       as const, label: 'Explicar'  },
+  { icon: 'edit-2'    as const, label: 'Marcar'    },
+  { icon: 'bookmark'  as const, label: 'Salvar'    },
+  { icon: 'file-text' as const, label: 'Nota'      },
+];
 
 type Params = { bookId: string; chapter: string; bookName: string; englishBookName: string };
 
@@ -130,6 +155,19 @@ export default function ChapterScreen() {
 
   const { displayMode, setDisplayMode, isBookmarked, addBookmark, removeBookmark, saveReadingProgress } = useBible();
 
+  // CEFR level — persisted separately from BibleContext
+  const [englishLevel, setEnglishLevel] = useState<EnglishLevel>('intermediate');
+  useEffect(() => {
+    AsyncStorage.getItem(LEVEL_KEY)
+      .then(v => { if (v === 'beginner' || v === 'advanced') setEnglishLevel(v as EnglishLevel); })
+      .catch(() => {});
+  }, []);
+  const handleLevelChange = useCallback((l: EnglishLevel) => {
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    setEnglishLevel(l);
+    AsyncStorage.setItem(LEVEL_KEY, l).catch(() => {});
+  }, []);
+
   const [selectedWord, setSelectedWord] = useState('');
   const [wordContext, setWordContext] = useState('');
   const [wordModalVisible, setWordModalVisible] = useState(false);
@@ -222,24 +260,26 @@ export default function ChapterScreen() {
           </Text>
         </TouchableOpacity>
 
-        {/* Prev/Next book */}
-        <View style={styles.navArrows}>
-          <TouchableOpacity
-            onPress={() => navigateBook('prev')}
-            disabled={!hasPrev}
-            style={[styles.navArrow, !hasPrev && { opacity: 0.25 }]}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Feather name="chevron-left" size={20} color={colors.primary} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => navigateBook('next')}
-            disabled={!hasNext}
-            style={[styles.navArrow, !hasNext && { opacity: 0.25 }]}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Feather name="chevron-right" size={20} color={colors.primary} />
-          </TouchableOpacity>
+        {/* CEFR level selector */}
+        <View style={[styles.levelSelector, { backgroundColor: colors.muted, borderRadius: 10 }]}>
+          {CEFR_LEVELS.map(l => {
+            const active = englishLevel === l.key;
+            return (
+              <TouchableOpacity
+                key={l.key}
+                onPress={() => handleLevelChange(l.key)}
+                style={[
+                  styles.levelBtn,
+                  active && [styles.levelBtnActive, { backgroundColor: colors.primary, borderRadius: 7 }],
+                ]}
+                hitSlop={{ top: 4, bottom: 4, left: 2, right: 2 }}
+              >
+                <Text style={[styles.levelCode, { color: active ? colors.primaryForeground : colors.mutedForeground }]}>
+                  {l.code}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
 
@@ -296,15 +336,63 @@ export default function ChapterScreen() {
           )}
           ListHeaderComponent={
             <View style={[styles.chapterHeader, { borderBottomColor: colors.border }]}>
-              <View style={[styles.goldBar, { backgroundColor: colors.accent }]} />
-              <View style={styles.chapterHeaderText}>
-                <Text style={[styles.chapterTitle, { color: colors.accent }]}>
-                  {book?.englishName} {chapterNum}
-                </Text>
-                <Text style={[styles.chapterSub, { color: colors.mutedForeground }]}>
-                  {book?.name} {chapterNum} · {verses.length} versículo{verses.length !== 1 ? 's' : ''}
-                </Text>
+
+              {/* ── Navigation row ── */}
+              <View style={styles.chapterNavRow}>
+                <TouchableOpacity
+                  onPress={() => navigateBook('prev')} disabled={!hasPrev}
+                  style={[styles.chapterNavBtn, !hasPrev && { opacity: 0.22 }]}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Feather name="chevron-left" size={16} color={colors.mutedForeground} />
+                  <Text style={[styles.chapterNavText, { color: colors.mutedForeground }]}>Anterior</Text>
+                </TouchableOpacity>
+
+                <View style={[styles.chapterDot, { backgroundColor: colors.accent }]} />
+
+                <TouchableOpacity
+                  onPress={() => navigateBook('next')} disabled={!hasNext}
+                  style={[styles.chapterNavBtn, styles.chapterNavBtnRight, !hasNext && { opacity: 0.22 }]}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Text style={[styles.chapterNavText, { color: colors.mutedForeground }]}>Próximo</Text>
+                  <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+                </TouchableOpacity>
               </View>
+
+              {/* ── Book subtitle (small caps) ── */}
+              <Text style={[styles.bookSubtitle, { color: colors.accent }]}>
+                {book?.englishName?.toUpperCase()}
+              </Text>
+
+              {/* ── Gold rule ── */}
+              <View style={[styles.subtitleRule, { backgroundColor: colors.accent + '35' }]} />
+
+              {/* ── Chapter heading ── */}
+              <Text style={[styles.chapterBig, { color: colors.foreground }]}>
+                Chapter {CH_WORDS[chapterNum - 1] ?? String(chapterNum)}
+              </Text>
+
+              {/* ── Chapter meta ── */}
+              <Text style={[styles.chapterMeta, { color: colors.mutedForeground }]}>
+                {book?.name} {chapterNum} · {verses.length} versículo{verses.length !== 1 ? 's' : ''}
+              </Text>
+
+              {/* ── Dark action toolbar ── */}
+              <View style={styles.actionBar}>
+                {ACTIONS.map(({ icon, label }) => (
+                  <TouchableOpacity
+                    key={label}
+                    style={styles.actionBtn}
+                    onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); }}
+                    activeOpacity={0.75}
+                  >
+                    <Feather name={icon} size={16} color="#fff" />
+                    <Text style={styles.actionLabel}>{label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
             </View>
           }
           ListFooterComponent={<View style={{ height: bottomPad + 32 }} />}
@@ -382,6 +470,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
+  // CEFR level selector (header right side)
+  levelSelector: { flexDirection: 'row', padding: 3, gap: 2 },
+  levelBtn:      { paddingHorizontal: 10, paddingVertical: 5 },
+  levelBtnActive:{},
+  levelCode:     { fontSize: 12, fontFamily: 'Inter_700Bold', fontWeight: '700' as const },
+
   // Mode bar
   modeBar: {
     flexDirection: 'row',
@@ -399,25 +493,84 @@ const styles = StyleSheet.create({
   modeHint: { flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1, justifyContent: 'flex-end' },
   modeHintText: { fontSize: 10, fontFamily: 'Inter_400Regular' },
 
-  // Chapter header in list
+  // Chapter header in list (redesigned)
   chapterHeader: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 28,
+    paddingBottom: 24,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    gap: 0,
+  },
+
+  // Nav row above heading
+  chapterNavRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 18,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    gap: 14,
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 28,
   },
-  goldBar: { width: 4, height: 44, borderRadius: 2 },
-  chapterHeaderText: { gap: 3 },
-  chapterTitle: {
-    fontSize: 22,
+  chapterNavBtn:      { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  chapterNavBtnRight: { flexDirection: 'row-reverse' },
+  chapterNavText:     { fontSize: 12, fontFamily: 'Inter_500Medium' },
+  chapterDot:         { width: 5, height: 5, borderRadius: 3 },
+
+  // Book subtitle in small caps
+  bookSubtitle: {
+    fontSize: 11,
+    fontFamily: 'Inter_700Bold',
+    letterSpacing: 2.5,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+
+  // Gold rule below subtitle
+  subtitleRule: {
+    width: 48,
+    height: 1.5,
+    borderRadius: 1,
+    marginBottom: 14,
+  },
+
+  // Large chapter number
+  chapterBig: {
+    fontSize: 32,
     fontFamily: 'Inter_700Bold',
     fontWeight: '700' as const,
+    textAlign: 'center',
+    letterSpacing: -0.5,
+    marginBottom: 6,
   },
-  chapterSub: {
+
+  chapterMeta: {
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
+    textAlign: 'center',
+    marginBottom: 22,
+  },
+
+  // Dark action toolbar
+  actionBar: {
+    flexDirection: 'row',
+    backgroundColor: '#1A1A2E',
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    gap: 0,
+    alignSelf: 'stretch',
+  },
+  actionBtn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    paddingVertical: 4,
+  },
+  actionLabel: {
+    fontSize: 11,
+    fontFamily: 'Inter_500Medium',
+    color: 'rgba(255,255,255,0.8)',
   },
 
   // Empty state
