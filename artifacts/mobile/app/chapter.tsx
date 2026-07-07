@@ -1,15 +1,19 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
+  Modal,
   Platform,
+  Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import { useBible, type DisplayMode } from '@/context/BibleContext';
 import { BIBLE_DATA, type BibleVerse } from '@/constants/bibleData';
@@ -24,12 +28,105 @@ const MODE_LABELS: { key: DisplayMode; label: string }[] = [
   { key: 'portuguese', label: 'PT' },
 ];
 
+// All books in canonical order
+const ALL_BOOKS = Object.values(BIBLE_DATA);
+
+// ── Book picker modal ────────────────────────────────────────────────────────
+function BookPickerModal({
+  visible, currentBookId, onSelect, onClose,
+}: {
+  visible: boolean;
+  currentBookId: string;
+  onSelect: (bookId: string) => void;
+  onClose: () => void;
+}) {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+
+  const oldBooks = ALL_BOOKS.filter(b => b.testament === 'old');
+  const newBooks = ALL_BOOKS.filter(b => b.testament === 'new');
+
+  const renderBook = (b: typeof ALL_BOOKS[0]) => {
+    const isActive = b.id === currentBookId;
+    const chapter = Object.keys(b.chapters)[0];
+    return (
+      <TouchableOpacity
+        key={b.id}
+        onPress={() => {
+          if (Platform.OS !== 'web') Haptics.selectionAsync();
+          onSelect(b.id);
+        }}
+        activeOpacity={0.75}
+        style={[
+          styles.bookItem,
+          { borderColor: colors.border },
+          isActive && { backgroundColor: colors.primary + '12', borderColor: colors.primary + '40' },
+        ]}
+      >
+        <View style={styles.bookItemInner}>
+          <Text style={[styles.bookItemEn, { color: isActive ? colors.primary : colors.foreground }]}>
+            {b.englishName}
+          </Text>
+          <Text style={[styles.bookItemPt, { color: colors.mutedForeground }]}>{b.name}</Text>
+        </View>
+        <View style={styles.bookItemRight}>
+          <Text style={[styles.bookChapterBadge, { color: colors.mutedForeground }]}>
+            Ch. {chapter}
+          </Text>
+          {isActive && <Feather name="check" size={14} color={colors.primary} />}
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={styles.modalBackdrop} onPress={onClose}>
+        <Pressable
+          style={[
+            styles.modalSheet,
+            { backgroundColor: colors.card, paddingBottom: insets.bottom + 12 },
+          ]}
+          onPress={e => e.stopPropagation()}
+        >
+          {/* Handle */}
+          <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
+
+          <View style={styles.sheetHeader}>
+            <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Escolher Livro</Text>
+            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <Feather name="x" size={20} color={colors.mutedForeground} />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 4, paddingBottom: 8 }}>
+            <Text style={[styles.testamentLabel, { color: colors.mutedForeground }]}>ANTIGO TESTAMENTO</Text>
+            {oldBooks.map(renderBook)}
+            <Text style={[styles.testamentLabel, { color: colors.mutedForeground, marginTop: 12 }]}>NOVO TESTAMENTO</Text>
+            {newBooks.map(renderBook)}
+          </ScrollView>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+// ── Main screen ───────────────────────────────────────────────────────────────
 export default function ChapterScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<Params>();
-  const { bookId, chapter, bookName, englishBookName } = params;
-  const chapterNum = Number(chapter ?? 1);
+
+  const [currentBookId, setCurrentBookId] = useState(params.bookId ?? ALL_BOOKS[0].id);
+  const [pickerVisible, setPickerVisible] = useState(false);
+
+  const book = BIBLE_DATA[currentBookId] ?? null;
+  const chapterNum = book ? Number(Object.keys(book.chapters)[0]) : 1;
+  const verses: BibleVerse[] = book?.chapters[chapterNum] ?? [];
+
+  const bookIndex = ALL_BOOKS.findIndex(b => b.id === currentBookId);
+  const hasPrev = bookIndex > 0;
+  const hasNext = bookIndex < ALL_BOOKS.length - 1;
 
   const { displayMode, setDisplayMode, isBookmarked, addBookmark, removeBookmark, saveReadingProgress } = useBible();
 
@@ -37,20 +134,33 @@ export default function ChapterScreen() {
   const [wordContext, setWordContext] = useState('');
   const [wordModalVisible, setWordModalVisible] = useState(false);
 
-  const book = bookId ? BIBLE_DATA[bookId] : null;
-  const verses: BibleVerse[] = book?.chapters[chapterNum] ?? [];
+  const listRef = useRef<FlatList>(null);
 
-  // Save reading progress whenever this screen is opened
+  // Save reading progress
   React.useEffect(() => {
-    if (bookId && book) {
+    if (book) {
       saveReadingProgress({
-        bookId,
+        bookId: currentBookId,
         chapter: chapterNum,
-        bookName: bookName ?? book.name,
-        englishBookName: englishBookName ?? book.englishName,
+        bookName: book.name,
+        englishBookName: book.englishName,
       });
     }
-  }, [bookId, chapterNum]);
+  }, [currentBookId, chapterNum]);
+
+  const navigateBook = useCallback((dir: 'prev' | 'next') => {
+    const nextIdx = dir === 'prev' ? bookIndex - 1 : bookIndex + 1;
+    if (nextIdx < 0 || nextIdx >= ALL_BOOKS.length) return;
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    setCurrentBookId(ALL_BOOKS[nextIdx].id);
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+  }, [bookIndex]);
+
+  const handleSelectBook = useCallback((bookId: string) => {
+    setCurrentBookId(bookId);
+    setPickerVisible(false);
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+  }, []);
 
   const handleWordPress = useCallback((word: string, context: string) => {
     setSelectedWord(word);
@@ -59,14 +169,14 @@ export default function ChapterScreen() {
   }, []);
 
   const handleBookmarkToggle = useCallback((verse: BibleVerse) => {
-    if (!book || !bookId) return;
-    if (isBookmarked(bookId, chapterNum, verse.v)) {
-      removeBookmark(bookId, chapterNum, verse.v);
+    if (!book) return;
+    if (isBookmarked(currentBookId, chapterNum, verse.v)) {
+      removeBookmark(currentBookId, chapterNum, verse.v);
     } else {
       addBookmark({
-        bookId,
-        bookName: bookName ?? book.name,
-        englishBookName: englishBookName ?? book.englishName,
+        bookId: currentBookId,
+        bookName: book.name,
+        englishBookName: book.englishName,
         chapter: chapterNum,
         verse: verse.v,
         en: verse.en,
@@ -74,43 +184,81 @@ export default function ChapterScreen() {
         savedAt: Date.now(),
       });
     }
-  }, [book, bookId, chapterNum, bookName, englishBookName, isBookmarked, addBookmark, removeBookmark]);
+  }, [book, currentBookId, chapterNum, isBookmarked, addBookmark, removeBookmark]);
 
-  const headerTitle = `${englishBookName ?? book?.englishName ?? ''} ${chapterNum}`;
-  const headerTitlePt = `${bookName ?? book?.name ?? ''} ${chapterNum}`;
-
+  const topPad = Platform.OS === 'web' ? 0 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Stack.Screen
-        options={{
-          headerStyle: { backgroundColor: colors.card },
-          headerTintColor: colors.primary,
-          headerTitle: () => (
-            <View style={styles.headerTitleContainer}>
-              <Text style={[styles.headerTitleEn, { color: colors.primary }]}>{headerTitle}</Text>
-              <Text style={[styles.headerTitlePt, { color: colors.mutedForeground }]}>{headerTitlePt}</Text>
-            </View>
-          ),
-          headerBackTitle: 'Voltar',
-          headerRight: () => null,
-        }}
-      />
+      <Stack.Screen options={{ headerShown: false }} />
 
-      {/* Mode Toggle */}
-      <View style={[styles.modeBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      {/* ── Custom Header ── */}
+      <View style={[styles.header, { paddingTop: topPad + 6, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+
+        {/* Back */}
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.headerBtn}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Feather name="arrow-left" size={20} color={colors.primary} />
+        </TouchableOpacity>
+
+        {/* Tappable book title */}
+        <TouchableOpacity
+          onPress={() => setPickerVisible(true)}
+          style={styles.headerCenter}
+          activeOpacity={0.75}
+        >
+          <View style={styles.headerTitleRow}>
+            <Text style={[styles.headerBookEn, { color: colors.foreground }]}>
+              {book?.englishName ?? '—'}
+            </Text>
+            <Feather name="chevron-down" size={15} color={colors.primary} style={{ marginTop: 1 }} />
+          </View>
+          <Text style={[styles.headerBookPt, { color: colors.mutedForeground }]}>
+            {book?.name} {chapterNum}
+          </Text>
+        </TouchableOpacity>
+
+        {/* Prev/Next book */}
+        <View style={styles.navArrows}>
+          <TouchableOpacity
+            onPress={() => navigateBook('prev')}
+            disabled={!hasPrev}
+            style={[styles.navArrow, !hasPrev && { opacity: 0.25 }]}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Feather name="chevron-left" size={20} color={colors.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigateBook('next')}
+            disabled={!hasNext}
+            style={[styles.navArrow, !hasNext && { opacity: 0.25 }]}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Feather name="chevron-right" size={20} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* ── Mode Bar ── */}
+      <View style={[styles.modeBar, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <Text style={[styles.modeLabel, { color: colors.mutedForeground }]}>Exibir:</Text>
-        <View style={[styles.modeToggle, { backgroundColor: colors.muted, borderRadius: colors.radius }]}>
+        <View style={[styles.modeToggle, { backgroundColor: colors.muted, borderRadius: 10 }]}>
           {MODE_LABELS.map(({ key, label }) => (
             <TouchableOpacity
               key={key}
               style={[
                 styles.modeBtn,
                 displayMode === key && [styles.modeBtnActive, { backgroundColor: colors.primary }],
-                { borderRadius: colors.radius - 2 },
+                { borderRadius: 8 },
               ]}
-              onPress={() => setDisplayMode(key)}
+              onPress={() => {
+                if (Platform.OS !== 'web') Haptics.selectionAsync();
+                setDisplayMode(key);
+              }}
               activeOpacity={0.8}
             >
               <Text style={[styles.modeBtnText, { color: displayMode === key ? colors.primaryForeground : colors.mutedForeground }]}>
@@ -119,50 +267,60 @@ export default function ChapterScreen() {
             </TouchableOpacity>
           ))}
         </View>
-
         <View style={styles.modeHint}>
-          <Feather name="info" size={13} color={colors.mutedForeground} />
+          <Feather name="zap" size={11} color={colors.accent} />
           <Text style={[styles.modeHintText, { color: colors.mutedForeground }]}>toque nas palavras</Text>
         </View>
       </View>
 
+      {/* ── Verse list ── */}
       {verses.length === 0 ? (
         <View style={styles.empty}>
-          <Feather name="book" size={44} color={colors.border} />
-          <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Capítulo não disponível</Text>
+          <Feather name="book-open" size={44} color={colors.border} />
+          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Capítulo não disponível</Text>
+          <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>Este capítulo ainda não foi adicionado</Text>
         </View>
       ) : (
         <FlatList
+          ref={listRef}
           data={verses}
-          keyExtractor={(item) => String(item.v)}
+          keyExtractor={(item) => `${currentBookId}-${chapterNum}-${item.v}`}
           renderItem={({ item }) => (
             <VerseRow
               verse={item}
               displayMode={displayMode}
-              isBookmarked={isBookmarked(bookId ?? '', chapterNum, item.v)}
+              isBookmarked={isBookmarked(currentBookId, chapterNum, item.v)}
               onWordPress={handleWordPress}
               onBookmarkToggle={() => handleBookmarkToggle(item)}
             />
           )}
           ListHeaderComponent={
             <View style={[styles.chapterHeader, { borderBottomColor: colors.border }]}>
-              <View style={[styles.goldAccent, { backgroundColor: colors.accent }]} />
-              <View>
-                <Text style={[styles.chapterNum, { color: colors.accent }]}>
-                  Capítulo {chapterNum}
+              <View style={[styles.goldBar, { backgroundColor: colors.accent }]} />
+              <View style={styles.chapterHeaderText}>
+                <Text style={[styles.chapterTitle, { color: colors.accent }]}>
+                  {book?.englishName} {chapterNum}
                 </Text>
-                <Text style={[styles.chapterNumEn, { color: colors.mutedForeground }]}>
-                  Chapter {chapterNum} · {verses.length} versículos
+                <Text style={[styles.chapterSub, { color: colors.mutedForeground }]}>
+                  {book?.name} {chapterNum} · {verses.length} versículo{verses.length !== 1 ? 's' : ''}
                 </Text>
               </View>
             </View>
           }
-          ListFooterComponent={<View style={{ height: bottomPad + 24 }} />}
+          ListFooterComponent={<View style={{ height: bottomPad + 32 }} />}
           showsVerticalScrollIndicator={false}
-          contentInsetAdjustmentBehavior="never"
         />
       )}
 
+      {/* ── Book picker sheet ── */}
+      <BookPickerModal
+        visible={pickerVisible}
+        currentBookId={currentBookId}
+        onSelect={handleSelectBook}
+        onClose={() => setPickerVisible(false)}
+      />
+
+      {/* ── Word modal ── */}
       <WordModal
         visible={wordModalVisible}
         word={selectedWord}
@@ -175,86 +333,147 @@ export default function ChapterScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  headerTitleContainer: {
+
+  // Header
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingBottom: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    gap: 4,
   },
-  headerTitleEn: {
-    fontSize: 16,
+  headerBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  headerBookEn: {
+    fontSize: 17,
     fontFamily: 'Inter_700Bold',
     fontWeight: '700' as const,
   },
-  headerTitlePt: {
-    fontSize: 11,
+  headerBookPt: {
+    fontSize: 12,
     fontFamily: 'Inter_400Regular',
+    marginTop: 1,
   },
+  navArrows: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 0,
+  },
+  navArrow: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Mode bar
   modeBar: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 9,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    gap: 10,
+    gap: 8,
   },
-  modeLabel: {
-    fontSize: 12,
-    fontFamily: 'Inter_500Medium',
-  },
-  modeToggle: {
-    flexDirection: 'row',
-    padding: 3,
-    gap: 2,
-  },
-  modeBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-  },
+  modeLabel: { fontSize: 12, fontFamily: 'Inter_500Medium' },
+  modeToggle: { flexDirection: 'row', padding: 3, gap: 2 },
+  modeBtn: { paddingHorizontal: 13, paddingVertical: 5 },
   modeBtnActive: {},
-  modeBtnText: {
-    fontSize: 12,
-    fontFamily: 'Inter_600SemiBold',
-  },
-  modeHint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  modeHintText: {
-    fontSize: 10,
-    fontFamily: 'Inter_400Regular',
-  },
+  modeBtnText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
+  modeHint: { flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1, justifyContent: 'flex-end' },
+  modeHintText: { fontSize: 10, fontFamily: 'Inter_400Regular' },
+
+  // Chapter header in list
   chapterHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    paddingBottom: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 18,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    gap: 12,
+    gap: 14,
   },
-  goldAccent: {
-    width: 4,
-    height: 36,
-    borderRadius: 2,
-  },
-  chapterNum: {
-    fontSize: 20,
+  goldBar: { width: 4, height: 44, borderRadius: 2 },
+  chapterHeaderText: { gap: 3 },
+  chapterTitle: {
+    fontSize: 22,
     fontFamily: 'Inter_700Bold',
     fontWeight: '700' as const,
   },
-  chapterNumEn: {
+  chapterSub: {
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
-    marginTop: 2,
   },
-  empty: {
+
+  // Empty state
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, paddingHorizontal: 40 },
+  emptyTitle: { fontSize: 18, fontFamily: 'Inter_600SemiBold', textAlign: 'center' },
+  emptySub: { fontSize: 14, fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 22 },
+
+  // Book picker modal
+  modalBackdrop: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '75%',
     gap: 12,
+    paddingTop: 12,
   },
-  emptyText: {
-    fontSize: 16,
-    fontFamily: 'Inter_400Regular',
+  sheetHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
   },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+  },
+  sheetTitle: {
+    fontSize: 18,
+    fontFamily: 'Inter_700Bold',
+    fontWeight: '700' as const,
+  },
+  testamentLabel: {
+    fontSize: 10,
+    fontFamily: 'Inter_600SemiBold',
+    letterSpacing: 1.2,
+    marginBottom: 4,
+    marginTop: 4,
+  },
+  bookItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 4,
+  },
+  bookItemInner: { gap: 2 },
+  bookItemEn: { fontSize: 15, fontFamily: 'Inter_600SemiBold', fontWeight: '600' as const },
+  bookItemPt: { fontSize: 12, fontFamily: 'Inter_400Regular' },
+  bookItemRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  bookChapterBadge: { fontSize: 12, fontFamily: 'Inter_400Regular' },
 });
