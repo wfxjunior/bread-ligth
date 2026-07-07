@@ -14,51 +14,12 @@ export interface BibleBook {
 
 import { johnBook } from './bible/john';
 import { proverbsBook } from './bible/proverbs';
+import { genesisBook } from './bible/genesis';
 
 export const BIBLE_DATA: Record<string, BibleBook> = {
   john: johnBook,
   proverbs: proverbsBook,
-  genesis: {
-    id: 'genesis',
-    name: 'Gênesis',
-    englishName: 'Genesis',
-    testament: 'old',
-    chapters: {
-      1: [
-        { v: 1, en: 'In the beginning God created the heaven and the earth.', pt: 'No princípio, criou Deus os céus e a terra.' },
-        { v: 2, en: 'And the earth was without form, and void; and darkness was upon the face of the deep. And the Spirit of God moved upon the face of the waters.', pt: 'A terra era sem forma e vazia; trevas cobriam a face do abismo, e o Espírito de Deus se movia sobre a face das águas.' },
-        { v: 3, en: 'And God said, Let there be light: and there was light.', pt: 'E disse Deus: Haja luz. E houve luz.' },
-        { v: 4, en: 'And God saw the light, that it was good: and God divided the light from the darkness.', pt: 'E viu Deus que a luz era boa; e fez Deus separação entre a luz e as trevas.' },
-        { v: 5, en: 'And God called the light Day, and the darkness he called Night. And the evening and the morning were the first day.', pt: 'E Deus chamou à luz Dia, e às trevas chamou Noite. E foi a tarde e a manhã, o dia primeiro.' },
-        { v: 6, en: 'And God said, Let there be a firmament in the midst of the waters, and let it divide the waters from the waters.', pt: 'E disse Deus: Haja uma expansão no meio das águas, e haja separação entre águas e águas.' },
-        { v: 7, en: 'And God made the firmament, and divided the waters which were under the firmament from the waters which were above the firmament: and it was so.', pt: 'E fez Deus a expansão, e separou as águas que estavam debaixo da expansão das que estavam sobre a expansão. E assim se fez.' },
-        { v: 8, en: 'And God called the firmament Heaven. And the evening and the morning were the second day.', pt: 'E chamou Deus à expansão Céus; e foi a tarde e a manhã, o dia segundo.' },
-        { v: 9, en: 'And God said, Let the waters under the heaven be gathered together unto one place, and let the dry land appear: and it was so.', pt: 'E disse Deus: Ajuntem-se as águas que estão debaixo dos céus num lugar, e apareça a porção seca. E assim se fez.' },
-        { v: 10, en: 'And God called the dry land Earth; and the gathering together of the waters called he Seas: and God saw that it was good.', pt: 'E chamou Deus à porção seca Terra, e ao ajuntamento das águas chamou Mares; e viu Deus que isso era bom.' },
-        { v: 11, en: 'And God said, Let the earth bring forth grass, the herb yielding seed, and the fruit tree yielding fruit after his kind, whose seed is in itself, upon the earth: and it was so.', pt: 'E disse Deus: Produza a terra erva verde, erva que dê semente, árvore frutífera que dê fruto segundo a sua espécie, cuja semente esteja nela sobre a terra. E assim se fez.' },
-        { v: 12, en: 'And the earth brought forth grass, and herb yielding seed after his kind, and the tree yielding fruit, whose seed was in itself, after his kind: and God saw that it was good.', pt: 'E a terra produziu erva, erva dando semente segundo a sua espécie, e árvore dando fruto, cuja semente estava nela, segundo a sua espécie; e viu Deus que isso era bom.' },
-        { v: 13, en: 'And the evening and the morning were the third day.', pt: 'E foi a tarde e a manhã, o dia terceiro.' },
-        { v: 14, en: 'And God said, Let there be lights in the firmament of the heaven to divide the day from the night; and let them be for signs, and for seasons, and for days, and years.', pt: 'E disse Deus: Haja luminares na expansão dos céus, para separar o dia da noite; e sejam eles para sinais, e para estações, e para dias, e para anos.' },
-        { v: 15, en: 'And let them be for lights in the firmament of the heaven to give light upon the earth: and it was so.', pt: 'E sejam luminares na expansão dos céus para iluminar a terra. E assim se fez.' },
-        { v: 16, en: 'And God made two great lights; the greater light to rule the day, and the lesser light to rule the night: he made the stars also.', pt: 'E fez Deus os dois grandes luminares: o luminar maior para governar o dia, e o luminar menor para governar a noite; e também as estrelas.' },
-        { v: 17, en: 'And God set them in the firmament of the heaven to give light upon the earth.', pt: 'E Deus os pôs na expansão dos céus para iluminar a terra.' },
-        { v: 18, en: 'And to rule over the day and over the night, and to divide the light from the darkness: and God saw that it was good.', pt: 'E para governar o dia e a noite, e para separar a luz das trevas; e viu Deus que era bom.' },
-        { v: 19, en: 'And the evening and the morning were the fourth day.', pt: 'E foi a tarde e a manhã, o dia quarto.' },
-        { v: 20, en: 'And God said, Let the waters bring forth abundantly the moving creature that hath life, and fowl that may fly above the earth in the open firmament of heaven.', pt: 'E disse Deus: Produzam as águas abundantemente répteis, seres vivos, e aves que voem sobre a terra na aberta expansão dos céus.' },
-        { v: 21, en: 'And God created great whales, and every living creature that moveth, which the waters brought forth abundantly, after their kind, and every winged fowl after his kind: and God saw that it was good.', pt: 'E criou Deus as grandes baleias, e todo o réptil vivente que as águas produziram abundantemente segundo as suas espécies, e toda ave de asas segundo a sua espécie; e viu Deus que era bom.' },
-        { v: 22, en: 'And God blessed them, saying, Be fruitful, and multiply, and fill the waters in the seas, and let fowl multiply in the earth.', pt: 'E Deus os abençoou, dizendo: Sede fecundos e multiplicai-vos, e enchei as águas nos mares; e as aves se multipliquem na terra.' },
-        { v: 23, en: 'And the evening and the morning were the fifth day.', pt: 'E foi a tarde e a manhã, o dia quinto.' },
-        { v: 24, en: 'And God said, Let the earth bring forth the living creature after his kind, cattle, and creeping thing, and beast of the earth after his kind: and it was so.', pt: 'E disse Deus: Produza a terra seres vivos segundo as suas espécies: animais domésticos, répteis e feras da terra segundo as suas espécies. E assim se fez.' },
-        { v: 25, en: 'And God made the beast of the earth after his kind, and cattle after their kind, and every thing that creepeth upon the earth after his kind: and God saw that it was good.', pt: 'E fez Deus as feras da terra segundo as suas espécies, e os animais domésticos segundo as suas espécies, e todos os répteis da terra segundo as suas espécies; e viu Deus que era bom.' },
-        { v: 26, en: 'And God said, Let us make man in our image, after our likeness: and let them have dominion over the fish of the sea, and over the fowl of the air, and over the cattle, and over all the earth.', pt: 'E disse Deus: Façamos o homem à nossa imagem, conforme a nossa semelhança; e domine sobre os peixes do mar, e sobre as aves dos céus, e sobre o gado, e sobre toda a terra.' },
-        { v: 27, en: 'So God created man in his own image, in the image of God created he him; male and female created he them.', pt: 'E criou Deus o homem à sua imagem; à imagem de Deus o criou; homem e mulher os criou.' },
-        { v: 28, en: 'And God blessed them, and God said unto them, Be fruitful, and multiply, and replenish the earth, and subdue it: and have dominion over the fish of the sea, and over the fowl of the air.', pt: 'E Deus os abençoou, e Deus lhes disse: Sede fecundos, multiplicai-vos, enchei a terra e sujeitai-a; e dominai sobre os peixes do mar, e sobre as aves dos céus.' },
-        { v: 29, en: 'And God said, Behold, I have given you every herb bearing seed, which is upon the face of all the earth, and every tree, in the which is the fruit of a tree yielding seed; to you it shall be for meat.', pt: 'E disse Deus: Eis que vos tenho dado toda a erva que dá semente, que está sobre a face de toda a terra, e toda a árvore em que há fruto com semente; isso vos será para alimento.' },
-        { v: 30, en: 'And to every beast of the earth, and to every fowl of the air, and to every thing that creepeth upon the earth, wherein there is life, I have given every green herb for meat: and it was so.', pt: 'E a todo o animal da terra, e a toda a ave dos céus, e a todo o réptil da terra em que há vida, toda a erva verde servirá de alimento. E assim se fez.' },
-        { v: 31, en: 'And God saw every thing that he had made, and, behold, it was very good. And the evening and the morning were the sixth day.', pt: 'E viu Deus tudo quanto tinha feito, e eis que era muito bom; e foi a tarde e a manhã, o dia sexto.' },
-      ],
-    },
-  },
+  genesis: genesisBook,
   psalms: {
     id: 'psalms',
     name: 'Salmos',
