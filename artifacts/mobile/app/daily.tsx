@@ -78,14 +78,15 @@ function DevotionalModal({
   visible, text, loading, error, onClose,
   verseRef, verseEn, versePt, dateStr,
   textEn, loadingEn, errorEn, onRequestEnglish,
+  lang, onLangChange,
 }: {
   visible: boolean; text: string; loading: boolean; error: string;
   onClose: () => void; verseRef: string; verseEn: string; versePt: string; dateStr: string;
   textEn: string; loadingEn: boolean; errorEn: string; onRequestEnglish: () => void;
+  lang: 'pt' | 'en'; onLangChange: (l: 'pt' | 'en') => void;
 }) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const [lang, setLang] = useState<'pt' | 'en'>('pt');
 
   const activeText    = lang === 'pt' ? text    : textEn;
   const activeLoading = lang === 'pt' ? loading : loadingEn;
@@ -93,7 +94,7 @@ function DevotionalModal({
   const hasText = !activeLoading && !activeError && activeText.length > 0;
 
   const handleLangSwitch = (l: 'pt' | 'en') => {
-    setLang(l);
+    onLangChange(l);
     if (l === 'en' && !textEn && !loadingEn && !errorEn) onRequestEnglish();
   };
 
@@ -248,6 +249,9 @@ export default function DailyScreen() {
   const [devErrorEn,   setDevErrorEn]   = useState('');
   const DEVOTIONAL_EN_KEY = `${todayKey()}:devotional:en`;
 
+  // Language preference for devotional (synced between bottom bar toggle and modal)
+  const [devLang, setDevLang] = useState<'pt' | 'en'>('pt');
+
   const openDevotional = useCallback(async () => {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
     setDevVisible(true);
@@ -302,6 +306,11 @@ export default function DailyScreen() {
       setDevLoadingEn(false);
     }
   }, [devLoadingEn, devTextEn, verseObj, entry, DEVOTIONAL_EN_KEY]);
+
+  const handleOpenDevotional = useCallback(() => {
+    openDevotional();
+    if (devLang === 'en') openDevotionalEn();
+  }, [openDevotional, openDevotionalEn, devLang]);
 
   if (!verseObj) return null;
 
@@ -362,15 +371,35 @@ export default function DailyScreen() {
 
       {/* ── Fixed bottom bar ── */}
       {checked && (
-        <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
-          {/* Devotional button — always shown */}
-          <TouchableOpacity
-            onPress={openDevotional}
-            activeOpacity={0.8}
-            style={styles.devBtn}
-          >
-            <Text style={styles.devBtnText}>Ler Devocional</Text>
-          </TouchableOpacity>
+        <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 10 }]}>
+
+          {/* Devotional row: button + PT/EN lang toggle */}
+          <View style={styles.devRow}>
+            <TouchableOpacity
+              onPress={handleOpenDevotional}
+              activeOpacity={0.8}
+              style={styles.devBtn}
+            >
+              <Text style={styles.devBtnText}>Ler Devocional</Text>
+            </TouchableOpacity>
+
+            <View style={[styles.devLangPill, { borderColor: D.wineBorder, backgroundColor: D.wineFaint }]}>
+              {(['pt', 'en'] as const).map(l => (
+                <TouchableOpacity
+                  key={l}
+                  onPress={() => {
+                    if (Platform.OS !== 'web') Haptics.selectionAsync();
+                    setDevLang(l);
+                  }}
+                  style={[styles.devLangBtn, devLang === l && { backgroundColor: D.wine }]}
+                >
+                  <Text style={[styles.devLangText, { color: devLang === l ? D.white : D.wine }]}>
+                    {l.toUpperCase()}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
 
           {/* Complete / done row */}
           {done ? (
@@ -384,14 +413,8 @@ export default function DailyScreen() {
               </View>
             </View>
           ) : (
-            <TouchableOpacity onPress={handleComplete} activeOpacity={0.88} style={styles.completeBtn}>
-              <LinearGradient
-                colors={['#8B3344', '#6B1E2A']}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                style={styles.completeBtnGrad}
-              >
-                <Text style={styles.completeBtnText}>Marcar como concluído</Text>
-              </LinearGradient>
+            <TouchableOpacity onPress={handleComplete} activeOpacity={0.85} style={styles.completeBtn}>
+              <Text style={styles.completeBtnText}>Marcar como concluído</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -408,6 +431,8 @@ export default function DailyScreen() {
         errorEn={devErrorEn}
         onRequestEnglish={openDevotionalEn}
         onClose={() => setDevVisible(false)}
+        lang={devLang}
+        onLangChange={setDevLang}
         verseRef={`${entry.bookEn} ${entry.chapter}:${entry.verse}`}
         verseEn={verseObj.en}
         versePt={verseObj.pt}
@@ -529,34 +554,34 @@ const styles = StyleSheet.create({
     gap: 8,
   },
 
-  // Devotional button
+  // Devotional row (button + lang toggle side by side)
+  devRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   devBtn: {
-    flexDirection: 'row',
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
     paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: D.wineBorder,
     backgroundColor: D.wineFaint,
   },
-  devBtnText: {
-    fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
-    color: D.wine,
-  },
+  devBtnText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: D.wine },
 
-  // Complete button
-  completeBtn:     { borderRadius: 14, overflow: 'hidden' },
-  completeBtnGrad: {
-    flexDirection: 'row',
+  // PT/EN lang toggle pill in bottom bar
+  devLangPill: { flexDirection: 'row', borderRadius: 10, borderWidth: 1, padding: 2, gap: 1 },
+  devLangBtn:  { paddingHorizontal: 11, paddingVertical: 7, borderRadius: 8 },
+  devLangText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
+
+  // Complete button — simpler, more discreet
+  completeBtn: {
+    borderRadius: 12,
+    paddingVertical: 11,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 15,
+    backgroundColor: D.wine,
   },
-  completeBtnText: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: D.white },
+  completeBtnText: { fontSize: 14, fontFamily: 'Inter_500Medium', color: D.white },
 
   // Done state
   doneRow: {
