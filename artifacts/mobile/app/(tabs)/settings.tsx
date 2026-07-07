@@ -3,10 +3,14 @@ import {
   Alert,
   Animated,
   Image,
+  KeyboardAvoidingView,
+  Modal,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
   Share,
@@ -230,6 +234,154 @@ function LevelPillSelector({ value, onChange }: { value: LevelKey; onChange: (v:
 }
 
 // ── Main screen ───────────────────────────────────────────────────────────────
+// ── Issue types ───────────────────────────────────────────────────────────────
+const ISSUE_TYPES: { icon: string; label: string }[] = [
+  { icon: 'type',            label: 'Texto incorreto'       },
+  { icon: 'globe',           label: 'Tradução errada'       },
+  { icon: 'book-open',       label: 'Capítulo faltando'     },
+  { icon: 'cloud-off',       label: 'Devocional não carrega' },
+  { icon: 'alert-triangle',  label: 'App travando'          },
+  { icon: 'more-horizontal', label: 'Outro'                 },
+];
+
+// ── Support modal ─────────────────────────────────────────────────────────────
+function SupportModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const [selected, setSelected]     = useState<string[]>([]);
+  const [description, setDescription] = useState('');
+  const [sent, setSent]             = useState(false);
+
+  const canSend = selected.length > 0 || description.trim().length > 0;
+
+  const handleClose = () => {
+    setSelected([]); setDescription(''); setSent(false);
+    onClose();
+  };
+
+  const toggleType = (label: string) => {
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    setSelected(prev =>
+      prev.includes(label) ? prev.filter(l => l !== label) : [...prev, label]
+    );
+  };
+
+  const handleSend = () => {
+    if (!canSend) return;
+    if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setSent(true);
+    setTimeout(() => { setSent(false); setSelected([]); setDescription(''); onClose(); }, 2000);
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+        <Pressable style={styles.supportBackdrop} onPress={handleClose}>
+          <Pressable
+            style={[styles.supportSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 20 }]}
+            onPress={e => e.stopPropagation()}
+          >
+            {/* Handle */}
+            <View style={[styles.supportHandle, { backgroundColor: colors.border }]} />
+
+            {/* Header */}
+            <View style={styles.supportModalHeader}>
+              <Text style={[styles.supportModalTitle, { color: colors.foreground }]}>Reportar problema</Text>
+              <TouchableOpacity onPress={handleClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                <Feather name="x" size={20} color={colors.mutedForeground} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Sent confirmation */}
+            {sent ? (
+              <View style={styles.supportSentBox}>
+                <Feather name="check-circle" size={40} color={colors.primary} />
+                <Text style={[styles.supportSentTitle, { color: colors.foreground }]}>Obrigado!</Text>
+                <Text style={[styles.supportSentSub, { color: colors.mutedForeground }]}>
+                  Seu relatório foi registrado.{'\n'}Vamos trabalhar nisso em breve.
+                </Text>
+              </View>
+            ) : (
+              <ScrollView
+                contentContainerStyle={styles.supportBody}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+              >
+                {/* Issue type chips */}
+                <Text style={[styles.supportFieldLabel, { color: colors.mutedForeground }]}>
+                  TIPO DE PROBLEMA
+                </Text>
+                <View style={styles.supportChips}>
+                  {ISSUE_TYPES.map(({ icon, label }) => {
+                    const active = selected.includes(label);
+                    return (
+                      <TouchableOpacity
+                        key={label}
+                        onPress={() => toggleType(label)}
+                        activeOpacity={0.75}
+                        style={[styles.supportChip, {
+                          borderColor:     active ? colors.primary : colors.border,
+                          backgroundColor: active ? colors.primary + '12' : colors.background,
+                        }]}
+                      >
+                        <Feather name={icon as any} size={13}
+                          color={active ? colors.primary : colors.mutedForeground} />
+                        <Text style={[styles.supportChipText, {
+                          color:      active ? colors.primary : colors.foreground,
+                          fontFamily: active ? 'Inter_500Medium' : 'Inter_400Regular',
+                        }]}>
+                          {label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                {/* Description */}
+                <Text style={[styles.supportFieldLabel, { color: colors.mutedForeground, marginTop: 20 }]}>
+                  DESCRIÇÃO
+                </Text>
+                <TextInput
+                  value={description}
+                  onChangeText={setDescription}
+                  placeholder="Descreva o que aconteceu…"
+                  placeholderTextColor={colors.mutedForeground}
+                  multiline
+                  style={[styles.supportInput, {
+                    color:           colors.foreground,
+                    backgroundColor: colors.muted,
+                    borderColor:     colors.border,
+                  }]}
+                  textAlignVertical="top"
+                />
+
+                {/* Send */}
+                <TouchableOpacity
+                  onPress={handleSend}
+                  disabled={!canSend}
+                  activeOpacity={0.8}
+                  style={[styles.supportSendBtn, {
+                    backgroundColor: canSend ? colors.primary : colors.muted,
+                  }]}
+                >
+                  <Feather name="send" size={15}
+                    color={canSend ? colors.primaryForeground : colors.mutedForeground} />
+                  <Text style={[styles.supportSendText, {
+                    color: canSend ? colors.primaryForeground : colors.mutedForeground,
+                  }]}>
+                    Enviar
+                  </Text>
+                </TouchableOpacity>
+              </ScrollView>
+            )}
+          </Pressable>
+        </Pressable>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
+// ── Settings Screen ───────────────────────────────────────────────────────────
 export default function SettingsScreen() {
   const colors   = useColors();
   const insets   = useSafeAreaInsets();
@@ -248,7 +400,8 @@ export default function SettingsScreen() {
   const [autoTr,      setAutoTr]      = useState(true);
   const [vocabRemind, setVocabRemind] = useState(false);
   const [audioSpeed,  setAudioSpeed]  = useState('Normal');
-  const [linkCopied,  setLinkCopied]  = useState(false);
+  const [linkCopied,    setLinkCopied]    = useState(false);
+  const [supportVisible, setSupportVisible] = useState(false);
   const [avatarUri,   setAvatarUri]   = useState<string | null>(null);
 
   const { readingTheme, setReadingTheme, accentColor, setAccentColor } = useTheme();
@@ -576,8 +729,17 @@ export default function SettingsScreen() {
         {/* ── Sobre ── */}
         <SectionLabel title="Sobre" />
         <SettingsCard>
-          <SettingsRow icon="info" label="Versão" sub="1.1.26" border={false} />
+          <SettingsRow icon="info" label="Versão" sub="1.1.26" />
+          <SettingsRow
+            icon="life-buoy"
+            label="Suporte"
+            sub="Reporte um problema ou erro"
+            onPress={() => setSupportVisible(true)}
+            border={false}
+          />
         </SettingsCard>
+
+        <SupportModal visible={supportVisible} onClose={() => setSupportVisible(false)} />
 
       </ScrollView>
     </View>
@@ -675,12 +837,30 @@ const styles = StyleSheet.create({
   copyBtn:  { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6 },
   copyText: { fontSize: 13, fontFamily: 'Inter_500Medium' },
 
-  // Support / Apoio card
+  // Support / Apoio card (Apoio section)
   supportHeader:    { padding: 16, paddingBottom: 14, gap: 7, borderBottomWidth: StyleSheet.hairlineWidth },
   supportBadge:     { alignSelf: 'flex-start', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 20, borderWidth: 1 },
   supportBadgeText: { fontSize: 10, fontFamily: 'Inter_700Bold', letterSpacing: 1.2 },
   supportTitle:     { fontSize: 22, fontFamily: 'Lora_700Bold', letterSpacing: -0.3 },
   supportDesc:      { fontSize: 13, fontFamily: 'Inter_400Regular', lineHeight: 20 },
+
+  // SupportModal sheet
+  supportBackdrop:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  supportSheet:       { borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '85%', paddingTop: 10 },
+  supportHandle:      { width: 36, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 2 },
+  supportModalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 14 },
+  supportModalTitle:  { fontSize: 17, fontFamily: 'Inter_700Bold' },
+  supportBody:        { paddingHorizontal: 20, paddingBottom: 8 },
+  supportFieldLabel:  { fontSize: 10, fontFamily: 'Inter_700Bold', letterSpacing: 1.3, marginBottom: 10 },
+  supportChips:       { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  supportChip:        { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 20, borderWidth: 1 },
+  supportChipText:    { fontSize: 13 },
+  supportInput:       { borderWidth: StyleSheet.hairlineWidth, borderRadius: 12, padding: 12, minHeight: 100, fontSize: 14, fontFamily: 'Inter_400Regular', lineHeight: 22, marginBottom: 16 },
+  supportSendBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14 },
+  supportSendText:    { fontSize: 15, fontFamily: 'Inter_600SemiBold' },
+  supportSentBox:     { alignItems: 'center', paddingVertical: 48, paddingHorizontal: 24, gap: 12 },
+  supportSentTitle:   { fontSize: 22, fontFamily: 'Lora_700Bold' },
+  supportSentSub:     { fontSize: 14, fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 22 },
 
   // Reading theme grid
   themeGrid:    { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
