@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
   Dimensions,
   Platform,
@@ -7,11 +7,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from 'react-native-reanimated';
 import { Feather } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -112,19 +107,6 @@ function TabItem({
   inactiveColor: string;
   onPress: () => void;
 }) {
-  // Only animate the color — no scale, no label slide
-  const progress = useSharedValue(isActive ? 1 : 0);
-
-  useEffect(() => {
-    progress.value = withTiming(isActive ? 1 : 0, { duration: 200 });
-  }, [isActive]);
-
-  // Small dot below icon (fades in on active)
-  const dotStyle = useAnimatedStyle(() => ({
-    opacity: progress.value,
-    transform: [{ scaleX: progress.value }],
-  }));
-
   return (
     <Pressable
       onPress={onPress}
@@ -148,15 +130,6 @@ function TabItem({
       >
         {tab.label}
       </Text>
-
-      {/* Tiny dot indicator */}
-      <Animated.View
-        style={[
-          styles.dot,
-          { backgroundColor: activeColor },
-          dotStyle,
-        ]}
-      />
     </Pressable>
   );
 }
@@ -192,11 +165,5 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontFamily: 'Inter_600SemiBold',
     letterSpacing: 0.2,
-  },
-  dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    marginTop: 1,
   },
 });
