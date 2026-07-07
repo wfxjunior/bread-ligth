@@ -344,10 +344,11 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   headerBtn: {
-    width: 36,
+    width: 68,
     height: 36,
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'center',
+    paddingLeft: 4,
   },
   headerCenter: {
     flex: 1,

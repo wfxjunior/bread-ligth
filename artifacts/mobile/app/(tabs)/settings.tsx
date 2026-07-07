@@ -263,9 +263,9 @@ export default function SettingsScreen() {
             onPress={handleCopyLink}
             right={
               <View style={[styles.copyBtn, { backgroundColor: linkCopied ? colors.accent + '20' : colors.secondary, borderRadius: 8 }]}>
-                <Feather name={linkCopied ? 'check' : 'copy'} size={14} color={linkCopied ? colors.accent : colors.mutedForeground} />
+                <Feather name={linkCopied ? 'check' : 'share-2'} size={14} color={linkCopied ? colors.accent : colors.mutedForeground} />
                 <Text style={[styles.copyText, { color: linkCopied ? colors.accent : colors.mutedForeground }]}>
-                  {linkCopied ? 'Copiado!' : 'Copiar'}
+                  {linkCopied ? 'Compartilhado!' : 'Compartilhar'}
                 </Text>
               </View>
             }

@@ -45,10 +45,12 @@ const MONTHS = [
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+const EASE = [0.22, 1, 0.36, 1] as [number, number, number, number];
+
 const fade = (delay = 0) => ({
   initial: { opacity: 0, y: 16 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1], delay },
+  transition: { duration: 0.45, ease: EASE, delay },
 });
 
 const LEVEL_BG: Record<number, string> = {
@@ -86,7 +88,7 @@ export default function JourneyPage() {
                 key={s.label}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.08 + i * 0.06, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ delay: 0.08 + i * 0.06, duration: 0.4, ease: EASE }}
                 className="bg-card border border-border rounded-2xl p-6"
               >
                 <div className="flex items-start justify-between mb-5">
@@ -131,7 +133,7 @@ export default function JourneyPage() {
                   className="h-full bg-primary rounded-full"
                   initial={{ width: 0 }}
                   animate={{ width: `${masteredPct}%` }}
-                  transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
+                  transition={{ duration: 0.9, ease: EASE, delay: 0.3 }}
                 />
               </div>
             </div>
@@ -171,23 +173,13 @@ export default function JourneyPage() {
                       {day.minutes > 0 ? `${day.minutes}m` : ''}
                     </p>
                     {/* Bar */}
-                    <div className="w-full bg-muted/60 rounded-sm overflow-hidden" style={{ height: 80 }}>
+                    <div className="w-full bg-muted/60 rounded-sm overflow-hidden flex items-end" style={{ height: 80 }}>
                       <motion.div
                         className={`w-full rounded-sm ${isToday ? 'bg-secondary' : 'bg-primary/70'}`}
                         initial={{ height: 0 }}
                         animate={{ height: `${Math.max(pct * 100, day.minutes > 0 ? 6 : 0)}%` }}
-                        transition={{ delay: 0.25 + i * 0.04, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                        style={{ marginTop: 'auto', position: 'absolute', bottom: 0 }}
+                        transition={{ delay: 0.25 + i * 0.04, duration: 0.5, ease: EASE }}
                       />
-                      {/* Re-implement without absolute — simple approach */}
-                      <div className="h-full flex items-end">
-                        <motion.div
-                          className={`w-full rounded-sm ${isToday ? 'bg-secondary' : 'bg-primary/70'}`}
-                          initial={{ height: 0 }}
-                          animate={{ height: `${Math.max(pct * 100, day.minutes > 0 ? 6 : 0)}%` }}
-                          transition={{ delay: 0.25 + i * 0.04, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                        />
-                      </div>
                     </div>
                     <p className={`text-[10px] font-medium ${isToday ? 'text-secondary font-bold' : 'text-muted-foreground'}`}>
                       {WEEK_DAYS[i]}
@@ -239,7 +231,7 @@ export default function JourneyPage() {
                   key={b.name}
                   initial={{ opacity: 0, x: -12 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 + i * 0.07, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ delay: 0.3 + i * 0.07, duration: 0.4, ease: EASE }}
                   className="bg-card border border-border rounded-xl p-5 flex items-center gap-5"
                 >
                   {/* Color strip */}
@@ -261,7 +253,7 @@ export default function JourneyPage() {
                         style={{ backgroundColor: b.color }}
                         initial={{ width: 0 }}
                         animate={{ width: pct > 0 ? `${Math.max(pct, 3)}%` : '0%' }}
-                        transition={{ delay: 0.35 + i * 0.07, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                        transition={{ delay: 0.35 + i * 0.07, duration: 0.7, ease: EASE }}
                       />
                     </div>
                   </div>

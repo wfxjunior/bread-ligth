@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   },
   tappableWord: {
     textDecorationLine: 'underline',
-    textDecorationStyle: 'dotted',
+    textDecorationStyle: 'solid',
   },
   divider: {
     height: StyleSheet.hairlineWidth,
