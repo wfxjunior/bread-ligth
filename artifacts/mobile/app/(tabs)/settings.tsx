@@ -1320,7 +1320,7 @@ const styles = StyleSheet.create({
   segText:    { fontSize: 13, letterSpacing: 0.1 },
 
   // Support / Apoio card (Apoio section)
-  supportHeader:    { padding: 20, paddingBottom: 18, gap: 7, borderBottomWidth: StyleSheet.hairlineWidth, alignItems: 'center' },
+  supportHeader:    { padding: 20, paddingBottom: 28, gap: 7, borderBottomWidth: StyleSheet.hairlineWidth, alignItems: 'center' },
   supportBadge:     { alignSelf: 'center', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 20, borderWidth: 1 },
   supportBadgeText: { fontSize: 10, fontFamily: 'Inter_700Bold', letterSpacing: 1.2 },
   supportTitle:     { fontSize: 22, fontFamily: 'Lora_700Bold', letterSpacing: -0.3, textAlign: 'center' },
