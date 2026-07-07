@@ -250,6 +250,11 @@ export default function HomeScreen() {
   const topPad    = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = useTabBarHeight();
 
+  const [userName, setUserName] = useState('');
+  useEffect(() => {
+    AsyncStorage.getItem('@bibliaeN:userName').then(n => setUserName(n ?? 'Wilson')).catch(() => setUserName('Wilson'));
+  }, []);
+
   const today    = new Date();
   const dateStr  = `${WEEKDAYS_PT[today.getDay()]}, ${today.getDate()} ${MONTHS_PT[today.getMonth()]}`;
   const greeting = getGreeting();
@@ -282,7 +287,9 @@ export default function HomeScreen() {
       ]}>
         <Text style={[styles.headerName, { color: colors.foreground }]}>BíbliaEN</Text>
         <View style={styles.headerSubRow}>
-          <Text style={[styles.headerGreeting, { color: colors.mutedForeground }]}>{greeting}</Text>
+          <Text style={[styles.headerGreeting, { color: colors.mutedForeground }]}>
+            {greeting}{userName ? `, ${userName}` : ''}
+          </Text>
           <Text style={[styles.headerDot, { color: colors.border }]}>·</Text>
           <Text style={[styles.headerDate, { color: colors.mutedForeground }]}>{dateStr}</Text>
         </View>
@@ -343,9 +350,9 @@ const styles = StyleSheet.create({
   // Header
   header: {
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingBottom: 22,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    gap: 5,
+    gap: 6,
   },
   headerName: {
     fontSize: 34,
