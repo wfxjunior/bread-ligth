@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/bible-english/"
+title = "Bible English — Learn English Through the Bible"
+version = "1.0.0"
+id = "artifacts/bible-english"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/bible-english/" ]
+localPort = 19074
+
+[services.development]
+run = "pnpm --filter @workspace/bible-english run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/bible-english", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/bible-english/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19074"
+BASE_PATH = "/bible-english/"
