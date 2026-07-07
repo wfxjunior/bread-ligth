@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Animated,
+  Dimensions,
   FlatList,
   LayoutAnimation,
   Modal,
@@ -194,6 +196,12 @@ export default function ChapterScreen() {
 
   const [focusMode, setFocusMode] = useState(false);
 
+  // Verse action popup
+  const [selectedVerse, setSelectedVerse] = useState<{ v: number; popupY: number } | null>(null);
+  const popupAnim = useRef(new Animated.Value(0)).current;
+  const popupScale = popupAnim.interpolate({ inputRange: [0, 1], outputRange: [0.88, 1] });
+  const popupTranslateY = popupAnim.interpolate({ inputRange: [0, 1], outputRange: [6, 0] });
+
   const [selectedWord, setSelectedWord] = useState('');
   const [wordContext, setWordContext] = useState('');
   const [wordModalVisible, setWordModalVisible] = useState(false);
@@ -255,10 +263,28 @@ export default function ChapterScreen() {
     }
   }, [book, currentBookId, chapterNum, isBookmarked, addBookmark, removeBookmark]);
 
+  const handleVerseSelect = useCallback((v: number, pageY: number, height: number) => {
+    const { height: screenH } = Dimensions.get('window');
+    const popupH = 76;
+    let py = pageY + height + 10;
+    if (py + popupH > screenH - 80) py = pageY - popupH - 10;
+    py = Math.max(insets.top + 10, py);
+    setSelectedVerse({ v, popupY: py });
+    popupAnim.setValue(0);
+    Animated.spring(popupAnim, { toValue: 1, useNativeDriver: true, tension: 220, friction: 15 }).start();
+  }, [insets.top, popupAnim]);
+
+  const handleVerseDeselect = useCallback(() => {
+    Animated.timing(popupAnim, { toValue: 0, duration: 130, useNativeDriver: true }).start(() => {
+      setSelectedVerse(null);
+    });
+  }, [popupAnim]);
+
   const toggleFocus = useCallback(() => {
+    handleVerseDeselect();
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setFocusMode(f => !f);
-  }, []);
+  }, [handleVerseDeselect]);
 
   const topPad = Platform.OS === 'web' ? 0 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
@@ -361,22 +387,6 @@ export default function ChapterScreen() {
         </View>
       )}
 
-      {/* ── Fixed action toolbar (hidden in focus mode) ── */}
-      {!focusMode && (
-        <View style={[styles.actionBar, { backgroundColor: colors.primary, borderBottomColor: colors.border }]}>
-          {ACTIONS.map(({ icon, label }) => (
-            <TouchableOpacity
-              key={label}
-              style={styles.actionBtn}
-              onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); }}
-              activeOpacity={0.75}
-            >
-              <Feather name={icon} size={16} color={colors.primaryForeground} />
-              <Text style={[styles.actionLabel, { color: colors.primaryForeground }]}>{label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
 
       {/* ── Floating exit button — only in focus mode ── */}
       {focusMode && (
@@ -406,7 +416,8 @@ export default function ChapterScreen() {
           ref={listRef}
           data={verses}
           keyExtractor={(item) => `${currentBookId}-${chapterNum}-${item.v}`}
-          extraData={[focusMode, displayMode, chapterNum, textSize, currentBookId]}
+          extraData={[focusMode, displayMode, chapterNum, textSize, currentBookId, selectedVerse?.v]}
+          onScrollBeginDrag={handleVerseDeselect}
           renderItem={({ item }) => (
             <VerseRow
               verse={item}
@@ -415,6 +426,8 @@ export default function ChapterScreen() {
               isBookmarked={isBookmarked(currentBookId, chapterNum, item.v)}
               onWordPress={handleWordPress}
               onBookmarkToggle={() => handleBookmarkToggle(item)}
+              selected={selectedVerse?.v === item.v}
+              onVersePress={handleVerseSelect}
             />
           )}
           ListHeaderComponent={
@@ -485,6 +498,35 @@ export default function ChapterScreen() {
           ListFooterComponent={<View style={{ height: bottomPad + 32 }} />}
           showsVerticalScrollIndicator={false}
         />
+      )}
+
+      {/* ── Verse action popup ── */}
+      {selectedVerse && (
+        <Animated.View
+          style={[
+            styles.versePopup,
+            {
+              top:     selectedVerse.popupY,
+              opacity: popupAnim,
+              transform: [{ scale: popupScale }, { translateY: popupTranslateY }],
+            },
+          ]}
+        >
+          {ACTIONS.map(({ icon, label }) => (
+            <TouchableOpacity
+              key={label}
+              style={styles.versePopupBtn}
+              onPress={() => {
+                if (Platform.OS !== 'web') Haptics.selectionAsync();
+                handleVerseDeselect();
+              }}
+              activeOpacity={0.7}
+            >
+              <Feather name={icon} size={17} color="#FFFFFF" />
+              <Text style={styles.versePopupLabel}>{label}</Text>
+            </TouchableOpacity>
+          ))}
+        </Animated.View>
       )}
 
       {/* ── Book picker sheet ── */}
@@ -658,23 +700,28 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
 
-  // Fixed action toolbar — always visible, sits between mode bar and list
-  actionBar: {
+  // Floating verse action popup
+  versePopup: {
+    position: 'absolute',
+    left: 16, right: 16,
     flexDirection: 'row',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    backgroundColor: '#1A1A1C',
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    zIndex: 100,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.28,
+    shadowRadius: 14,
+    elevation: 10,
   },
-  actionBtn: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-    paddingVertical: 6,
+  versePopupBtn: {
+    flex: 1, alignItems: 'center', justifyContent: 'center',
+    gap: 5, paddingVertical: 2,
   },
-  actionLabel: {
-    fontSize: 11,
-    fontFamily: 'Inter_500Medium',
+  versePopupLabel: {
+    fontSize: 11, fontFamily: 'Inter_500Medium', color: '#FFFFFF',
   },
 
   // Empty state

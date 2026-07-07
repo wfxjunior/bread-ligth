@@ -1,5 +1,5 @@
-import React, { memo } from 'react';
-import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { memo, useRef } from 'react';
+import { Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
@@ -21,21 +21,35 @@ interface VerseRowProps {
   isBookmarked: boolean;
   onWordPress: (word: string, context: string) => void;
   onBookmarkToggle: () => void;
+  selected?: boolean;
+  onVersePress?: (v: number, pageY: number, height: number) => void;
 }
 
-function VerseRow({ verse, displayMode, textSize = 'medium', isBookmarked, onWordPress, onBookmarkToggle }: VerseRowProps) {
-  const colors = useColors();
+function VerseRow({
+  verse, displayMode, textSize = 'medium', isBookmarked,
+  onWordPress, onBookmarkToggle,
+  selected = false, onVersePress,
+}: VerseRowProps) {
+  const colors  = useColors();
+  const rowRef  = useRef<View>(null);
 
   const handleBookmark = () => {
     if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onBookmarkToggle();
   };
 
-  const showEn = displayMode === 'both' || displayMode === 'english';
-  const showPt = displayMode === 'both' || displayMode === 'portuguese';
-  const showBoth = displayMode === 'both';
+  const handleRowPress = () => {
+    if (!onVersePress) return;
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    rowRef.current?.measureInWindow((_, y, __, height) => {
+      onVersePress(verse.v, y, height);
+    });
+  };
 
-  const scale = TEXT_SCALE[textSize];
+  const showEn   = displayMode === 'both' || displayMode === 'english';
+  const showPt   = displayMode === 'both' || displayMode === 'portuguese';
+  const showBoth = displayMode === 'both';
+  const scale    = TEXT_SCALE[textSize];
 
   const renderTappableWords = (text: string) => {
     const words = text.split(' ');
@@ -63,7 +77,17 @@ function VerseRow({ verse, displayMode, textSize = 'medium', isBookmarked, onWor
   };
 
   return (
-    <View style={[styles.container, { borderBottomColor: colors.border }]}>
+    <View
+      ref={rowRef}
+      style={[
+        styles.container,
+        { borderBottomColor: colors.border },
+        selected && { backgroundColor: colors.accent + '12' },
+      ]}
+    >
+      {/* Tappable background — catches taps on empty space; word/bookmark taps take priority */}
+      <Pressable style={StyleSheet.absoluteFillObject} onPress={handleRowPress} />
+
       {/* Verse number pill */}
       <View style={[styles.verseNumber, { backgroundColor: colors.accent + '18' }]}>
         <Text style={[styles.verseNumText, { color: colors.verseNumber }]}>{verse.v}</Text>
@@ -134,75 +158,33 @@ const styles = StyleSheet.create({
 
   // Verse number circle
   verseNumber: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 3,
-    flexShrink: 0,
+    width: 28, height: 28, borderRadius: 14,
+    alignItems: 'center', justifyContent: 'center',
+    marginTop: 3, flexShrink: 0,
   },
-  verseNumText: {
-    fontSize: 11,
-    fontFamily: 'Inter_700Bold',
-  },
+  verseNumText: { fontSize: 11, fontFamily: 'Inter_700Bold' },
 
   // Text layout
-  textContainer: {
-    flex: 1,
-    gap: 8,
-  },
-  languageBlock: {
-    gap: 5,
-  },
+  textContainer:  { flex: 1, gap: 8 },
+  languageBlock:  { gap: 5 },
 
   // Language badge (EN / PT chip)
-  langBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 5,
-  },
-  langBadgeText: {
-    fontSize: 9,
-    fontFamily: 'Inter_700Bold',
-    letterSpacing: 0.8,
-  },
+  langBadge:     { alignSelf: 'flex-start', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 5 },
+  langBadgeText: { fontSize: 9, fontFamily: 'Inter_700Bold', letterSpacing: 0.8 },
 
   // English verse — Lora serif for reading comfort
-  verseEnText: {
-    fontSize: 18,
-    lineHeight: 30,
-    fontFamily: 'Lora_400Regular',
-  },
-  enWord: {
-    fontSize: 18,
-    lineHeight: 30,
-    fontFamily: 'Lora_400Regular',
-  },
-  tappableWord: {
-    textDecorationLine: 'underline',
-    textDecorationStyle: 'solid',
-  },
+  verseEnText: { fontSize: 18, lineHeight: 30, fontFamily: 'Lora_400Regular' },
+  enWord:      { fontSize: 18, lineHeight: 30, fontFamily: 'Lora_400Regular' },
+  tappableWord: { textDecorationLine: 'underline', textDecorationStyle: 'solid' },
 
   // Portuguese verse — italic serif
-  versePtText: {
-    fontSize: 17,
-    lineHeight: 28,
-    fontFamily: 'Lora_400Regular_Italic',
-  },
+  versePtText: { fontSize: 17, lineHeight: 28, fontFamily: 'Lora_400Regular_Italic' },
 
   // Separator between EN and PT
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    marginVertical: 2,
-  },
+  divider: { height: StyleSheet.hairlineWidth, marginVertical: 2 },
 
   // Bookmark
-  bookmarkBtn: {
-    paddingTop: 3,
-    flexShrink: 0,
-  },
+  bookmarkBtn: { paddingTop: 3, flexShrink: 0 },
 });
 
 export default memo(VerseRow);
