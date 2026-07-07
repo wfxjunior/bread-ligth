@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
+  Image,
   Platform,
   ScrollView,
   StyleSheet,
@@ -8,13 +9,17 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Share,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { Share } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColors } from '@/hooks/useColors';
 import { useBible } from '@/context/BibleContext';
+
+const AVATAR_KEY = '@bibliaeN:avatar';
 
 // ── Small reusable components ─────────────────────────────────────────────────
 
@@ -139,6 +144,34 @@ export default function SettingsScreen() {
   const [audioSpeed,  setAudioSpeed]  = useState('Normal');
   const [waitlisted,  setWaitlisted]  = useState(false);
   const [linkCopied,  setLinkCopied]  = useState(false);
+  const [avatarUri,   setAvatarUri]   = useState<string | null>(null);
+
+  // Load persisted avatar
+  useEffect(() => {
+    AsyncStorage.getItem(AVATAR_KEY).then(v => { if (v) setAvatarUri(v); }).catch(() => {});
+  }, []);
+
+  const handlePickAvatar = async () => {
+    if (Platform.OS !== 'web') {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permissão necessária', 'Precisamos de acesso à galeria para alterar sua foto.');
+        return;
+      }
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.85,
+    });
+    if (!result.canceled && result.assets[0]) {
+      const uri = result.assets[0].uri;
+      setAvatarUri(uri);
+      AsyncStorage.setItem(AVATAR_KEY, uri).catch(() => {});
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+  };
 
   const handleClearVocab = () => {
     if (Platform.OS === 'web') {
@@ -182,9 +215,18 @@ export default function SettingsScreen() {
         {/* ── Profile ── */}
         <SettingsCard>
           <View style={styles.profileRow}>
-            <View style={[styles.avatar, { backgroundColor: colors.primary + '20' }]}>
-              <Text style={[styles.avatarText, { color: colors.primary }]}>W</Text>
-            </View>
+            <TouchableOpacity onPress={handlePickAvatar} activeOpacity={0.8} style={styles.avatarWrapper}>
+              {avatarUri ? (
+                <Image source={{ uri: avatarUri }} style={styles.avatar} />
+              ) : (
+                <View style={[styles.avatar, { backgroundColor: colors.primary + '20' }]}>
+                  <Text style={[styles.avatarText, { color: colors.primary }]}>W</Text>
+                </View>
+              )}
+              <View style={[styles.avatarCam, { backgroundColor: colors.primary }]}>
+                <Feather name="camera" size={10} color="#fff" />
+              </View>
+            </TouchableOpacity>
             <View style={styles.profileInfo}>
               <Text style={[styles.profileName, { color: colors.foreground }]}>Wilson</Text>
               <Text style={[styles.profileEmail, { color: colors.mutedForeground }]}>wilson@email.com</Text>
@@ -351,7 +393,9 @@ const styles = StyleSheet.create({
   rowSub:       { fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 1 },
 
   profileRow:   { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
+  avatarWrapper:{ position: 'relative' },
   avatar:       { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
+  avatarCam:    { position: 'absolute', bottom: 0, right: 0, width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#fff' },
   avatarText:   { fontSize: 22, fontFamily: 'Inter_700Bold', fontWeight: '700' as const },
   profileInfo:  { flex: 1 },
   profileName:  { fontSize: 17, fontFamily: 'Inter_600SemiBold', fontWeight: '600' as const },
@@ -368,8 +412,8 @@ const styles = StyleSheet.create({
   innerSection: { paddingHorizontal: 14, paddingVertical: 12, gap: 10 },
   innerLabel:   { fontSize: 12, fontFamily: 'Inter_500Medium', letterSpacing: 0.3 },
 
-  pillRow:      { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  pill:         { paddingHorizontal: 14, paddingVertical: 7 },
+  pillRow:      { flexDirection: 'row', gap: 6 },
+  pill:         { flex: 1, alignItems: 'center', paddingVertical: 8 },
   pillText:     { fontSize: 13, fontFamily: 'Inter_500Medium' },
 
   copyBtn:      { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6 },
