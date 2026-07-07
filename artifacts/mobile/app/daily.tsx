@@ -28,9 +28,9 @@ const D = {
   bg1:       '#0A1628',
   bg2:       '#111E35',
   bg3:       '#162442',
-  wine:      '#C87A8A',
-  wineFaint: 'rgba(200,122,138,0.18)',
-  wineBorder:'rgba(200,122,138,0.35)',
+  wine:      '#D4A870',           // warm gold — harmonious with dark navy
+  wineFaint: 'rgba(212,168,112,0.13)',
+  wineBorder:'rgba(212,168,112,0.38)',
   white:     '#FFFFFF',
   whiteHi:   'rgba(255,255,255,0.90)',
   whiteMid:  'rgba(255,255,255,0.55)',
@@ -383,10 +383,10 @@ export default function DailyScreen() {
 
         <View style={styles.tipRow}>
           <Feather name="zap" size={12} color={D.whiteLow} />
-          <Text style={styles.tipText}>
+          <Text style={styles.tipText} numberOfLines={1}>
             {showPt
-              ? 'Toque em qualquer palavra em inglês para ver sua definição'
-              : 'Toque em qualquer palavra · Toque em PT para revelar a tradução'}
+              ? 'Toque nas palavras para ver definições'
+              : 'Toque nas palavras · PT revela a tradução'}
           </Text>
         </View>
       </ScrollView>
