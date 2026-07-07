@@ -26,6 +26,8 @@ const PAD    = 16;
 const GAP    = 10;
 const CARD_H = 196;
 
+const VIEW_MODE_KEY = '@bibliaeN:libraryViewMode';
+
 const WEEKDAYS_PT = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const MONTHS_PT   = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
@@ -239,6 +241,70 @@ function BookGridCard({ meta, cardW }: { meta: BookMeta; cardW: number }) {
   );
 }
 
+// ── Book list row ─────────────────────────────────────────────────────────────
+function BookListRow({ meta, isLast }: { meta: BookMeta; isLast?: boolean }) {
+  const colors = useColors();
+  const book   = BIBLE_DATA[meta.bookId];
+  if (!book) return null;
+
+  const chapterKey  = Object.keys(book.chapters)[0];
+  const chapterCount = Object.keys(book.chapters).length;
+
+  const handlePress = () => {
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    router.push({
+      pathname: '/chapter',
+      params: {
+        bookId:          meta.bookId,
+        chapter:         chapterKey,
+        bookName:        book.name,
+        englishBookName: book.englishName,
+      },
+    });
+  };
+
+  return (
+    <TouchableOpacity
+      onPress={handlePress}
+      activeOpacity={0.82}
+      style={[styles.listRow, !isLast && { borderBottomColor: colors.border }]}
+    >
+      {/* Colour swatch */}
+      <LinearGradient
+        colors={meta.gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.6, y: 1 }}
+        style={[styles.listSwatch, { borderRadius: colors.radius - 2 }]}
+      >
+        <Text style={styles.listSwatchRoman}>{meta.roman}</Text>
+      </LinearGradient>
+
+      {/* Info */}
+      <View style={styles.listInfo}>
+        <Text style={[styles.listNameEn, { color: colors.foreground }]} numberOfLines={1}>
+          {book.englishName}
+        </Text>
+        <Text style={[styles.listNamePt, { color: colors.mutedForeground }]} numberOfLines={1}>
+          {book.name}
+        </Text>
+        <View style={[styles.listTag, { backgroundColor: colors.primary + '14' }]}>
+          <Text style={[styles.listTagText, { color: colors.primary }]}>
+            {meta.testamentPt}
+          </Text>
+        </View>
+      </View>
+
+      {/* Right: chapter count + chevron */}
+      <View style={styles.listRight}>
+        <Text style={[styles.listChapters, { color: colors.mutedForeground }]}>
+          {chapterCount} cap.
+        </Text>
+        <Feather name="chevron-right" size={14} color={colors.mutedForeground} />
+      </View>
+    </TouchableOpacity>
+  );
+}
+
 // ── Main Screen ───────────────────────────────────────────────────────────────
 export default function HomeScreen() {
   const colors    = useColors();
@@ -250,10 +316,19 @@ export default function HomeScreen() {
   const topPad    = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = useTabBarHeight();
 
-  const [userName, setUserName] = useState('');
+  const [userName,  setUserName]  = useState('');
+  const [viewMode,  setViewMode]  = useState<'grid' | 'list'>('grid');
+
   useEffect(() => {
     AsyncStorage.getItem('@bibliaeN:userName').then(n => setUserName(n ?? '')).catch(() => setUserName(''));
+    AsyncStorage.getItem(VIEW_MODE_KEY).then(v => { if (v === 'list' || v === 'grid') setViewMode(v); }).catch(() => {});
   }, []);
+
+  const toggleView = (mode: 'grid' | 'list') => {
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    setViewMode(mode);
+    AsyncStorage.setItem(VIEW_MODE_KEY, mode).catch(() => {});
+  };
 
   const today    = new Date();
   const dateStr  = `${WEEKDAYS_PT[today.getDay()]}, ${today.getDate()} ${MONTHS_PT[today.getMonth()]}`;
@@ -323,20 +398,53 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* ── Library grid ── */}
+      {/* ── Library ── */}
       <View style={[styles.section, { marginTop: readingProgress ? 24 : 20 }]}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>BIBLIOTECA</Text>
-          <Text style={[styles.sectionCount, { color: colors.accent }]}>
-            {BOOK_CATALOGUE.length} livros
-          </Text>
+          <View style={styles.sectionRight}>
+            <Text style={[styles.sectionCount, { color: colors.accent }]}>
+              {BOOK_CATALOGUE.length} livros
+            </Text>
+            {/* View-mode toggle */}
+            <View style={[styles.viewToggle, { borderColor: colors.border, backgroundColor: colors.card }]}>
+              <TouchableOpacity
+                onPress={() => toggleView('grid')}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                style={[styles.viewToggleBtn, viewMode === 'grid' && { backgroundColor: colors.primary + '18' }]}
+                accessibilityRole="button"
+                accessibilityLabel="Visualização em grade"
+                accessibilityState={{ selected: viewMode === 'grid' }}
+              >
+                <Feather name="grid" size={13} color={viewMode === 'grid' ? colors.primary : colors.mutedForeground} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => toggleView('list')}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                style={[styles.viewToggleBtn, viewMode === 'list' && { backgroundColor: colors.primary + '18' }]}
+                accessibilityRole="button"
+                accessibilityLabel="Visualização em lista"
+                accessibilityState={{ selected: viewMode === 'list' }}
+              >
+                <Feather name="list" size={13} color={viewMode === 'list' ? colors.primary : colors.mutedForeground} />
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
 
-        <View style={styles.grid}>
-          {BOOK_CATALOGUE.map(meta => (
-            <BookGridCard key={meta.bookId} meta={meta} cardW={cardW} />
-          ))}
-        </View>
+        {viewMode === 'grid' ? (
+          <View style={styles.grid}>
+            {BOOK_CATALOGUE.map(meta => (
+              <BookGridCard key={meta.bookId} meta={meta} cardW={cardW} />
+            ))}
+          </View>
+        ) : (
+          <View style={[styles.listContainer, { borderColor: colors.border, backgroundColor: colors.card, borderRadius: colors.radius }]}>
+            {BOOK_CATALOGUE.map((meta, idx) => (
+              <BookListRow key={meta.bookId} meta={meta} isLast={idx === BOOK_CATALOGUE.length - 1} />
+            ))}
+          </View>
+        )}
       </View>
 
     </ScrollView>
@@ -437,11 +545,86 @@ const styles = StyleSheet.create({
   continueLabel: { fontSize: 12, fontFamily: 'Inter_400Regular' },
   continueName:  { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
 
+  // Section right cluster (count + toggle)
+  sectionRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  viewToggle: {
+    flexDirection: 'row',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  viewToggleBtn: {
+    width: 28,
+    height: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   // Book grid
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: GAP,
+  },
+
+  // Book list
+  listContainer: {
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+  },
+  listRow: {
+    flexDirection:    'row',
+    alignItems:       'center',
+    gap:              12,
+    paddingHorizontal: 14,
+    paddingVertical:   12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  listSwatch: {
+    width:          52,
+    height:         52,
+    alignItems:     'center',
+    justifyContent: 'center',
+    overflow:       'hidden',
+  },
+  listSwatchRoman: {
+    fontSize:     20,
+    fontFamily:   'Inter_700Bold',
+    color:        'rgba(255,255,255,0.18)',
+    letterSpacing: -1,
+  },
+  listInfo: { flex: 1, gap: 2 },
+  listNameEn: {
+    fontSize:   14,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  listNamePt: {
+    fontSize:   12,
+    fontFamily: 'Inter_400Regular',
+  },
+  listTag: {
+    alignSelf:         'flex-start',
+    borderRadius:       4,
+    paddingHorizontal:  6,
+    paddingVertical:    2,
+    marginTop:          2,
+  },
+  listTagText: {
+    fontSize:   9,
+    fontFamily: 'Inter_600SemiBold',
+    letterSpacing: 0.4,
+  },
+  listRight: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  listChapters: {
+    fontSize:   11,
+    fontFamily: 'Inter_400Regular',
   },
   card:         {},
   cardGradient: {
