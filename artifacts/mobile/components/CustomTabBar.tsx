@@ -20,6 +20,7 @@ import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useColors } from '@/hooks/useColors';
+import { useTheme } from '@/context/ThemeContext';
 
 const TABS = [
   { name: 'index',     icon: 'book-open' as const, label: 'Leitura'      },
@@ -36,6 +37,7 @@ const SPRING    = { damping: 22, stiffness: 220 };
 
 export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const colors  = useColors();
+  const { isDark } = useTheme();
   const insets  = useSafeAreaInsets();
   const isWeb   = Platform.OS === 'web';
   const isIOS   = Platform.OS === 'ios';
@@ -101,7 +103,7 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
       {isIOS && !isWeb ? (
         <BlurView
           intensity={85}
-          tint="extraLight"
+          tint={isDark ? 'dark' : 'extraLight'}
           style={[styles.blurContainer, { borderRadius: RADIUS }]}
         >
           {bar}

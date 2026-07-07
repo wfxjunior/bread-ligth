@@ -1,0 +1,2 @@
+- [Theme system](theme-system.md) — ThemeContext (context/ThemeContext.tsx) owns dark/light/system override; useColors reads isDark from it, not raw useColorScheme.
+- [Daily verse utility](daily-verse.md) — Shared util (utils/dailyVerse.ts) for DST-safe rotation + todayKey(); both home and daily screens use AppState listener to refresh at midnight.

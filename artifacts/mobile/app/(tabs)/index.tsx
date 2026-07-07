@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  AppState,
   Platform,
   ScrollView,
   StyleSheet,
@@ -15,6 +16,73 @@ import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import { useBible } from '@/context/BibleContext';
 import { BIBLE_DATA } from '@/constants/bibleData';
+import { getEntryForDate, resolveVerse } from '@/utils/dailyVerse';
+
+// ── Daily Card ─────────────────────────────────────────────────────────────────
+function DailyCard() {
+  const colors = useColors();
+
+  // Recompute when app comes back to foreground so midnight rollovers are caught
+  const [today, setToday] = useState(() => new Date());
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', s => {
+      if (s === 'active') setToday(new Date());
+    });
+    return () => sub.remove();
+  }, []);
+
+  const entry = getEntryForDate(today);
+  const verse = resolveVerse(entry);
+  if (!verse) return null;
+
+  const preview = verse.en.length > 72 ? verse.en.slice(0, 72).trimEnd() + '…' : verse.en;
+
+  return (
+    <View style={[styles.section, { marginTop: 20 }]}>
+      <View style={styles.sectionHeader}>
+        <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>MODO DIÁRIO</Text>
+      </View>
+      <TouchableOpacity
+        activeOpacity={0.88}
+        onPress={() => {
+          if (Platform.OS !== 'web') Haptics.selectionAsync();
+          router.push('/daily');
+        }}
+      >
+        <LinearGradient
+          colors={['#0D1B2A', '#162442']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.dailyCard, { borderRadius: colors.radius }]}
+        >
+          {/* Subtle cross */}
+          <View style={StyleSheet.absoluteFill} pointerEvents="none">
+            <View style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 1, backgroundColor: 'rgba(196,146,42,0.1)' }} />
+            <View style={{ position: 'absolute', left: 0, right: 0, top: '50%', height: 1, backgroundColor: 'rgba(196,146,42,0.1)' }} />
+          </View>
+
+          <View style={styles.dailyBadgeRow}>
+            <View style={styles.dailyBadge}>
+              <Feather name="sun" size={11} color="#C4922A" />
+              <Text style={styles.dailyBadgeText}>Versículo do dia</Text>
+            </View>
+            <Text style={styles.dailyRef}>{entry.bookEn} {entry.chapter}:{entry.verse}</Text>
+          </View>
+
+          <Text style={styles.dailyVerse}>"{preview}"</Text>
+
+          <View style={styles.dailyFooter}>
+            <Text style={styles.dailyVersePt} numberOfLines={1}>{entry.bookPt} {entry.chapter}:{entry.verse}</Text>
+            <View style={styles.dailyOpenBtn}>
+              <Text style={styles.dailyOpenText}>Abrir</Text>
+              <Feather name="arrow-right" size={13} color="#C4922A" />
+            </View>
+          </View>
+        </LinearGradient>
+      </TouchableOpacity>
+    </View>
+  );
+}
 
 // ── Book catalogue ────────────────────────────────────────────────────────────
 // Visual identity per book (gradient + roman numeral + testament label)
@@ -158,6 +226,9 @@ export default function HomeScreen() {
           ))}
         </View>
       </LinearGradient>
+
+      {/* ── Modo Diário ── */}
+      <DailyCard />
 
       {/* ── Continue Reading ── */}
       {readingProgress && (
@@ -392,6 +463,18 @@ const styles = StyleSheet.create({
   continueText: { flex: 1 },
   continueName: { fontSize: 16, fontFamily: 'Inter_600SemiBold', fontWeight: '600' as const },
   continueNamePt: { fontSize: 13, fontFamily: 'Inter_400Regular', marginTop: 2 },
+
+  // Daily card
+  dailyCard:      { padding: 18, overflow: 'hidden' },
+  dailyBadgeRow:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  dailyBadge:     { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(196,146,42,0.15)', borderRadius: 20, paddingHorizontal: 9, paddingVertical: 4, borderWidth: 1, borderColor: 'rgba(196,146,42,0.3)' },
+  dailyBadgeText: { color: '#C4922A', fontSize: 10, fontFamily: 'Inter_600SemiBold', letterSpacing: 1 },
+  dailyRef:       { color: 'rgba(255,255,255,0.45)', fontSize: 11, fontFamily: 'Inter_500Medium' },
+  dailyVerse:     { fontSize: 15, fontFamily: 'Inter_400Regular', color: '#FFFFFF', lineHeight: 24, marginBottom: 14, fontStyle: 'italic' },
+  dailyFooter:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  dailyVersePt:   { fontSize: 12, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.35)', flex: 1 },
+  dailyOpenBtn:   { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  dailyOpenText:  { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: '#C4922A' },
 
   // Tip
   tipCard: {

@@ -15,6 +15,7 @@ import {
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { BibleProvider } from '@/context/BibleContext';
+import { ThemeProvider } from '@/context/ThemeContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -26,11 +27,11 @@ function RootLayoutNav() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen
         name="chapter"
-        options={{
-          headerShown: true,
-          presentation: 'card',
-          headerBackTitle: 'Voltar',
-        }}
+        options={{ headerShown: true, presentation: 'card', headerBackTitle: 'Voltar' }}
+      />
+      <Stack.Screen
+        name="daily"
+        options={{ headerShown: false, presentation: 'modal' }}
       />
     </Stack>
   );
@@ -73,9 +74,11 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <GestureHandlerRootView style={{ flex: 1 }}>
             <KeyboardProvider>
-              <BibleProvider>
-                <RootLayoutNav />
-              </BibleProvider>
+              <ThemeProvider>
+                <BibleProvider>
+                  <RootLayoutNav />
+                </BibleProvider>
+              </ThemeProvider>
             </KeyboardProvider>
           </GestureHandlerRootView>
         </QueryClientProvider>

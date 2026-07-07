@@ -18,6 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColors } from '@/hooks/useColors';
 import { useBible } from '@/context/BibleContext';
+import { useTheme, type ThemeMode } from '@/context/ThemeContext';
 
 const AVATAR_KEY = '@bibliaeN:avatar';
 
@@ -142,9 +143,16 @@ export default function SettingsScreen() {
   const [autoTr,      setAutoTr]      = useState(true);
   const [vocabRemind, setVocabRemind] = useState(false);
   const [audioSpeed,  setAudioSpeed]  = useState('Normal');
+  const { themeMode, setThemeMode }   = useTheme();
   const [waitlisted,  setWaitlisted]  = useState(false);
   const [linkCopied,  setLinkCopied]  = useState(false);
   const [avatarUri,   setAvatarUri]   = useState<string | null>(null);
+
+  const THEME_LABELS: { value: ThemeMode; label: string }[] = [
+    { value: 'system', label: 'Sistema' },
+    { value: 'light',  label: 'Claro'   },
+    { value: 'dark',   label: 'Escuro'  },
+  ];
 
   // Load persisted avatar
   useEffect(() => {
@@ -249,6 +257,40 @@ export default function SettingsScreen() {
                 </View>
               </React.Fragment>
             ))}
+          </View>
+        </SettingsCard>
+
+        {/* ── Aparência ── */}
+        <SectionLabel title="Aparência" />
+        <SettingsCard>
+          <View style={styles.innerSection}>
+            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>Tema</Text>
+            <View style={styles.pillRow}>
+              {THEME_LABELS.map(({ value, label }) => {
+                const icon = value === 'system' ? 'monitor' : value === 'light' ? 'sun' : 'moon';
+                const active = themeMode === value;
+                return (
+                  <TouchableOpacity
+                    key={value}
+                    onPress={() => {
+                      if (Platform.OS !== 'web') Haptics.selectionAsync();
+                      setThemeMode(value);
+                    }}
+                    style={[
+                      styles.pill,
+                      { backgroundColor: active ? colors.primary : colors.secondary, borderRadius: colors.radius / 2 },
+                    ]}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                      <Feather name={icon as any} size={13} color={active ? colors.primaryForeground : colors.mutedForeground} />
+                      <Text style={[styles.pillText, { color: active ? colors.primaryForeground : colors.foreground }]}>
+                        {label}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
         </SettingsCard>
 
