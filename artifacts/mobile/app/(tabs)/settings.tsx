@@ -1088,7 +1088,7 @@ export default function SettingsScreen() {
                       }]}>
                         <MaterialCommunityIcons
                           name={TEMPLATE_ICONS[id] as any}
-                          size={20}
+                          size={24}
                           color={tmpl.isDark ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.50)'}
                         />
                       </View>
@@ -1402,9 +1402,9 @@ const styles = StyleSheet.create({
 
   // Background template picker
   bgTmplRow:     { gap: 10, paddingBottom: 4 },
-  bgTmplCard:    { width: 76, overflow: 'hidden' },
-  bgTmplGradient:{ height: 72, alignItems: 'center', justifyContent: 'center' },
-  bgTmplIconBg:  { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  bgTmplCheck:   { position: 'absolute', top: 5, right: 5, width: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  bgTmplName:    { fontSize: 10, fontFamily: 'Inter_500Medium', textAlign: 'center', paddingHorizontal: 4, paddingVertical: 6, letterSpacing: 0.1 },
+  bgTmplCard:    { width: 88, overflow: 'hidden' },
+  bgTmplGradient:{ height: 88, alignItems: 'center', justifyContent: 'center' },
+  bgTmplIconBg:  { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
+  bgTmplCheck:   { position: 'absolute', top: 6, right: 6, width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  bgTmplName:    { fontSize: 11, fontFamily: 'Inter_500Medium', textAlign: 'center', paddingHorizontal: 4, paddingVertical: 8, letterSpacing: 0.1 },
 });
