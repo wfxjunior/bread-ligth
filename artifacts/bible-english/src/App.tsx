@@ -14,6 +14,7 @@ import NotesPage from './pages/notes';
 import FavoritesPage from './pages/favorites';
 import JourneyPage from './pages/journey';
 import SettingsPage from './pages/settings';
+import DevotionalsPage from './pages/devotionals';
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/favorites" component={FavoritesPage} />
       <Route path="/journey" component={JourneyPage} />
       <Route path="/settings" component={SettingsPage} />
+      <Route path="/devotionals" component={DevotionalsPage} />
       <Route component={NotFound} />
     </Switch>
   );

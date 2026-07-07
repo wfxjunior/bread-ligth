@@ -9,7 +9,8 @@ import {
   BookText, 
   Settings, 
   Flag,
-  Feather
+  Feather,
+  BookHeart
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
   { name: 'Vocabulary', path: '/vocabulary', icon: BookText },
   { name: 'Notes', path: '/notes', icon: Feather },
   { name: 'Favorites', path: '/favorites', icon: Bookmark },
+  { name: 'Devotionals', path: '/devotionals', icon: BookHeart },
   { name: 'Journey', path: '/journey', icon: Flag },
   { name: 'Settings', path: '/settings', icon: Settings },
 ];
