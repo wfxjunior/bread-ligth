@@ -19,14 +19,14 @@ interface ThemeCtx {
 const ThemeContext = createContext<ThemeCtx>({
   readingTheme:    'classic',
   setReadingTheme: () => {},
-  accentColor:     'royal-blue',
+  accentColor:     'burgundy',
   setAccentColor:  () => {},
   isDark:          false,
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [readingTheme, setReadingThemeState] = useState<ReadingTheme>('classic');
-  const [accentColor,  setAccentColorState]  = useState<AccentColor>('royal-blue');
+  const [accentColor,  setAccentColorState]  = useState<AccentColor>('burgundy');
 
   useEffect(() => {
     AsyncStorage.multiGet([THEME_KEY, ACCENT_KEY])

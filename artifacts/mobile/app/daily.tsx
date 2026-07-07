@@ -28,9 +28,9 @@ const D = {
   bg1:       '#0A1628',
   bg2:       '#111E35',
   bg3:       '#162442',
-  gold:      '#C4922A',
-  goldFaint: 'rgba(196,146,42,0.18)',
-  goldBorder:'rgba(196,146,42,0.35)',
+  wine:      '#C87A8A',
+  wineFaint: 'rgba(200,122,138,0.18)',
+  wineBorder:'rgba(200,122,138,0.35)',
   white:     '#FFFFFF',
   whiteHi:   'rgba(255,255,255,0.90)',
   whiteMid:  'rgba(255,255,255,0.55)',
@@ -121,7 +121,7 @@ function DevotionalModal({ visible, text, loading, error, onClose, verseRef, ver
 
           <View style={styles.sheetHeader}>
             <View style={styles.sheetTitleRow}>
-              <Feather name="feather" size={15} color={D.gold} />
+              <Feather name="feather" size={15} color={D.wine} />
               <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Devocional do Dia</Text>
             </View>
 
@@ -143,12 +143,12 @@ function DevotionalModal({ visible, text, loading, error, onClose, verseRef, ver
             </View>
           </View>
 
-          <View style={[styles.sheetGoldRule, { backgroundColor: D.gold }]} />
+          <View style={[styles.sheetGoldRule, { backgroundColor: D.wine }]} />
 
           <ScrollView contentContainerStyle={styles.sheetBody} showsVerticalScrollIndicator={false}>
             {loading ? (
               <View style={styles.sheetCenter}>
-                <ActivityIndicator color={D.gold} size="large" />
+                <ActivityIndicator color={D.wine} size="large" />
                 <Text style={[styles.sheetHint, { color: colors.mutedForeground }]}>Gerando sua reflexão…</Text>
               </View>
             ) : error ? (
@@ -161,7 +161,7 @@ function DevotionalModal({ visible, text, loading, error, onClose, verseRef, ver
                 <Text style={[styles.sheetText, { color: colors.foreground }]}>{text}</Text>
 
                 {/* Verse attribution at bottom of text */}
-                <View style={[styles.sheetVerseBlock, { borderColor: D.goldBorder, backgroundColor: D.goldFaint }]}>
+                <View style={[styles.sheetVerseBlock, { borderColor: D.wineBorder, backgroundColor: D.wineFaint }]}>
                   <Text style={styles.sheetVerseRef}>{verseRef}</Text>
                   <Text style={styles.sheetVerseEn} numberOfLines={3}>"{verseEn}"</Text>
                 </View>
@@ -275,7 +275,7 @@ export default function DailyScreen() {
 
         <View style={styles.headerCenter}>
           <View style={styles.modoBadge}>
-            <Feather name="sun" size={11} color={D.gold} />
+            <Feather name="sun" size={11} color={D.wine} />
             <Text style={styles.modoBadgeText}>MODO DIÁRIO</Text>
           </View>
           <Text style={styles.dateText}>{dateStr}</Text>
@@ -303,7 +303,7 @@ export default function DailyScreen() {
         <Text style={styles.versePt}>{verseObj.pt}</Text>
 
         <View style={styles.bookTag}>
-          <Feather name="book-open" size={12} color={D.goldBorder} />
+          <Feather name="book-open" size={12} color={D.wineBorder} />
           <Text style={styles.bookTagText}>{entry.bookPt} · Capítulo {entry.chapter}</Text>
         </View>
 
@@ -322,7 +322,7 @@ export default function DailyScreen() {
             activeOpacity={0.8}
             style={styles.devBtn}
           >
-            <Feather name="feather" size={16} color={D.gold} />
+            <Feather name="feather" size={16} color={D.wine} />
             <Text style={styles.devBtnText}>Ler Devocional</Text>
           </TouchableOpacity>
 
@@ -340,7 +340,7 @@ export default function DailyScreen() {
           ) : (
             <TouchableOpacity onPress={handleComplete} activeOpacity={0.88} style={styles.completeBtn}>
               <LinearGradient
-                colors={['#C4922A', '#A07220']}
+                colors={['#8B3344', '#6B1E2A']}
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                 style={styles.completeBtnGrad}
               >
@@ -392,14 +392,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: D.goldFaint,
+    backgroundColor: D.wineFaint,
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderWidth: 1,
-    borderColor: D.goldBorder,
+    borderColor: D.wineBorder,
   },
-  modoBadgeText: { color: D.gold, fontSize: 10, fontFamily: 'Inter_700Bold', letterSpacing: 1.2 },
+  modoBadgeText: { color: D.wine, fontSize: 10, fontFamily: 'Inter_700Bold', letterSpacing: 1.2 },
   dateText:      { color: D.whiteMid, fontSize: 12, fontFamily: 'Inter_400Regular' },
   vocabBadge:    { width: 48, alignItems: 'flex-end', flexShrink: 0 },
   vocabCount:    { color: D.white, fontSize: 17, fontFamily: 'Inter_700Bold', lineHeight: 20 },
@@ -407,12 +407,12 @@ const styles = StyleSheet.create({
 
   // Content
   content:  { paddingHorizontal: 24, paddingTop: 10, alignItems: 'flex-start' },
-  goldBar:  { width: 40, height: 3, backgroundColor: D.gold, borderRadius: 2, marginBottom: 20 },
+  goldBar:  { width: 40, height: 3, backgroundColor: D.wine, borderRadius: 2, marginBottom: 20 },
   reference: {
     fontSize: 11,
     fontFamily: 'Inter_700Bold',
     letterSpacing: 1.8,
-    color: D.gold,
+    color: D.wine,
     marginBottom: 16,
     textTransform: 'uppercase',
   },
@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
 
   // Tags
   bookTag: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 18 },
-  bookTagText: { color: D.goldBorder, fontSize: 12, fontFamily: 'Inter_500Medium' },
+  bookTagText: { color: D.wineBorder, fontSize: 12, fontFamily: 'Inter_500Medium' },
   tipRow: {
     flexDirection: 'row',
     gap: 7,
@@ -489,13 +489,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: D.goldBorder,
-    backgroundColor: D.goldFaint,
+    borderColor: D.wineBorder,
+    backgroundColor: D.wineFaint,
   },
   devBtnText: {
     fontSize: 14,
     fontFamily: 'Inter_600SemiBold',
-    color: D.gold,
+    color: D.wine,
   },
 
   // Complete button
@@ -575,10 +575,10 @@ const styles = StyleSheet.create({
   },
   sheetVerseRef: {
     fontSize: 10, fontFamily: 'Inter_700Bold',
-    letterSpacing: 1.4, color: D.gold, textTransform: 'uppercase',
+    letterSpacing: 1.4, color: D.wine, textTransform: 'uppercase',
   },
   sheetVerseEn: {
     fontSize: 13, fontFamily: 'Lora_400Regular_Italic',
-    color: D.gold, lineHeight: 20, opacity: 0.85,
+    color: D.wine, lineHeight: 20, opacity: 0.85,
   },
 });

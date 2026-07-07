@@ -65,7 +65,7 @@ export default function RootLayout() {
         <View style={{ flex: 1, backgroundColor: '#F7F3EC', alignItems: 'center', justifyContent: 'center' }}>
           <View style={{ alignItems: 'center', gap: 10 }}>
             <View style={{ width: 60, height: 60, borderRadius: 14, backgroundColor: '#1B3A6B', alignItems: 'center', justifyContent: 'center' }}>
-              <View style={{ width: 32, height: 32, borderRadius: 4, borderWidth: 3, borderColor: '#C4922A', borderBottomColor: 'transparent', transform: [{ rotate: '45deg' }] }} />
+              <View style={{ width: 32, height: 32, borderRadius: 4, borderWidth: 3, borderColor: '#6B1E2A', borderBottomColor: 'transparent', transform: [{ rotate: '45deg' }] }} />
             </View>
             <View style={{ width: 100, height: 3, borderRadius: 2, backgroundColor: '#E8E4DC', overflow: 'hidden' }}>
               <View style={{ width: '60%', height: '100%', backgroundColor: '#1B3A6B', borderRadius: 2 }} />

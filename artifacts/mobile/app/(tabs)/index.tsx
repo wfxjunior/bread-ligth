@@ -58,15 +58,14 @@ function DailyPill() {
         borderRadius: colors.radius,
       }]}
     >
-      {/* Gold left-border accent */}
-      <View style={styles.pillAccent} />
+      <View style={[styles.pillAccent, { backgroundColor: colors.accent }]} />
 
       <View style={styles.pillBody}>
         {/* Top row: badge + ref */}
         <View style={styles.pillTopRow}>
           <View style={styles.pillBadge}>
-            <Feather name="sun" size={10} color="#C4922A" />
-            <Text style={styles.pillBadgeText}>Versículo do dia</Text>
+            <Feather name="sun" size={10} color={colors.accent} />
+            <Text style={[styles.pillBadgeText, { color: colors.accent }]}>Versículo do dia</Text>
           </View>
           <Text style={[styles.pillRef, { color: colors.mutedForeground }]}>
             {entry.bookEn} {entry.chapter}:{entry.verse}
@@ -84,8 +83,8 @@ function DailyPill() {
             {entry.bookPt} {entry.chapter}:{entry.verse}
           </Text>
           <View style={styles.pillOpenBtn}>
-            <Text style={styles.pillOpenText}>Abrir</Text>
-            <Feather name="arrow-right" size={12} color="#C4922A" />
+            <Text style={[styles.pillOpenText, { color: colors.accent }]}>Abrir</Text>
+            <Feather name="arrow-right" size={12} color={colors.accent} />
           </View>
         </View>
       </View>
@@ -311,7 +310,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },
-  pillAccent: { width: 3, backgroundColor: '#C4922A' },
+  pillAccent: { width: 3 },
   pillBody:   { flex: 1, paddingHorizontal: 14, paddingVertical: 12, gap: 7 },
   pillTopRow: {
     flexDirection: 'row',
@@ -319,13 +318,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   pillBadge:     { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  pillBadgeText: { fontSize: 10, fontFamily: 'Inter_600SemiBold', color: '#C4922A', letterSpacing: 0.6 },
+  pillBadgeText: { fontSize: 10, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.6 },
   pillRef:       { fontSize: 11, fontFamily: 'Inter_400Regular' },
   pillVerse:     { fontSize: 14, fontFamily: 'Lora_400Regular_Italic', lineHeight: 22 },
   pillFooter:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   pillPt:        { fontSize: 11, fontFamily: 'Inter_400Regular', flex: 1 },
   pillOpenBtn:   { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  pillOpenText:  { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: '#C4922A' },
+  pillOpenText:  { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
 
   // Continue strip
   continueStrip: {
