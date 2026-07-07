@@ -248,7 +248,6 @@ export default function SettingsScreen() {
   const [autoTr,      setAutoTr]      = useState(true);
   const [vocabRemind, setVocabRemind] = useState(false);
   const [audioSpeed,  setAudioSpeed]  = useState('Normal');
-  const [waitlisted,  setWaitlisted]  = useState(false);
   const [linkCopied,  setLinkCopied]  = useState(false);
   const [avatarUri,   setAvatarUri]   = useState<string | null>(null);
 
@@ -305,6 +304,24 @@ export default function SettingsScreen() {
         ],
       );
     }
+  };
+
+  const handleDonate = () => {
+    if (Platform.OS === 'web') {
+      window.alert('Em breve! O link de doação estará disponível em breve. Obrigado pelo apoio 🙏');
+    } else {
+      Alert.alert('Em breve', 'O link de doação estará disponível em breve.\nObrigado pelo apoio! 🙏');
+    }
+  };
+
+  const handleShareApp = async () => {
+    try {
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await Share.share({
+        message: '📖 Estou aprendendo inglês com o BíbliaEN — um app gratuito que usa a Bíblia para ensinar inglês. Recomendo!\n\nbibleenglish.app',
+        url: 'https://bibleenglish.app',
+      });
+    } catch {}
   };
 
   const handleCopyLink = async () => {
@@ -509,54 +526,40 @@ export default function SettingsScreen() {
           />
         </SettingsCard>
 
-        {/* ── Plano Premium ── */}
-        <SectionLabel title="Plano" />
-        <View style={[styles.premiumCard, { backgroundColor: colors.primary, borderRadius: colors.radius }]}>
-          <View style={styles.premiumTop}>
-            <View>
-              <Text style={styles.premiumLabel}>PREMIUM</Text>
-              <Text style={styles.premiumTitle}>Bible English</Text>
+        {/* ── Apoio ── */}
+        <SectionLabel title="Apoio" />
+        <SettingsCard>
+          {/* Mission header */}
+          <View style={[styles.supportHeader, { borderBottomColor: colors.border }]}>
+            <View style={[styles.supportBadge, {
+              backgroundColor: colors.primary + '12',
+              borderColor:     colors.primary + '28',
+            }]}>
+              <Text style={[styles.supportBadgeText, { color: colors.primary }]}>
+                GRATUITO PARA SEMPRE
+              </Text>
             </View>
-            <View style={styles.premiumPrice}>
-              <Text style={styles.premiumAmount}>$4.99</Text>
-              <Text style={styles.premiumPer}>/mês</Text>
-            </View>
-          </View>
-
-          <View style={styles.premiumFeatures}>
-            {[
-              'Todos os 66 livros',
-              'Cores personalizadas',
-              'Devocionais ilimitados',
-              'Exportar anotações',
-              'Áudio em todos os capítulos',
-              'Gramática avançada',
-            ].map(f => (
-              <View key={f} style={styles.featureRow}>
-                <Feather name="check" size={13} color={colors.accent} />
-                <Text style={styles.featureText}>{f}</Text>
-              </View>
-            ))}
-          </View>
-
-          <TouchableOpacity
-            onPress={() => {
-              if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              setWaitlisted(true);
-            }}
-            style={[styles.premiumBtn, {
-              backgroundColor: waitlisted ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.92)',
-              borderRadius: colors.radius,
-            }]}
-            activeOpacity={0.85}
-          >
-            <Feather name={waitlisted ? 'check' : 'star'} size={16} color={waitlisted ? '#fff' : colors.primary} />
-            <Text style={[styles.premiumBtnText, { color: waitlisted ? '#fff' : colors.primary }]}>
-              {waitlisted ? 'Na lista de espera!' : 'Entrar na lista de espera'}
+            <Text style={[styles.supportTitle, { color: colors.foreground }]}>BíbliaEN</Text>
+            <Text style={[styles.supportDesc, { color: colors.mutedForeground }]}>
+              Uma missão simples: ajudar pessoas a aprender inglês através da Bíblia.
+              Gratuito agora e sempre.
             </Text>
-          </TouchableOpacity>
-          <Text style={styles.premiumSub}>Beta privado — em breve</Text>
-        </View>
+          </View>
+
+          <SettingsRow
+            icon="heart"
+            label="Fazer uma doação"
+            sub="Apoie o desenvolvimento do app"
+            onPress={handleDonate}
+          />
+          <SettingsRow
+            icon="star"
+            label="Ser Embaixador"
+            sub="Compartilhe com quem quer aprender inglês"
+            onPress={handleShareApp}
+            border={false}
+          />
+        </SettingsCard>
 
         {/* ── Dados ── */}
         <SectionLabel title="Dados" />
@@ -672,19 +675,12 @@ const styles = StyleSheet.create({
   copyBtn:  { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6 },
   copyText: { fontSize: 13, fontFamily: 'Inter_500Medium' },
 
-  premiumCard:    { padding: 20, gap: 16 },
-  premiumTop:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  premiumLabel:   { fontSize: 10, fontFamily: 'Inter_700Bold', color: 'rgba(255,255,255,0.50)', letterSpacing: 1.6 },
-  premiumTitle:   { fontSize: 24, fontFamily: 'Lora_700Bold', color: '#FFFFFF', marginTop: 3 },
-  premiumPrice:   { flexDirection: 'row', alignItems: 'baseline', gap: 1 },
-  premiumAmount:  { fontSize: 30, fontFamily: 'Inter_700Bold', color: '#FFFFFF', fontWeight: '700' as const },
-  premiumPer:     { fontSize: 14, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.55)' },
-  premiumFeatures:{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  featureRow:     { flexDirection: 'row', alignItems: 'center', gap: 6, width: '47%' },
-  featureText:    { fontSize: 12, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.85)', flex: 1 },
-  premiumBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, gap: 8 },
-  premiumBtnText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', fontWeight: '600' as const },
-  premiumSub:     { fontSize: 11, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.40)', textAlign: 'center' },
+  // Support / Apoio card
+  supportHeader:    { padding: 16, paddingBottom: 14, gap: 7, borderBottomWidth: StyleSheet.hairlineWidth },
+  supportBadge:     { alignSelf: 'flex-start', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 20, borderWidth: 1 },
+  supportBadgeText: { fontSize: 10, fontFamily: 'Inter_700Bold', letterSpacing: 1.2 },
+  supportTitle:     { fontSize: 22, fontFamily: 'Lora_700Bold', letterSpacing: -0.3 },
+  supportDesc:      { fontSize: 13, fontFamily: 'Inter_400Regular', lineHeight: 20 },
 
   // Reading theme grid
   themeGrid:    { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
