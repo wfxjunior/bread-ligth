@@ -46,6 +46,210 @@ const ACCENT_COLORS: { id: AccentColor; hex: string; label: string }[] = [
 
 const AVATAR_KEY = '@bibliaeN:avatar';
 
+// ── Donation modal ────────────────────────────────────────────────────────────
+const PRESET_AMOUNTS = [5, 10, 20, 50];
+
+function DonationModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const colors  = useColors();
+  const insets  = useSafeAreaInsets();
+  const [selected, setSelected] = useState<number | null>(null);
+  const [custom,   setCustom]   = useState('');
+
+  const raw    = custom.replace(',', '.');
+  const amount = custom ? parseFloat(raw) : selected;
+  const valid  = typeof amount === 'number' && !isNaN(amount) && amount > 0;
+
+  const pick = (a: number) => { setSelected(a); setCustom(''); if (Platform.OS !== 'web') Haptics.selectionAsync(); };
+
+  const handleContinue = () => {
+    if (!valid) return;
+    if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Alert.alert(
+      'Obrigado! 💛',
+      `Seu apoio de R${amount} significa muito!\n\nO processamento de pagamento estará disponível em breve.`,
+      [{ text: 'OK', onPress: onClose }],
+    );
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={styles.donateBackdrop} onPress={onClose}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <Pressable
+            style={[styles.donateSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 20 }]}
+            onPress={e => e.stopPropagation()}
+          >
+            <View style={[styles.donateHandle, { backgroundColor: colors.border }]} />
+
+            {/* Header */}
+            <View style={styles.donateHeader}>
+              <View style={[styles.donateIconCircle, { backgroundColor: colors.primary + '16' }]}>
+                <Feather name="heart" size={24} color={colors.primary} />
+              </View>
+              <Text style={[styles.donateTitle, { color: colors.foreground }]}>Apoiar o BíbliaEN</Text>
+              <Text style={[styles.donateSub, { color: colors.mutedForeground }]}>
+                Cada doação mantém o app gratuito e nos ajuda a crescer. 🙏
+              </Text>
+            </View>
+
+            {/* Preset amounts — 2×2 grid */}
+            <View style={styles.amountGrid}>
+              {PRESET_AMOUNTS.map(a => {
+                const active = selected === a && !custom;
+                return (
+                  <TouchableOpacity
+                    key={a}
+                    onPress={() => pick(a)}
+                    activeOpacity={0.78}
+                    style={[styles.amountBtn, {
+                      borderColor:     active ? colors.primary : colors.border,
+                      backgroundColor: active ? colors.primary + '14' : colors.muted,
+                      borderRadius:    colors.radius,
+                    }]}
+                  >
+                    <Text style={[styles.amountCurrency, { color: active ? colors.primary : colors.mutedForeground }]}>R$</Text>
+                    <Text style={[styles.amountValue,    { color: active ? colors.primary : colors.foreground }]}>{a}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Custom amount */}
+            <View style={[styles.customRow, {
+              borderColor:  custom ? colors.primary : colors.border,
+              borderRadius: colors.radius,
+              backgroundColor: colors.muted,
+            }]}>
+              <Text style={[styles.customPrefix, { color: colors.mutedForeground }]}>R$</Text>
+              <TextInput
+                value={custom}
+                onChangeText={t => { setCustom(t.replace(/[^0-9,.]/g, '')); setSelected(null); }}
+                placeholder="Outro valor"
+                placeholderTextColor={colors.mutedForeground}
+                keyboardType="decimal-pad"
+                style={[styles.customInput, { color: colors.foreground }]}
+              />
+            </View>
+
+            {/* CTA */}
+            <TouchableOpacity
+              onPress={handleContinue}
+              activeOpacity={valid ? 0.8 : 1}
+              style={[styles.donateBtn, {
+                backgroundColor: valid ? colors.primary : colors.muted,
+                borderRadius:    colors.radius,
+              }]}
+            >
+              <Text style={[styles.donateBtnText, {
+                color: valid ? colors.primaryForeground : colors.mutedForeground,
+              }]}>
+                {valid ? `Continuar com R${amount}` : 'Selecione um valor'}
+              </Text>
+            </TouchableOpacity>
+
+            <Text style={[styles.donateLegal, { color: colors.mutedForeground }]}>
+              Pagamento seguro via Pix ou cartão • Cancele quando quiser
+            </Text>
+          </Pressable>
+        </KeyboardAvoidingView>
+      </Pressable>
+    </Modal>
+  );
+}
+
+// ── Ambassador modal ──────────────────────────────────────────────────────────
+const AMBASSADOR_FEATURES: { icon: string; text: string }[] = [
+  { icon: 'zap',       text: 'Acesso antecipado a novos livros e recursos' },
+  { icon: 'award',     text: 'Selo de Embaixador no seu perfil' },
+  { icon: 'book-open', text: 'Suporte direto ao desenvolvimento do app' },
+  { icon: 'heart',     text: 'Missão: inglês gratuito para todos' },
+];
+
+function AmbassadorModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+
+  const handleSubscribe = () => {
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    Alert.alert('Em breve! 🌟', 'As assinaturas de Embaixador estarão disponíveis em breve.\nFique ligado nas novidades!');
+  };
+
+  const handleShare = async () => {
+    try {
+      if (Platform.OS !== 'web') Haptics.selectionAsync();
+      await Share.share({
+        message: '📖 Estou aprendendo inglês com o BíbliaEN — gratuito e incrível! Confira: bibleenglish.app',
+        url: 'https://bibleenglish.app',
+      });
+    } catch {}
+    onClose();
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={styles.donateBackdrop} onPress={onClose}>
+        <Pressable
+          style={[styles.ambassadorSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 20 }]}
+          onPress={e => e.stopPropagation()}
+        >
+          <View style={[styles.donateHandle, { backgroundColor: colors.border }]} />
+
+          {/* Crown header */}
+          <View style={styles.ambassadorHeader}>
+            <View style={[styles.ambassadorCrown, { backgroundColor: colors.accent + '18' }]}>
+              <Feather name="award" size={28} color={colors.accent} />
+            </View>
+            <Text style={[styles.ambassadorTitle, { color: colors.foreground }]}>Embaixador BíbliaEN</Text>
+            <View style={styles.ambassadorPriceRow}>
+              <Text style={[styles.ambassadorPrice, { color: colors.primary }]}>R$9,90</Text>
+              <Text style={[styles.ambassadorPer,   { color: colors.mutedForeground }]}>/mês</Text>
+            </View>
+            <Text style={[styles.ambassadorDesc, { color: colors.mutedForeground }]}>
+              Ajude a missão e ganhe vantagens exclusivas
+            </Text>
+          </View>
+
+          <View style={[styles.ambassadorDivider, { backgroundColor: colors.border }]} />
+
+          {/* Feature list */}
+          <View style={styles.ambassadorFeatures}>
+            {AMBASSADOR_FEATURES.map(f => (
+              <View key={f.icon} style={styles.ambassadorFeatureRow}>
+                <View style={[styles.ambassadorFeatureIcon, { backgroundColor: colors.accent + '14', borderRadius: colors.radius }]}>
+                  <Feather name={f.icon as any} size={14} color={colors.accent} />
+                </View>
+                <Text style={[styles.ambassadorFeatureText, { color: colors.foreground }]}>{f.text}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Buttons */}
+          <TouchableOpacity
+            onPress={handleSubscribe}
+            activeOpacity={0.82}
+            style={[styles.ambassadorBtn, { backgroundColor: colors.primary, borderRadius: colors.radius }]}
+          >
+            <Text style={[styles.ambassadorBtnText, { color: colors.primaryForeground }]}>
+              Assinar — R$9,90/mês
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleShare}
+            activeOpacity={0.8}
+            style={[styles.ambassadorShareBtn, { borderColor: colors.border, borderRadius: colors.radius }]}
+          >
+            <Feather name="share-2" size={15} color={colors.mutedForeground} />
+            <Text style={[styles.ambassadorShareText, { color: colors.mutedForeground }]}>
+              Compartilhar sem assinar
+            </Text>
+          </TouchableOpacity>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
 // ── Custom toggle — consistent on all platforms ───────────────────────────────
 function CustomToggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
   const colors = useColors();
@@ -476,22 +680,14 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleDonate = () => {
-    if (Platform.OS === 'web') {
-      window.alert('Em breve! O link de doação estará disponível em breve. Obrigado pelo apoio 🙏');
-    } else {
-      Alert.alert('Em breve', 'O link de doação estará disponível em breve.\nObrigado pelo apoio! 🙏');
-    }
-  };
+  const [donateVisible,     setDonateVisible]     = useState(false);
+  const [ambassadorVisible, setAmbassadorVisible] = useState(false);
+  const [donateKey,         setDonateKey]         = useState(0); // bumped on open to reset modal state
 
-  const handleShareApp = async () => {
-    try {
-      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      await Share.share({
-        message: '📖 Estou aprendendo inglês com o BíbliaEN — um app gratuito que usa a Bíblia para ensinar inglês. Recomendo!\n\nbibleenglish.app',
-        url: 'https://bibleenglish.app',
-      });
-    } catch {}
+  const handleDonate = () => {
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    setDonateKey(k => k + 1);
+    setDonateVisible(true);
   };
 
   const handleCopyLink = async () => {
@@ -725,8 +921,8 @@ export default function SettingsScreen() {
           <SettingsRow
             icon="star"
             label="Ser Embaixador"
-            sub="Compartilhe com quem quer aprender inglês"
-            onPress={handleShareApp}
+            sub="Plano mensal com benefícios exclusivos"
+            onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); setAmbassadorVisible(true); }}
             border={false}
           />
         </SettingsCard>
@@ -756,7 +952,9 @@ export default function SettingsScreen() {
           />
         </SettingsCard>
 
-        <SupportModal visible={supportVisible} onClose={() => setSupportVisible(false)} />
+        <SupportModal    visible={supportVisible}    onClose={() => setSupportVisible(false)} />
+        <DonationModal   key={donateKey} visible={donateVisible} onClose={() => setDonateVisible(false)} />
+        <AmbassadorModal visible={ambassadorVisible} onClose={() => setAmbassadorVisible(false)} />
 
       </ScrollView>
     </View>
@@ -878,6 +1076,44 @@ const styles = StyleSheet.create({
   supportSentBox:     { alignItems: 'center', paddingVertical: 48, paddingHorizontal: 24, gap: 12 },
   supportSentTitle:   { fontSize: 22, fontFamily: 'Lora_700Bold' },
   supportSentSub:     { fontSize: 14, fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 22 },
+
+  // Donation modal
+  donateBackdrop:  { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  donateSheet:     { borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 10, maxHeight: '90%' },
+  donateHandle:    { width: 36, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 6 },
+  donateHeader:    { alignItems: 'center', paddingHorizontal: 24, paddingTop: 12, paddingBottom: 20, gap: 8 },
+  donateIconCircle:{ width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
+  donateTitle:     { fontSize: 20, fontFamily: 'Lora_700Bold', textAlign: 'center' },
+  donateSub:       { fontSize: 13, fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 20 },
+  amountGrid:      { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 20, marginBottom: 12 },
+  amountBtn:       { width: '47%', paddingVertical: 18, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, gap: 2 },
+  amountCurrency:  { fontSize: 12, fontFamily: 'Inter_500Medium' },
+  amountValue:     { fontSize: 26, fontFamily: 'Inter_700Bold', lineHeight: 30 },
+  customRow:       { flexDirection: 'row', alignItems: 'center', marginHorizontal: 20, marginBottom: 14, paddingHorizontal: 14, paddingVertical: 12, borderWidth: 1.5, gap: 6 },
+  customPrefix:    { fontSize: 16, fontFamily: 'Inter_500Medium' },
+  customInput:     { flex: 1, fontSize: 20, fontFamily: 'Inter_500Medium' },
+  donateBtn:       { marginHorizontal: 20, paddingVertical: 15, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  donateBtnText:   { fontSize: 16, fontFamily: 'Inter_600SemiBold' },
+  donateLegal:     { fontSize: 11, fontFamily: 'Inter_400Regular', textAlign: 'center', paddingHorizontal: 24, marginBottom: 8, lineHeight: 17 },
+
+  // Ambassador modal
+  ambassadorSheet:       { borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 10, maxHeight: '90%' },
+  ambassadorHeader:      { alignItems: 'center', paddingHorizontal: 24, paddingTop: 12, paddingBottom: 16, gap: 8 },
+  ambassadorCrown:       { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center' },
+  ambassadorTitle:       { fontSize: 20, fontFamily: 'Lora_700Bold', textAlign: 'center' },
+  ambassadorPriceRow:    { flexDirection: 'row', alignItems: 'flex-end', gap: 2 },
+  ambassadorPrice:       { fontSize: 32, fontFamily: 'Inter_700Bold', lineHeight: 36 },
+  ambassadorPer:         { fontSize: 14, fontFamily: 'Inter_400Regular', paddingBottom: 4 },
+  ambassadorDesc:        { fontSize: 13, fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 20 },
+  ambassadorDivider:     { height: StyleSheet.hairlineWidth, marginHorizontal: 20, marginBottom: 16 },
+  ambassadorFeatures:    { paddingHorizontal: 20, gap: 12, marginBottom: 20 },
+  ambassadorFeatureRow:  { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  ambassadorFeatureIcon: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  ambassadorFeatureText: { flex: 1, fontSize: 14, fontFamily: 'Inter_400Regular', lineHeight: 21 },
+  ambassadorBtn:         { marginHorizontal: 20, paddingVertical: 15, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
+  ambassadorBtnText:     { fontSize: 16, fontFamily: 'Inter_600SemiBold' },
+  ambassadorShareBtn:    { marginHorizontal: 20, paddingVertical: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: StyleSheet.hairlineWidth, marginBottom: 6 },
+  ambassadorShareText:   { fontSize: 14, fontFamily: 'Inter_400Regular' },
 
   // Reading theme grid
   themeGrid:    { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
