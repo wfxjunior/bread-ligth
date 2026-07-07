@@ -25,7 +25,10 @@ import { useColors } from '@/hooks/useColors';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useBible } from '@/context/BibleContext';
 import { useTheme } from '@/context/ThemeContext';
-import type { ReadingTheme, AccentColor } from '@/constants/colors';
+import { BACKGROUND_TEMPLATES } from '@/constants/colors';
+import type { ReadingTheme, AccentColor, BackgroundTemplate } from '@/constants/colors';
+import { LinearGradient } from 'expo-linear-gradient';
+import SettingsDrawer from '@/components/SettingsDrawer';
 
 // ── Reading theme data ────────────────────────────────────────────────────────
 const READING_THEMES: { id: ReadingTheme; name: string; desc: string; bg: string; dark: boolean }[] = [
@@ -624,7 +627,7 @@ export default function SettingsScreen() {
   const [supportVisible, setSupportVisible] = useState(false);
   const [avatarUri,   setAvatarUri]   = useState<string | null>(null);
 
-  const { readingTheme, setReadingTheme, accentColor, setAccentColor } = useTheme();
+  const { readingTheme, setReadingTheme, accentColor, setAccentColor, backgroundTemplate, setBackgroundTemplate } = useTheme();
 
   useEffect(() => {
     AsyncStorage.getItem(LEVEL_KEY)
@@ -679,9 +682,21 @@ export default function SettingsScreen() {
     }
   };
 
+  const [drawerVisible,     setDrawerVisible]     = useState(false);
   const [donateVisible,     setDonateVisible]     = useState(false);
   const [ambassadorVisible, setAmbassadorVisible] = useState(false);
   const [donateKey,         setDonateKey]         = useState(0); // bumped on open to reset modal state
+
+  // Auto-match reading theme contrast when a dark/light template is selected
+  const handleSetTemplate = (id: BackgroundTemplate) => {
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    setBackgroundTemplate(id);
+    if (id !== 'none') {
+      const tmpl = BACKGROUND_TEMPLATES[id];
+      if (tmpl.isDark  && readingTheme !== 'night')   setReadingTheme('night');
+      if (!tmpl.isDark && readingTheme === 'night')    setReadingTheme('classic');
+    }
+  };
 
   const handleDonate = () => {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
@@ -697,6 +712,14 @@ export default function SettingsScreen() {
         styles.header,
         { paddingTop: topPad + 14, borderBottomColor: colors.border, backgroundColor: colors.background },
       ]}>
+        <View style={styles.headerTopRow}>
+          <TouchableOpacity
+            onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); setDrawerVisible(true); }}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Feather name="menu" size={22} color={colors.foreground} />
+          </TouchableOpacity>
+        </View>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Configurações</Text>
       </View>
 
@@ -804,7 +827,7 @@ export default function SettingsScreen() {
           </View>
 
           {/* Accent color circles */}
-          <View style={styles.innerSection}>
+          <View style={[styles.innerSection, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
             <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>Cor de Destaque</Text>
             <View style={styles.accentRow}>
               {ACCENT_COLORS.map(c => {
@@ -826,6 +849,51 @@ export default function SettingsScreen() {
                 );
               })}
             </View>
+          </View>
+
+          {/* Background templates */}
+          <View style={styles.innerSection}>
+            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>Fundo da Leitura</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.bgTmplRow}
+            >
+              {(Object.keys(BACKGROUND_TEMPLATES) as BackgroundTemplate[]).map(id => {
+                const tmpl  = BACKGROUND_TEMPLATES[id];
+                const active = backgroundTemplate === id;
+                return (
+                  <TouchableOpacity
+                    key={id}
+                    onPress={() => handleSetTemplate(id)}
+                    activeOpacity={0.8}
+                    style={[styles.bgTmplCard, {
+                      borderColor:  active ? colors.primary : colors.border,
+                      borderWidth:  active ? 1.5 : StyleSheet.hairlineWidth,
+                      borderRadius: colors.radius / 1.5,
+                    }]}
+                  >
+                    <LinearGradient
+                      colors={[...tmpl.gradient]}
+                      style={[styles.bgTmplGradient, {
+                        borderTopLeftRadius:  colors.radius / 1.5 - 1,
+                        borderTopRightRadius: colors.radius / 1.5 - 1,
+                      }]}
+                    >
+                      <Text style={styles.bgTmplEmoji}>{tmpl.emoji}</Text>
+                      {active && (
+                        <View style={[styles.bgTmplCheck, { backgroundColor: colors.primary }]}>
+                          <Feather name="check" size={8} color={colors.primaryForeground} />
+                        </View>
+                      )}
+                    </LinearGradient>
+                    <Text style={[styles.bgTmplName, { color: colors.foreground }]} numberOfLines={1}>
+                      {tmpl.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
           </View>
         </SettingsCard>
 
@@ -929,6 +997,14 @@ export default function SettingsScreen() {
         <AmbassadorModal visible={ambassadorVisible} onClose={() => setAmbassadorVisible(false)} />
 
       </ScrollView>
+
+      {/* ── Drawer ── */}
+      <SettingsDrawer
+        visible={drawerVisible}
+        onClose={() => setDrawerVisible(false)}
+        avatarUri={avatarUri}
+        onPickAvatar={handlePickAvatar}
+      />
     </View>
   );
 }
@@ -1098,4 +1174,15 @@ const styles = StyleSheet.create({
   accentRow:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   accentCircleOuter:{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', borderColor: 'transparent' },
   accentCircle:     { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+
+  // Header
+  headerTopRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 2 },
+
+  // Background template picker
+  bgTmplRow:     { gap: 8, paddingBottom: 4 },
+  bgTmplCard:    { width: 68, overflow: 'hidden' },
+  bgTmplGradient:{ height: 56, alignItems: 'center', justifyContent: 'center' },
+  bgTmplEmoji:   { fontSize: 22 },
+  bgTmplCheck:   { position: 'absolute', top: 4, right: 4, width: 14, height: 14, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
+  bgTmplName:    { fontSize: 9, fontFamily: 'Inter_500Medium', textAlign: 'center', paddingHorizontal: 4, paddingVertical: 5 },
 });

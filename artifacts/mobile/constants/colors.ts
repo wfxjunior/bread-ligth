@@ -142,3 +142,25 @@ const colors = {
   radius: 12,
 };
 export default colors;
+
+// ── Background templates ───────────────────────────────────────────────────────
+export type BackgroundTemplate =
+  | 'none' | 'golf' | 'soccer' | 'business' | 'sky' | 'forest' | 'sunset' | 'car';
+
+export interface BackgroundTemplateData {
+  name:     string;
+  emoji:    string;
+  gradient: readonly [string, string, string];
+  isDark:   boolean;
+}
+
+export const BACKGROUND_TEMPLATES: Record<BackgroundTemplate, BackgroundTemplateData> = {
+  none:     { name: 'Padrão',   emoji: '📖', isDark: false, gradient: ['#FAF8F4', '#F5F2EC', '#EDE9E0'] },
+  golf:     { name: 'Golfe',    emoji: '⛳', isDark: false, gradient: ['#EEF6EC', '#DFF0D8', '#D0E9C6'] },
+  soccer:   { name: 'Soccer',   emoji: '⚽', isDark: true,  gradient: ['#1A3D14', '#255C1C', '#1A3D14'] },
+  business: { name: 'Business', emoji: '💼', isDark: true,  gradient: ['#0D1B2A', '#1B2D44', '#0A1825'] },
+  sky:      { name: 'Sky',      emoji: '☁️', isDark: false, gradient: ['#EBF6FE', '#D4EEFA', '#BFE4F6'] },
+  forest:   { name: 'Forest',   emoji: '🌲', isDark: true,  gradient: ['#1B2D1E', '#243D27', '#1A2B1C'] },
+  sunset:   { name: 'Sunset',   emoji: '🌅', isDark: false, gradient: ['#FFF5E8', '#FFE0B2', '#FFBB6B'] },
+  car:      { name: 'Drive',    emoji: '🚗', isDark: true,  gradient: ['#12121E', '#1A1A2E', '#101020'] },
+};
