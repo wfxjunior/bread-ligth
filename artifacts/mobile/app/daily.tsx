@@ -18,45 +18,50 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColors } from '@/hooks/useColors';
-import { useTheme } from '@/context/ThemeContext';
 import { useBible } from '@/context/BibleContext';
 import WordModal from '@/components/WordModal';
 import { getEntryForDate, resolveVerse, todayKey } from '@/utils/dailyVerse';
 
-// PT weekday/month labels
-const WEEKDAYS_PT = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
-const MONTHS_PT   = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+// ── Palette — always dark; this screen is an immersive reading experience ─────
+const D = {
+  bg1:       '#0A1628',
+  bg2:       '#111E35',
+  bg3:       '#162442',
+  gold:      '#C4922A',
+  goldFaint: 'rgba(196,146,42,0.18)',
+  goldBorder:'rgba(196,146,42,0.35)',
+  white:     '#FFFFFF',
+  whiteHi:   'rgba(255,255,255,0.90)',
+  whiteMid:  'rgba(255,255,255,0.55)',
+  whiteLow:  'rgba(255,255,255,0.35)',
+  whiteFaint:'rgba(255,255,255,0.07)',
+  border:    'rgba(255,255,255,0.10)',
+  overlayBg: 'rgba(10,22,40,0.96)',
+};
+
+// PT weekday / month labels
+const WEEKDAYS_PT = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+const MONTHS_PT   = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
 const _domain = process.env.EXPO_PUBLIC_DOMAIN;
 const API_BASE = _domain ? `https://${_domain}/api` : null;
 
-// ── Tappable verse text ───────────────────────────────────────────────────────
-function TappableVerse({
-  text,
-  onWordPress,
-  isDark,
-}: {
+// ── Tappable EN verse ─────────────────────────────────────────────────────────
+function TappableVerse({ text, onWordPress }: {
   text: string;
   onWordPress: (word: string, ctx: string) => void;
-  isDark: boolean;
 }) {
-  const colors = useColors();
   const words = text.split(/(\s+)/);
-
   return (
-    <Text style={[styles.verseEnWrap, { color: isDark ? '#FFFFFF' : colors.foreground }]}>
+    <Text style={styles.verseEnWrap}>
       {words.map((token, i) => {
-        if (/^\s+$/.test(token)) return <Text key={i}>{token}</Text>;
+        if (/^\s+$/.test(token)) return <Text key={i} style={{ color: D.white }}>{token}</Text>;
         const clean = token.replace(/[^a-zA-Z'-]/g, '');
         return (
           <Text
             key={i}
             onPress={() => clean.length > 1 && onWordPress(clean.toLowerCase(), text)}
-            style={[
-              styles.verseWord,
-              { color: isDark ? '#FFFFFF' : colors.foreground },
-              { textDecorationColor: isDark ? 'rgba(255,255,255,0.25)' : colors.border },
-            ]}
+            style={styles.verseWord}
             suppressHighlighting
           >
             {token}
@@ -67,70 +72,51 @@ function TappableVerse({
   );
 }
 
-// ── Devotional Modal ──────────────────────────────────────────────────────────
-function DevotionalModal({
-  visible,
-  text,
-  loading,
-  error,
-  onClose,
-  isDark,
-}: {
+// ── Devotional bottom-sheet modal ─────────────────────────────────────────────
+function DevotionalModal({ visible, text, loading, error, onClose }: {
   visible: boolean;
   text: string;
   loading: boolean;
   error: string;
   onClose: () => void;
-  isDark: boolean;
 }) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
 
-  const bgColor   = isDark ? '#111E35' : colors.card;
-  const textColor = isDark ? '#EDE8DF' : colors.foreground;
-  const mutedColor = isDark ? 'rgba(237,232,223,0.5)' : colors.mutedForeground;
-
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.modalBackdrop} onPress={onClose}>
+      <Pressable style={styles.sheetBackdrop} onPress={onClose}>
         <Pressable
-          style={[styles.modalSheet, { backgroundColor: bgColor, paddingBottom: insets.bottom + 16 }]}
+          style={[styles.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 20 }]}
           onPress={e => e.stopPropagation()}
         >
-          {/* Handle */}
-          <View style={[styles.sheetHandle, { backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : colors.border }]} />
+          <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
 
-          {/* Header */}
           <View style={styles.sheetHeader}>
             <View style={styles.sheetTitleRow}>
-              <Feather name="sun" size={16} color="#C4922A" />
-              <Text style={[styles.sheetTitle, { color: textColor }]}>Devocional do Dia</Text>
+              <Feather name="feather" size={15} color={D.gold} />
+              <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Devocional do Dia</Text>
             </View>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-              <Feather name="x" size={20} color={mutedColor} />
+              <Feather name="x" size={20} color={colors.mutedForeground} />
             </TouchableOpacity>
           </View>
 
-          {/* Gold divider */}
-          <View style={[styles.sheetGoldBar, { marginHorizontal: 20 }]} />
+          <View style={[styles.sheetGoldRule, { backgroundColor: D.gold }]} />
 
-          {/* Content */}
-          <ScrollView
-            contentContainerStyle={styles.sheetContent}
-            showsVerticalScrollIndicator={false}
-          >
+          <ScrollView contentContainerStyle={styles.sheetBody} showsVerticalScrollIndicator={false}>
             {loading ? (
-              <View style={styles.sheetLoading}>
-                <ActivityIndicator color="#C4922A" size="large" />
-                <Text style={[styles.sheetLoadingText, { color: mutedColor }]}>Gerando sua reflexão…</Text>
+              <View style={styles.sheetCenter}>
+                <ActivityIndicator color={D.gold} size="large" />
+                <Text style={[styles.sheetHint, { color: colors.mutedForeground }]}>Gerando sua reflexão…</Text>
               </View>
             ) : error ? (
-              <View style={styles.sheetError}>
-                <Feather name="alert-circle" size={32} color={isDark ? 'rgba(255,255,255,0.3)' : colors.border} />
-                <Text style={[styles.sheetErrorText, { color: mutedColor }]}>{error}</Text>
+              <View style={styles.sheetCenter}>
+                <Feather name="alert-circle" size={30} color={colors.border} />
+                <Text style={[styles.sheetHint, { color: colors.mutedForeground }]}>{error}</Text>
               </View>
             ) : (
-              <Text style={[styles.sheetText, { color: textColor }]}>{text}</Text>
+              <Text style={[styles.sheetText, { color: colors.foreground }]}>{text}</Text>
             )}
           </ScrollView>
         </Pressable>
@@ -139,14 +125,11 @@ function DevotionalModal({
   );
 }
 
-// ── Main Screen ───────────────────────────────────────────────────────────────
+// ── Main screen ───────────────────────────────────────────────────────────────
 export default function DailyScreen() {
-  const colors  = useColors();
-  const { isDark } = useTheme();
-  const insets  = useSafeAreaInsets();
+  const insets = useSafeAreaInsets();
   const { vocabulary } = useBible();
 
-  // Recompute when app comes back to foreground (midnight rollover)
   const [today, setToday] = useState(() => new Date());
   useEffect(() => {
     const sub = AppState.addEventListener('change', s => {
@@ -157,13 +140,11 @@ export default function DailyScreen() {
 
   const entry    = getEntryForDate(today);
   const verseObj = resolveVerse(entry);
+  const dateStr  = `${WEEKDAYS_PT[today.getDay()]}, ${today.getDate()} ${MONTHS_PT[today.getMonth()]}`;
 
-  const dateStr = `${WEEKDAYS_PT[today.getDay()]}, ${today.getDate()} ${MONTHS_PT[today.getMonth()]}`;
-
-  // Completion state
+  // Completion
   const [done, setDone]       = useState(false);
   const [checked, setChecked] = useState(false);
-
   useEffect(() => {
     setDone(false);
     setChecked(false);
@@ -184,53 +165,35 @@ export default function DailyScreen() {
   const [modalWord, setModalWord] = useState('');
   const [modalCtx,  setModalCtx]  = useState('');
   const [modalVis,  setModalVis]  = useState(false);
-
   const openWord = useCallback((word: string, ctx: string) => {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
-    setModalWord(word);
-    setModalCtx(ctx);
-    setModalVis(true);
+    setModalWord(word); setModalCtx(ctx); setModalVis(true);
   }, []);
 
-  // Devotional state
+  // Devotional
   const [devText,    setDevText]    = useState('');
   const [devLoading, setDevLoading] = useState(false);
   const [devError,   setDevError]   = useState('');
   const [devVisible, setDevVisible] = useState(false);
-
   const DEVOTIONAL_KEY = `${todayKey()}:devotional`;
 
   const openDevotional = useCallback(async () => {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
     setDevVisible(true);
-
-    // Return cached result if available
     try {
       const cached = await AsyncStorage.getItem(DEVOTIONAL_KEY);
-      if (cached) {
-        setDevText(cached);
-        setDevLoading(false);
-        return;
-      }
+      if (cached) { setDevText(cached); setDevLoading(false); return; }
     } catch {}
-
     if (!verseObj || !API_BASE) {
       setDevLoading(false);
       setDevError('Serviço indisponível no momento.');
       return;
     }
-
-    setDevLoading(true);
-    setDevError('');
-    setDevText('');
-
+    setDevLoading(true); setDevError(''); setDevText('');
     try {
       const params = new URLSearchParams({
-        book:    entry.bookEn,
-        chapter: String(entry.chapter),
-        verse:   String(entry.verse),
-        en:      verseObj.en,
-        pt:      verseObj.pt,
+        book: entry.bookEn, chapter: String(entry.chapter),
+        verse: String(entry.verse), en: verseObj.en, pt: verseObj.pt,
       });
       const res  = await fetch(`${API_BASE}/devotional?${params}`);
       const data = await res.json();
@@ -238,7 +201,7 @@ export default function DailyScreen() {
       setDevText(data.text);
       await AsyncStorage.setItem(DEVOTIONAL_KEY, data.text).catch(() => {});
     } catch (err: any) {
-      setDevError(err.message ?? 'Não foi possível gerar o devocional. Verifique sua conexão.');
+      setDevError(err.message ?? 'Não foi possível gerar o devocional.');
     } finally {
       setDevLoading(false);
     }
@@ -246,137 +209,93 @@ export default function DailyScreen() {
 
   if (!verseObj) return null;
 
-  const bookName = entry.bookPt;
-  const bookEn   = entry.bookEn;
-  const chNum    = entry.chapter;
-  const vNum     = entry.verse;
-
-  // ── Theme-aware color tokens ──────────────────────────────────────────────
-  const headerIconColor   = isDark ? 'rgba(255,255,255,0.8)'  : colors.primary;
-  const referenceColor    = '#C4922A';
-  const versePtColor      = isDark ? 'rgba(255,255,255,0.45)' : colors.portugueseText;
-  const bookTagColor      = isDark ? 'rgba(196,146,42,0.7)'   : colors.accent;
-  const tipTextColor      = isDark ? 'rgba(255,255,255,0.3)'  : colors.mutedForeground;
-  const tipBg             = isDark ? 'rgba(255,255,255,0.05)' : colors.muted;
-  const tipBorder         = isDark ? 'rgba(255,255,255,0.08)' : colors.border;
-  const bottomBg          = isDark ? 'rgba(10,22,40,0.92)'    : colors.card;
-  const bottomBorder      = isDark ? 'rgba(255,255,255,0.08)' : colors.border;
-  const vocabCountColor   = isDark ? '#fff'                   : colors.foreground;
-  const vocabLabelColor   = isDark ? 'rgba(255,255,255,0.4)'  : colors.mutedForeground;
-  const dateTextColor     = isDark ? 'rgba(255,255,255,0.5)'  : colors.mutedForeground;
-  const doneBg            = isDark ? '#2A4A2C'                : colors.muted;
-  const doneTitleColor    = isDark ? '#fff'                   : colors.foreground;
-  const doneSubColor      = isDark ? 'rgba(255,255,255,0.5)'  : colors.mutedForeground;
-
   return (
     <View style={styles.root}>
-      {/* ── Theme-aware background ── */}
-      {isDark ? (
-        <LinearGradient
-          colors={['#0A1628', '#111E35', '#162442']}
-          style={StyleSheet.absoluteFill}
-        />
-      ) : (
-        <LinearGradient
-          colors={[colors.background, colors.muted, colors.secondary]}
-          style={StyleSheet.absoluteFill}
-        />
-      )}
-
-      {/* ── Decorative cross ── */}
-      <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        <View style={[styles.crossV, { backgroundColor: 'rgba(196,146,42,0.10)' }]} />
-        <View style={[styles.crossH, { backgroundColor: 'rgba(196,146,42,0.10)' }]} />
-      </View>
+      {/* Always-dark gradient — this is an immersive reading experience */}
+      <LinearGradient colors={[D.bg1, D.bg2, D.bg3]} style={StyleSheet.absoluteFill} />
 
       {/* ── Header ── */}
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-          <Feather name="arrow-left" size={22} color={headerIconColor} />
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
+          <Feather name="arrow-left" size={22} color={D.whiteMid} />
         </TouchableOpacity>
 
         <View style={styles.headerCenter}>
           <View style={styles.modoBadge}>
-            <Feather name="sun" size={11} color="#C4922A" />
+            <Feather name="sun" size={11} color={D.gold} />
             <Text style={styles.modoBadgeText}>MODO DIÁRIO</Text>
           </View>
-          <Text style={[styles.dateText, { color: dateTextColor }]}>{dateStr}</Text>
+          <Text style={styles.dateText}>{dateStr}</Text>
         </View>
 
         <View style={styles.vocabBadge}>
-          <Text style={[styles.vocabCount, { color: vocabCountColor }]}>{vocabulary.length}</Text>
-          <Text style={[styles.vocabLabel, { color: vocabLabelColor }]}>palavras</Text>
+          <Text style={styles.vocabCount}>{vocabulary.length}</Text>
+          <Text style={styles.vocabLabel}>palavras</Text>
         </View>
       </View>
 
-      {/* ── Content ── */}
+      {/* ── Scrollable content ── */}
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 150 }]}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 180 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Gold divider */}
         <View style={styles.goldBar} />
 
-        {/* Reference */}
-        <Text style={[styles.reference, { color: referenceColor }]}>
-          {bookEn} {chNum}:{vNum}
+        <Text style={styles.reference}>
+          {entry.bookEn} {entry.chapter}:{entry.verse}
         </Text>
 
-        {/* EN verse — tappable words */}
-        <TappableVerse text={verseObj.en} onWordPress={openWord} isDark={isDark} />
+        <TappableVerse text={verseObj.en} onWordPress={openWord} />
 
-        {/* PT verse */}
-        <Text style={[styles.versePt, { color: versePtColor }]}>{verseObj.pt}</Text>
+        <Text style={styles.versePt}>{verseObj.pt}</Text>
 
-        {/* Book tag */}
         <View style={styles.bookTag}>
-          <Feather name="book-open" size={12} color={bookTagColor} />
-          <Text style={[styles.bookTagText, { color: bookTagColor }]}>{bookName} · Capítulo {chNum}</Text>
+          <Feather name="book-open" size={12} color={D.goldBorder} />
+          <Text style={styles.bookTagText}>{entry.bookPt} · Capítulo {entry.chapter}</Text>
         </View>
 
-        {/* Tip */}
-        <View style={[styles.tipRow, { backgroundColor: tipBg, borderColor: tipBorder }]}>
-          <Feather name="zap" size={13} color={tipTextColor} />
-          <Text style={[styles.tipText, { color: tipTextColor }]}>Toque em qualquer palavra em inglês para ver sua tradução</Text>
+        <View style={styles.tipRow}>
+          <Feather name="zap" size={12} color={D.whiteLow} />
+          <Text style={styles.tipText}>Toque em qualquer palavra em inglês para ver sua tradução</Text>
         </View>
       </ScrollView>
 
-      {/* ── Bottom action bar ── */}
+      {/* ── Fixed bottom bar ── */}
       {checked && (
-        <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 16, backgroundColor: bottomBg, borderTopColor: bottomBorder }]}>
-          {/* Devotional button */}
+        <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
+          {/* Devotional button — always shown */}
           <TouchableOpacity
             onPress={openDevotional}
-            activeOpacity={0.82}
-            style={[styles.devotionalBtn, { borderColor: 'rgba(196,146,42,0.45)', backgroundColor: 'rgba(196,146,42,0.10)' }]}
+            activeOpacity={0.8}
+            style={styles.devBtn}
           >
-            <Feather name="feather" size={16} color="#C4922A" />
-            <Text style={styles.devotionalBtnText}>Ler Devocional</Text>
+            <Feather name="feather" size={16} color={D.gold} />
+            <Text style={styles.devBtnText}>Ler Devocional</Text>
           </TouchableOpacity>
 
+          {/* Complete / done row */}
           {done ? (
-            <View style={[styles.doneRow, { backgroundColor: doneBg, borderRadius: 14 }]}>
-              <View style={[styles.doneIcon, { backgroundColor: '#3A6B3D' }]}>
-                <Feather name="check" size={18} color="#fff" />
+            <View style={styles.doneRow}>
+              <View style={styles.doneIcon}>
+                <Feather name="check" size={18} color={D.white} />
               </View>
               <View>
-                <Text style={[styles.doneTitle, { color: doneTitleColor }]}>Concluído hoje 🎉</Text>
-                <Text style={[styles.doneSub, { color: doneSubColor }]}>Volte amanhã para o próximo versículo</Text>
+                <Text style={styles.doneTitle}>Concluído hoje 🎉</Text>
+                <Text style={styles.doneSub}>Volte amanhã para o próximo versículo</Text>
               </View>
             </View>
           ) : (
-            <TouchableOpacity
-              onPress={handleComplete}
-              activeOpacity={0.88}
-              style={styles.completeBtn}
-            >
+            <TouchableOpacity onPress={handleComplete} activeOpacity={0.88} style={styles.completeBtn}>
               <LinearGradient
                 colors={['#C4922A', '#A07220']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                 style={styles.completeBtnGrad}
               >
-                <Feather name="check-circle" size={20} color="#fff" />
+                <Feather name="check-circle" size={20} color={D.white} />
                 <Text style={styles.completeBtnText}>Marcar como concluído</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -384,16 +303,14 @@ export default function DailyScreen() {
         </View>
       )}
 
-      {/* ── Devotional modal ── */}
+      {/* ── Modals ── */}
       <DevotionalModal
         visible={devVisible}
         text={devText}
         loading={devLoading}
         error={devError}
         onClose={() => setDevVisible(false)}
-        isDark={isDark}
       />
-
       <WordModal
         visible={modalVis}
         word={modalWord}
@@ -404,88 +321,94 @@ export default function DailyScreen() {
   );
 }
 
+// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root:    { flex: 1 },
-  crossV:  { position: 'absolute', left: '50%', top: 0, bottom: 0, width: 1 },
-  crossH:  { position: 'absolute', left: 0, right: 0, top: '38%', height: 1 },
+  root: { flex: 1 },
 
   // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingBottom: 16,
-    justifyContent: 'space-between',
+    paddingBottom: 14,
+    gap: 8,
   },
-  backBtn:      { width: 36, alignItems: 'flex-start' },
-  headerCenter: { alignItems: 'center', flex: 1, gap: 4 },
+  backBtn:      { width: 36, alignItems: 'flex-start', flexShrink: 0 },
+  headerCenter: { flex: 1, alignItems: 'center', gap: 5, minWidth: 0 },
   modoBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: 'rgba(196,146,42,0.15)',
+    backgroundColor: D.goldFaint,
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderWidth: 1,
-    borderColor: 'rgba(196,146,42,0.3)',
+    borderColor: D.goldBorder,
   },
-  modoBadgeText: {
-    color: '#C4922A',
-    fontSize: 10,
-    fontFamily: 'Inter_700Bold',
-    letterSpacing: 1.2,
-  },
-  dateText:   { fontSize: 13, fontFamily: 'Inter_400Regular' },
-  vocabBadge: { width: 52, alignItems: 'flex-end' },
-  vocabCount: { fontSize: 18, fontFamily: 'Inter_700Bold', lineHeight: 20 },
-  vocabLabel: { fontSize: 10, fontFamily: 'Inter_400Regular' },
+  modoBadgeText: { color: D.gold, fontSize: 10, fontFamily: 'Inter_700Bold', letterSpacing: 1.2 },
+  dateText:      { color: D.whiteMid, fontSize: 12, fontFamily: 'Inter_400Regular' },
+  vocabBadge:    { width: 48, alignItems: 'flex-end', flexShrink: 0 },
+  vocabCount:    { color: D.white, fontSize: 17, fontFamily: 'Inter_700Bold', lineHeight: 20 },
+  vocabLabel:    { color: D.whiteLow, fontSize: 10, fontFamily: 'Inter_400Regular' },
 
   // Content
-  content:   { paddingHorizontal: 28, paddingTop: 8, alignItems: 'flex-start' },
-  goldBar:   { width: 48, height: 3, backgroundColor: '#C4922A', borderRadius: 2, marginBottom: 22 },
+  content:  { paddingHorizontal: 24, paddingTop: 10, alignItems: 'flex-start' },
+  goldBar:  { width: 40, height: 3, backgroundColor: D.gold, borderRadius: 2, marginBottom: 20 },
   reference: {
-    fontSize: 12,
-    fontFamily: 'Inter_600SemiBold',
-    letterSpacing: 1.4,
-    marginBottom: 18,
+    fontSize: 11,
+    fontFamily: 'Inter_700Bold',
+    letterSpacing: 1.8,
+    color: D.gold,
+    marginBottom: 16,
     textTransform: 'uppercase',
   },
 
-  // Verse
+  // EN verse
   verseEnWrap: {
-    fontSize: 24,
-    lineHeight: 38,
+    fontSize: 26,
+    lineHeight: 40,
     fontFamily: 'Inter_400Regular',
-    marginBottom: 24,
-    flexWrap: 'wrap',
+    color: D.white,
+    marginBottom: 22,
   },
   verseWord: {
+    fontSize: 26,
+    lineHeight: 40,
+    fontFamily: 'Inter_400Regular',
+    color: D.white,
     textDecorationLine: 'underline',
     textDecorationStyle: 'solid',
+    textDecorationColor: 'rgba(255,255,255,0.20)',
   },
+
+  // PT verse
   versePt: {
     fontSize: 16,
     lineHeight: 26,
     fontFamily: 'Inter_400Regular',
+    color: D.whiteMid,
     fontStyle: 'italic',
-    marginBottom: 32,
+    marginBottom: 28,
   },
 
   // Tags
-  bookTag: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 20 },
-  bookTagText: { fontSize: 12, fontFamily: 'Inter_500Medium' },
+  bookTag: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 18 },
+  bookTagText: { color: D.goldBorder, fontSize: 12, fontFamily: 'Inter_500Medium' },
   tipRow: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 7,
     alignItems: 'flex-start',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    paddingVertical: 11,
+    paddingHorizontal: 13,
+    backgroundColor: D.whiteFaint,
     borderRadius: 10,
     borderWidth: 1,
+    borderColor: D.border,
   },
   tipText: {
     flex: 1,
+    color: D.whiteLow,
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
     lineHeight: 18,
@@ -498,68 +421,73 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: 10,
+    backgroundColor: D.overlayBg,
     borderTopWidth: StyleSheet.hairlineWidth,
-    gap: 10,
+    borderTopColor: D.border,
+    gap: 8,
   },
-  devotionalBtn: {
+
+  // Devotional button
+  devBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: 11,
+    paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1,
+    borderColor: D.goldBorder,
+    backgroundColor: D.goldFaint,
   },
-  devotionalBtnText: {
+  devBtnText: {
     fontSize: 14,
     fontFamily: 'Inter_600SemiBold',
-    color: '#C4922A',
+    color: D.gold,
   },
+
+  // Complete button
   completeBtn:     { borderRadius: 14, overflow: 'hidden' },
   completeBtnGrad: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    paddingVertical: 16,
+    paddingVertical: 15,
   },
-  completeBtnText: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: '#fff' },
+  completeBtnText: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: D.white },
+
+  // Done state
   doneRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    gap: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
   },
   doneIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: 'rgba(58,107,61,0.85)',
+    alignItems: 'center', justifyContent: 'center',
   },
-  doneTitle: { fontSize: 16, fontFamily: 'Inter_600SemiBold' },
-  doneSub:   { fontSize: 13, fontFamily: 'Inter_400Regular', marginTop: 2 },
+  doneTitle: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: D.white },
+  doneSub:   { fontSize: 12, fontFamily: 'Inter_400Regular', color: D.whiteMid, marginTop: 2 },
 
-  // Devotional modal
-  modalBackdrop: {
+  // Devotional modal sheet
+  sheetBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.55)',
     justifyContent: 'flex-end',
   },
-  modalSheet: {
+  sheet: {
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '80%',
-    paddingTop: 12,
+    paddingTop: 10,
   },
   sheetHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginBottom: 4,
+    width: 36, height: 4, borderRadius: 2,
+    alignSelf: 'center', marginBottom: 2,
   },
   sheetHeader: {
     flexDirection: 'row',
@@ -569,25 +497,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   sheetTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  sheetTitle: {
-    fontSize: 17,
-    fontFamily: 'Inter_700Bold',
+  sheetTitle:    { fontSize: 17, fontFamily: 'Inter_700Bold' },
+  sheetGoldRule: {
+    height: 2, borderRadius: 1, opacity: 0.4,
+    marginHorizontal: 20, marginBottom: 2,
   },
-  sheetGoldBar: {
-    height: 2,
-    backgroundColor: '#C4922A',
-    borderRadius: 1,
-    opacity: 0.5,
-    marginBottom: 4,
-  },
-  sheetContent: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 24 },
-  sheetLoading: { alignItems: 'center', paddingVertical: 40, gap: 14 },
-  sheetLoadingText: { fontSize: 14, fontFamily: 'Inter_400Regular' },
-  sheetError:   { alignItems: 'center', paddingVertical: 40, gap: 12 },
-  sheetErrorText: { fontSize: 14, fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 22 },
-  sheetText: {
-    fontSize: 16,
-    lineHeight: 28,
-    fontFamily: 'Inter_400Regular',
-  },
+  sheetBody:   { paddingHorizontal: 20, paddingTop: 14, paddingBottom: 16 },
+  sheetCenter: { alignItems: 'center', paddingVertical: 40, gap: 14 },
+  sheetHint:   { fontSize: 14, fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 22 },
+  sheetText:   { fontSize: 16, lineHeight: 28, fontFamily: 'Inter_400Regular' },
 });
