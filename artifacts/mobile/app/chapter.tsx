@@ -875,7 +875,8 @@ const styles = StyleSheet.create({
   modeBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
+    paddingLeft: 16,
+    paddingRight: 14,
     paddingVertical: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     gap: 8,
