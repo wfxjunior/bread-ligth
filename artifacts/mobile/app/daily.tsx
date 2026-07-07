@@ -6,6 +6,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -73,15 +74,41 @@ function TappableVerse({ text, onWordPress }: {
 }
 
 // ── Devotional bottom-sheet modal ─────────────────────────────────────────────
-function DevotionalModal({ visible, text, loading, error, onClose }: {
+function DevotionalModal({ visible, text, loading, error, onClose, verseRef, verseEn, versePt, dateStr }: {
   visible: boolean;
   text: string;
   loading: boolean;
   error: string;
   onClose: () => void;
+  verseRef: string;
+  verseEn: string;
+  versePt: string;
+  dateStr: string;
 }) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+
+  const hasText = !loading && !error && text.length > 0;
+
+  const handleShare = useCallback(async () => {
+    if (!hasText) return;
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    const message = [
+      `✨ Devocional do Dia — ${dateStr}`,
+      '',
+      `📖 ${verseRef}`,
+      '',
+      text,
+      '',
+      `"${verseEn}"`,
+      `${versePt}`,
+      '',
+      '— BíbliaEN',
+    ].join('\n');
+    try {
+      await Share.share({ message });
+    } catch {}
+  }, [hasText, text, verseRef, verseEn, versePt, dateStr]);
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -97,9 +124,23 @@ function DevotionalModal({ visible, text, loading, error, onClose }: {
               <Feather name="feather" size={15} color={D.gold} />
               <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Devocional do Dia</Text>
             </View>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-              <Feather name="x" size={20} color={colors.mutedForeground} />
-            </TouchableOpacity>
+
+            {/* Actions — share + close */}
+            <View style={styles.sheetActions}>
+              {hasText && (
+                <TouchableOpacity
+                  onPress={handleShare}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  style={[styles.sheetShareBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+                >
+                  <Feather name="share-2" size={14} color={colors.mutedForeground} />
+                  <Text style={[styles.sheetShareLabel, { color: colors.mutedForeground }]}>Compartilhar</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                <Feather name="x" size={20} color={colors.mutedForeground} />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={[styles.sheetGoldRule, { backgroundColor: D.gold }]} />
@@ -116,7 +157,15 @@ function DevotionalModal({ visible, text, loading, error, onClose }: {
                 <Text style={[styles.sheetHint, { color: colors.mutedForeground }]}>{error}</Text>
               </View>
             ) : (
-              <Text style={[styles.sheetText, { color: colors.foreground }]}>{text}</Text>
+              <>
+                <Text style={[styles.sheetText, { color: colors.foreground }]}>{text}</Text>
+
+                {/* Verse attribution at bottom of text */}
+                <View style={[styles.sheetVerseBlock, { borderColor: D.goldBorder, backgroundColor: D.goldFaint }]}>
+                  <Text style={styles.sheetVerseRef}>{verseRef}</Text>
+                  <Text style={styles.sheetVerseEn} numberOfLines={3}>"{verseEn}"</Text>
+                </View>
+              </>
             )}
           </ScrollView>
         </Pressable>
@@ -310,6 +359,10 @@ export default function DailyScreen() {
         loading={devLoading}
         error={devError}
         onClose={() => setDevVisible(false)}
+        verseRef={`${entry.bookEn} ${entry.chapter}:${entry.verse}`}
+        verseEn={verseObj.en}
+        versePt={verseObj.pt}
+        dateStr={dateStr}
       />
       <WordModal
         visible={modalVis}
@@ -504,5 +557,28 @@ const styles = StyleSheet.create({
   sheetBody:   { paddingHorizontal: 20, paddingTop: 14, paddingBottom: 16 },
   sheetCenter: { alignItems: 'center', paddingVertical: 40, gap: 14 },
   sheetHint:   { fontSize: 14, fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 22 },
-  sheetText:   { fontSize: 16, lineHeight: 28, fontFamily: 'Inter_400Regular' },
+  sheetText:   { fontSize: 16, lineHeight: 28, fontFamily: 'Inter_400Regular', marginBottom: 20 },
+
+  // Header action row (share + close)
+  sheetActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  sheetShareBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 10, paddingVertical: 6,
+    borderRadius: 20, borderWidth: StyleSheet.hairlineWidth,
+  },
+  sheetShareLabel: { fontSize: 12, fontFamily: 'Inter_500Medium' },
+
+  // Verse attribution block at bottom of devotional text
+  sheetVerseBlock: {
+    borderLeftWidth: 2, borderRadius: 6,
+    paddingHorizontal: 12, paddingVertical: 10, gap: 4,
+  },
+  sheetVerseRef: {
+    fontSize: 10, fontFamily: 'Inter_700Bold',
+    letterSpacing: 1.4, color: D.gold, textTransform: 'uppercase',
+  },
+  sheetVerseEn: {
+    fontSize: 13, fontFamily: 'Lora_400Regular_Italic',
+    color: D.gold, lineHeight: 20, opacity: 0.85,
+  },
 });
