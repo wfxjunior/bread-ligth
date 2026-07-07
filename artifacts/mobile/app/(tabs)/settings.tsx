@@ -621,7 +621,6 @@ export default function SettingsScreen() {
   const [autoTr,      setAutoTr]      = useState(true);
   const [vocabRemind, setVocabRemind] = useState(false);
   const [audioSpeed,  setAudioSpeed]  = useState('Normal');
-  const [linkCopied,    setLinkCopied]    = useState(false);
   const [supportVisible, setSupportVisible] = useState(false);
   const [avatarUri,   setAvatarUri]   = useState<string | null>(null);
 
@@ -690,15 +689,6 @@ export default function SettingsScreen() {
     setDonateVisible(true);
   };
 
-  const handleCopyLink = async () => {
-    try {
-      await Share.share({ message: 'bibleenglish.app/invite/wilson', url: 'https://bibleenglish.app/invite/wilson' });
-      setLinkCopied(true);
-      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setTimeout(() => setLinkCopied(false), 2500);
-    } catch {}
-  };
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
 
@@ -738,7 +728,7 @@ export default function SettingsScreen() {
               backgroundColor: colors.primary + '14',
               borderColor:     colors.primary + '30',
             }]}>
-              <Text style={[styles.planText, { color: colors.primary }]}>Gratuito</Text>
+              <Text style={[styles.planText, { color: colors.primary }]}>Free</Text>
             </View>
           </View>
           <View style={[styles.statsRow, { borderTopColor: colors.border }]}>
@@ -871,25 +861,7 @@ export default function SettingsScreen() {
         <SectionLabel title="Compartilhar" />
         <SettingsCard>
           <SettingsRow icon="share-2"   label="Compartilhar versículo" sub="Enviar como imagem ou texto" onPress={() => {}} />
-          <SettingsRow icon="user-plus" label="Convidar um amigo"      sub="30 dias grátis de Premium"  onPress={() => {}} />
-          <SettingsRow
-            icon="link"
-            label="Seu link de convite"
-            sub="bibleenglish.app/invite/wilson"
-            border={false}
-            onPress={handleCopyLink}
-            right={
-              <View style={[styles.copyBtn, {
-                backgroundColor: linkCopied ? colors.primary + '14' : colors.secondary,
-                borderRadius: 8,
-              }]}>
-                <Feather name={linkCopied ? 'check' : 'share-2'} size={14} color={linkCopied ? colors.primary : colors.mutedForeground} />
-                <Text style={[styles.copyText, { color: linkCopied ? colors.primary : colors.mutedForeground }]}>
-                  {linkCopied ? 'Compartilhado!' : 'Compartilhar'}
-                </Text>
-              </View>
-            }
-          />
+          <SettingsRow icon="user-plus" label="Convidar um amigo"      sub="30 dias grátis de Premium"  onPress={() => {}} border={false} />
         </SettingsCard>
 
         {/* ── Apoio ── */}
@@ -1048,9 +1020,6 @@ const styles = StyleSheet.create({
   pillText: { fontSize: 13, fontFamily: 'Inter_500Medium', textAlign: 'center' },
   levelPill:{ paddingVertical: 9, gap: 3 },
   cefrCode: { fontSize: 10, fontFamily: 'Inter_700Bold', letterSpacing: 0.5 },
-
-  copyBtn:  { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6 },
-  copyText: { fontSize: 13, fontFamily: 'Inter_500Medium' },
 
   // Support / Apoio card (Apoio section)
   supportHeader:    { padding: 16, paddingBottom: 14, gap: 7, borderBottomWidth: StyleSheet.hairlineWidth },
