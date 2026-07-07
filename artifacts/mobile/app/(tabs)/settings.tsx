@@ -738,9 +738,11 @@ export default function SettingsScreen() {
   const topPad    = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = useTabBarHeight();
 
-  // 2-column grid — measured from the actual grid container (works on web + native)
+  // 2-column grid — measured from the grid container; falls back to screen width
+  // so cards are never invisible while waiting for the first onLayout.
+  // Formula: (available - gap) / 2  where available = screen – scroll padding (32) – innerSection padding (28)
   const [themeGridW, setThemeGridW] = useState(0);
-  const themeCardW = themeGridW > 0 ? Math.floor((themeGridW - 8) / 2) : 0;
+  const themeCardW = Math.floor(((themeGridW > 0 ? themeGridW : width - 60) - 8) / 2);
 
   const [level,       setLevel]       = useState<LevelKey>('intermediate');
   const [displayMode, setDisplayMode] = useState('EN+PT');
@@ -978,7 +980,7 @@ export default function SettingsScreen() {
               style={styles.themeGrid}
               onLayout={e => setThemeGridW(e.nativeEvent.layout.width)}
             >
-              {themeCardW > 0 && READING_THEMES.map(t => {
+              {READING_THEMES.map(t => {
                 const active = readingTheme === t.id;
                 return (
                   <TouchableOpacity

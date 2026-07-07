@@ -6,7 +6,7 @@ const THEME_KEY    = '@bibliaeN:readingTheme';
 const ACCENT_KEY   = '@bibliaeN:accentColor';
 const BG_TMPL_KEY  = '@bibliaeN:bgTemplate';
 
-const VALID_THEMES:     ReadingTheme[]       = ['classic', 'oxford', 'scholar', 'night', 'notebook'];
+const VALID_THEMES:     ReadingTheme[]       = ['classic', 'oxford', 'scholar', 'night', 'notebook', 'sepia'];
 const VALID_ACCENTS:    AccentColor[]        = ['royal-blue', 'burgundy', 'forest', 'slate', 'violet'];
 const VALID_TEMPLATES:  BackgroundTemplate[] = ['none', 'golf', 'soccer', 'business', 'sky', 'forest', 'sunset', 'car'];
 
@@ -60,7 +60,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem(BG_TMPL_KEY, t).catch(() => {});
   }, []);
 
-  const isDark = readingTheme === 'night';
+  const isDark = readingTheme === 'night' || readingTheme === 'sepia';
 
   return (
     <ThemeContext.Provider value={{
