@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import { type DisplayMode } from '@/context/BibleContext';
@@ -74,11 +75,11 @@ function VerseRow({ verse, displayMode, isBookmarked, onWordPress, onBookmarkTog
       </View>
 
       <TouchableOpacity onPress={handleBookmark} style={styles.bookmarkBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-        <Feather
-          name={isBookmarked ? 'bookmark' : 'bookmark'}
-          size={18}
+        <Ionicons
+          name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
+          size={20}
           color={isBookmarked ? colors.accent : colors.mutedForeground}
-          style={{ opacity: isBookmarked ? 1 : 0.5 }}
+          style={{ opacity: isBookmarked ? 1 : 0.45 }}
         />
       </TouchableOpacity>
     </View>
