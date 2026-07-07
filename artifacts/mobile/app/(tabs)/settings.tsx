@@ -1,0 +1,389 @@
+import React, { useState } from 'react';
+import {
+  Alert,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { Feather } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
+import * as Clipboard from 'expo-clipboard';
+import { useColors } from '@/hooks/useColors';
+import { useBible } from '@/context/BibleContext';
+
+// ── Small reusable components ─────────────────────────────────────────────────
+
+function SectionLabel({ title }: { title: string }) {
+  const colors = useColors();
+  return (
+    <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>
+      {title.toUpperCase()}
+    </Text>
+  );
+}
+
+function SettingsCard({ children }: { children: React.ReactNode }) {
+  const colors = useColors();
+  return (
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
+      {children}
+    </View>
+  );
+}
+
+function SettingsRow({
+  icon, label, sub, right, onPress, border = true,
+}: {
+  icon: string; label: string; sub?: string;
+  right?: React.ReactNode; onPress?: () => void; border?: boolean;
+}) {
+  const colors = useColors();
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={onPress ? 0.7 : 1}
+      style={[styles.row, border && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}
+    >
+      <View style={[styles.rowIcon, { backgroundColor: colors.primary + '15' }]}>
+        <Feather name={icon as any} size={16} color={colors.primary} />
+      </View>
+      <View style={styles.rowText}>
+        <Text style={[styles.rowLabel, { color: colors.foreground }]}>{label}</Text>
+        {sub ? <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>{sub}</Text> : null}
+      </View>
+      {right ?? (onPress ? <Feather name="chevron-right" size={16} color={colors.mutedForeground} /> : null)}
+    </TouchableOpacity>
+  );
+}
+
+function ToggleRow({
+  icon, label, sub, value, onChange, border = true,
+}: {
+  icon: string; label: string; sub?: string;
+  value: boolean; onChange: (v: boolean) => void; border?: boolean;
+}) {
+  const colors = useColors();
+  const handleChange = (v: boolean) => {
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    onChange(v);
+  };
+  return (
+    <SettingsRow
+      icon={icon} label={label} sub={sub} border={border}
+      right={
+        <Switch
+          value={value}
+          onValueChange={handleChange}
+          trackColor={{ false: colors.border, true: colors.accent }}
+          thumbColor={Platform.OS === 'android' ? (value ? colors.accent : colors.muted) : '#fff'}
+          ios_backgroundColor={colors.border}
+        />
+      }
+    />
+  );
+}
+
+function PillSelector({
+  options, value, onChange,
+}: {
+  options: string[]; value: string; onChange: (v: string) => void;
+}) {
+  const colors = useColors();
+  return (
+    <View style={styles.pillRow}>
+      {options.map(opt => (
+        <TouchableOpacity
+          key={opt}
+          onPress={() => {
+            if (Platform.OS !== 'web') Haptics.selectionAsync();
+            onChange(opt);
+          }}
+          style={[
+            styles.pill,
+            {
+              backgroundColor: value === opt ? colors.primary : colors.secondary,
+              borderRadius: colors.radius / 2,
+            },
+          ]}
+        >
+          <Text style={[styles.pillText, { color: value === opt ? colors.primaryForeground : colors.foreground }]}>
+            {opt}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+}
+
+// ── Main screen ───────────────────────────────────────────────────────────────
+
+export default function SettingsScreen() {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const { vocabulary, bookmarks, clearVocabulary } = useBible();
+
+  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const bottomPad = Platform.OS === 'web' ? 84 : insets.bottom + 20;
+
+  // Preferences state (all local — no backend)
+  const [level,       setLevel]       = useState('Intermediário');
+  const [displayMode, setDisplayMode] = useState('EN+PT');
+  const [showIPA,     setShowIPA]     = useState(true);
+  const [autoTr,      setAutoTr]      = useState(true);
+  const [vocabRemind, setVocabRemind] = useState(false);
+  const [audioSpeed,  setAudioSpeed]  = useState('Normal');
+  const [waitlisted,  setWaitlisted]  = useState(false);
+  const [linkCopied,  setLinkCopied]  = useState(false);
+
+  const handleClearVocab = () => {
+    if (Platform.OS === 'web') {
+      if (window.confirm('Limpar todo o vocabulário salvo? Esta ação não pode ser desfeita.')) {
+        clearVocabulary?.();
+      }
+    } else {
+      Alert.alert(
+        'Limpar Vocabulário',
+        'Remover todas as palavras salvas? Esta ação não pode ser desfeita.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Limpar', style: 'destructive', onPress: () => clearVocabulary?.() },
+        ],
+      );
+    }
+  };
+
+  const handleCopyLink = async () => {
+    await Clipboard.setStringAsync('bibleenglish.app/invite/wilson');
+    setLinkCopied(true);
+    if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setTimeout(() => setLinkCopied(false), 2500);
+  };
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: topPad + 12, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Configurações</Text>
+      </View>
+
+      <ScrollView
+        contentContainerStyle={{ padding: 16, paddingBottom: bottomPad, gap: 8 }}
+        showsVerticalScrollIndicator={false}
+      >
+
+        {/* ── Profile ── */}
+        <SettingsCard>
+          <View style={styles.profileRow}>
+            <View style={[styles.avatar, { backgroundColor: colors.primary + '20' }]}>
+              <Text style={[styles.avatarText, { color: colors.primary }]}>W</Text>
+            </View>
+            <View style={styles.profileInfo}>
+              <Text style={[styles.profileName, { color: colors.foreground }]}>Wilson</Text>
+              <Text style={[styles.profileEmail, { color: colors.mutedForeground }]}>wilson@email.com</Text>
+            </View>
+            <View style={[styles.planBadge, { backgroundColor: colors.accent + '20', borderColor: colors.accent + '40' }]}>
+              <Text style={[styles.planText, { color: colors.accent }]}>Free</Text>
+            </View>
+          </View>
+          <View style={[styles.statsRow, { borderTopColor: colors.border }]}>
+            {[
+              { label: 'Favoritos',  value: bookmarks.length },
+              { label: 'Palavras',   value: vocabulary.length },
+              { label: 'Dominadas',  value: vocabulary.filter(v => v.mastered).length },
+            ].map((s, i) => (
+              <React.Fragment key={s.label}>
+                {i > 0 && <View style={[styles.statDivider, { backgroundColor: colors.border }]} />}
+                <View style={styles.stat}>
+                  <Text style={[styles.statValue, { color: colors.foreground }]}>{s.value}</Text>
+                  <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{s.label}</Text>
+                </View>
+              </React.Fragment>
+            ))}
+          </View>
+        </SettingsCard>
+
+        {/* ── Aprendizado ── */}
+        <SectionLabel title="Aprendizado" />
+        <SettingsCard>
+          <View style={[styles.innerSection, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
+            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>Nível de Inglês</Text>
+            <PillSelector
+              options={['Iniciante', 'Intermediário', 'Avançado']}
+              value={level}
+              onChange={setLevel}
+            />
+          </View>
+          <View style={styles.innerSection}>
+            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>Modo de Exibição</Text>
+            <PillSelector
+              options={['EN', 'EN+PT', 'PT']}
+              value={displayMode}
+              onChange={setDisplayMode}
+            />
+          </View>
+        </SettingsCard>
+
+        <SettingsCard>
+          <ToggleRow icon="type"       label="Pronúncia (IPA)"        sub="Mostrar fonética ao tocar palavras" value={showIPA}     onChange={setShowIPA} />
+          <ToggleRow icon="globe"      label="Tradução automática"     sub="Traduzir palavras tocadas"          value={autoTr}      onChange={setAutoTr} />
+          <ToggleRow icon="bell"       label="Lembrete de vocabulário" sub="Revisar palavras diariamente"       value={vocabRemind} onChange={setVocabRemind} border={false} />
+        </SettingsCard>
+
+        {/* ── Áudio ── */}
+        <SectionLabel title="Áudio" />
+        <SettingsCard>
+          <View style={styles.innerSection}>
+            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>Velocidade de Reprodução</Text>
+            <PillSelector
+              options={['0.75×', 'Normal', '1.25×', '1.5×']}
+              value={audioSpeed}
+              onChange={setAudioSpeed}
+            />
+          </View>
+        </SettingsCard>
+
+        {/* ── Compartilhar ── */}
+        <SectionLabel title="Compartilhar" />
+        <SettingsCard>
+          <SettingsRow icon="share-2"   label="Compartilhar versículo"  sub="Enviar como imagem ou texto" onPress={() => {}} />
+          <SettingsRow icon="user-plus" label="Convidar um amigo"       sub="30 dias grátis de Premium"   onPress={() => {}} />
+          <SettingsRow
+            icon="link"
+            label="Seu link de convite"
+            sub="bibleenglish.app/invite/wilson"
+            border={false}
+            onPress={handleCopyLink}
+            right={
+              <View style={[styles.copyBtn, { backgroundColor: linkCopied ? colors.accent + '20' : colors.secondary, borderRadius: 8 }]}>
+                <Feather name={linkCopied ? 'check' : 'copy'} size={14} color={linkCopied ? colors.accent : colors.mutedForeground} />
+                <Text style={[styles.copyText, { color: linkCopied ? colors.accent : colors.mutedForeground }]}>
+                  {linkCopied ? 'Copiado!' : 'Copiar'}
+                </Text>
+              </View>
+            }
+          />
+        </SettingsCard>
+
+        {/* ── Plano Premium ── */}
+        <SectionLabel title="Plano" />
+        <View style={[styles.premiumCard, { backgroundColor: colors.primary, borderRadius: colors.radius }]}>
+          <View style={styles.premiumTop}>
+            <View>
+              <Text style={styles.premiumLabel}>PREMIUM</Text>
+              <Text style={styles.premiumTitle}>Bible English</Text>
+            </View>
+            <View style={styles.premiumPrice}>
+              <Text style={styles.premiumAmount}>$4.99</Text>
+              <Text style={styles.premiumPer}>/mês</Text>
+            </View>
+          </View>
+
+          <View style={styles.premiumFeatures}>
+            {[
+              'Todos os 66 livros',
+              'Cores personalizadas',
+              'Devocionais ilimitados',
+              'Exportar anotações',
+              'Áudio em todos os capítulos',
+              'Gramática avançada',
+            ].map(f => (
+              <View key={f} style={styles.featureRow}>
+                <Feather name="check" size={13} color={colors.accent} />
+                <Text style={styles.featureText}>{f}</Text>
+              </View>
+            ))}
+          </View>
+
+          <TouchableOpacity
+            onPress={() => {
+              if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              setWaitlisted(true);
+            }}
+            style={[styles.premiumBtn, { backgroundColor: waitlisted ? colors.accent + '30' : colors.accent, borderRadius: colors.radius }]}
+            activeOpacity={0.85}
+          >
+            <Feather name={waitlisted ? 'check' : 'star'} size={16} color={waitlisted ? colors.accent : '#fff'} />
+            <Text style={[styles.premiumBtnText, { color: waitlisted ? colors.accent : '#fff' }]}>
+              {waitlisted ? 'Na lista de espera!' : 'Entrar na lista de espera'}
+            </Text>
+          </TouchableOpacity>
+          <Text style={styles.premiumSub}>Beta privado — em breve</Text>
+        </View>
+
+        {/* ── Dados ── */}
+        <SectionLabel title="Dados" />
+        <SettingsCard>
+          <SettingsRow icon="trash-2" label="Limpar vocabulário" sub={`${vocabulary.length} palavra${vocabulary.length !== 1 ? 's' : ''} salva${vocabulary.length !== 1 ? 's' : ''}`} onPress={handleClearVocab} border={false} />
+        </SettingsCard>
+
+        {/* ── Sobre ── */}
+        <SectionLabel title="Sobre" />
+        <SettingsCard>
+          <SettingsRow icon="info"    label="Versão"        sub="1.0.0 (beta)"           border={false} />
+        </SettingsCard>
+
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container:    { flex: 1 },
+  header:       { paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: StyleSheet.hairlineWidth, gap: 2 },
+  headerTitle:  { fontSize: 26, fontFamily: 'Inter_700Bold', fontWeight: '700' as const },
+
+  sectionLabel: { fontSize: 11, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.1, marginTop: 12, marginBottom: 4, marginHorizontal: 4 },
+
+  card:         { borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+
+  row:          { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 13, gap: 12 },
+  rowIcon:      { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  rowText:      { flex: 1 },
+  rowLabel:     { fontSize: 15, fontFamily: 'Inter_500Medium' },
+  rowSub:       { fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 1 },
+
+  profileRow:   { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
+  avatar:       { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
+  avatarText:   { fontSize: 22, fontFamily: 'Inter_700Bold', fontWeight: '700' as const },
+  profileInfo:  { flex: 1 },
+  profileName:  { fontSize: 17, fontFamily: 'Inter_600SemiBold', fontWeight: '600' as const },
+  profileEmail: { fontSize: 13, fontFamily: 'Inter_400Regular', marginTop: 2 },
+  planBadge:    { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, borderWidth: 1 },
+  planText:     { fontSize: 12, fontFamily: 'Inter_600SemiBold', fontWeight: '600' as const },
+
+  statsRow:     { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: 12 },
+  stat:         { flex: 1, alignItems: 'center', gap: 2 },
+  statValue:    { fontSize: 20, fontFamily: 'Inter_700Bold', fontWeight: '700' as const },
+  statLabel:    { fontSize: 11, fontFamily: 'Inter_400Regular' },
+  statDivider:  { width: StyleSheet.hairlineWidth, marginVertical: 4 },
+
+  innerSection: { paddingHorizontal: 14, paddingVertical: 12, gap: 10 },
+  innerLabel:   { fontSize: 12, fontFamily: 'Inter_500Medium', letterSpacing: 0.3 },
+
+  pillRow:      { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  pill:         { paddingHorizontal: 14, paddingVertical: 7 },
+  pillText:     { fontSize: 13, fontFamily: 'Inter_500Medium' },
+
+  copyBtn:      { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6 },
+  copyText:     { fontSize: 13, fontFamily: 'Inter_500Medium' },
+
+  premiumCard:  { padding: 18, gap: 16 },
+  premiumTop:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  premiumLabel: { fontSize: 10, fontFamily: 'Inter_700Bold', color: 'rgba(255,255,255,0.55)', letterSpacing: 1.5 },
+  premiumTitle: { fontSize: 22, fontFamily: 'Inter_700Bold', color: '#FFFFFF', marginTop: 2 },
+  premiumPrice: { flexDirection: 'row', alignItems: 'baseline', gap: 1 },
+  premiumAmount:{ fontSize: 30, fontFamily: 'Inter_700Bold', color: '#FFFFFF', fontWeight: '700' as const },
+  premiumPer:   { fontSize: 14, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.6)' },
+  premiumFeatures:{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  featureRow:   { flexDirection: 'row', alignItems: 'center', gap: 6, width: '47%' },
+  featureText:  { fontSize: 12, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.85)', flex: 1 },
+  premiumBtn:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, gap: 8 },
+  premiumBtnText:{ fontSize: 15, fontFamily: 'Inter_600SemiBold', fontWeight: '600' as const },
+  premiumSub:   { fontSize: 11, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.45)', textAlign: 'center' },
+});

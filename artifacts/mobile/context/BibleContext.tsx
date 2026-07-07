@@ -50,6 +50,7 @@ interface BibleContextType {
   toggleMastered: (word: string) => void;
   setDisplayMode: (mode: DisplayMode) => void;
   saveReadingProgress: (progress: ReadingProgress) => void;
+  clearVocabulary: () => void;
 }
 
 const BibleContext = createContext<BibleContextType | null>(null);
@@ -134,6 +135,11 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem(STORAGE_KEYS.DISPLAY_MODE, mode).catch(() => {});
   }, []);
 
+  const clearVocabulary = useCallback(() => {
+    setVocabulary([]);
+    AsyncStorage.setItem(STORAGE_KEYS.VOCABULARY, JSON.stringify([])).catch(() => {});
+  }, []);
+
   const saveReadingProgress = useCallback((progress: ReadingProgress) => {
     setReadingProgressState(progress);
     AsyncStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(progress)).catch(() => {});
@@ -153,6 +159,7 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
       toggleMastered,
       setDisplayMode,
       saveReadingProgress,
+      clearVocabulary,
     }}>
       {children}
     </BibleContext.Provider>

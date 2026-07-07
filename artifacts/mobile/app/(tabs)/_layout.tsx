@@ -28,6 +28,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: 'bookmark', selected: 'bookmark.fill' }} />
         <Label>Favoritos</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="settings">
+        <Icon sf={{ default: 'gearshape', selected: 'gearshape.fill' }} />
+        <Label>Configurações</Label>
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }
@@ -112,6 +116,18 @@ function ClassicTabLayout() {
               <SymbolView name="bookmark.fill" tintColor={color} size={22} />
             ) : (
               <Feather name="bookmark" size={22} color={color} />
+            ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Config.',
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="gearshape.fill" tintColor={color} size={22} />
+            ) : (
+              <Feather name="settings" size={22} color={color} />
             ),
         }}
       />
