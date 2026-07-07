@@ -865,6 +865,7 @@ export default function SettingsScreen() {
         { paddingTop: topPad + 14, borderBottomColor: colors.border, backgroundColor: colors.background },
       ]}>
         <View style={styles.headerTopRow}>
+          <Text style={[styles.headerTitle, { color: colors.foreground }]}>{tl('settings_title')}</Text>
           <TouchableOpacity
             onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); setDrawerVisible(true); }}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
@@ -872,7 +873,6 @@ export default function SettingsScreen() {
             <Feather name="menu" size={22} color={colors.foreground} />
           </TouchableOpacity>
         </View>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>{tl('settings_title')}</Text>
       </View>
 
       <ScrollView
@@ -1237,10 +1237,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   headerTitle: {
-    fontSize: 34,
-    fontFamily: 'Lora_700Bold',
-    letterSpacing: -0.5,
-    lineHeight: 40,
+    fontSize: 20,
+    fontFamily: 'Inter_700Bold',
+    letterSpacing: -0.2,
   },
 
   sectionLabel: {
@@ -1398,7 +1397,7 @@ const styles = StyleSheet.create({
   accentCircle:     { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
 
   // Header
-  headerTopRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 2 },
+  headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
 
   // Background template picker
   bgTmplRow:     { gap: 10, paddingBottom: 4 },
