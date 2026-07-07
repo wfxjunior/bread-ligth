@@ -157,12 +157,24 @@ export default function ChapterScreen() {
   const [pickerVisible, setPickerVisible] = useState(false);
 
   const book = BIBLE_DATA[currentBookId] ?? null;
-  const chapterNum = book ? Number(Object.keys(book.chapters)[0]) : 1;
+
+  // Sorted chapter keys for the current book
+  const chapterKeys = book
+    ? Object.keys(book.chapters).map(Number).sort((a, b) => a - b)
+    : [1];
+
+  // Current chapter — seeded from URL param, defaults to first chapter of book
+  const [currentChapter, setCurrentChapter] = useState<number>(() => {
+    const fromParam = params.chapter ? Number(params.chapter) : NaN;
+    return !isNaN(fromParam) ? fromParam : (chapterKeys[0] ?? 1);
+  });
+  const chapterNum = currentChapter;
   const verses: BibleVerse[] = book?.chapters[chapterNum] ?? [];
 
-  const bookIndex = ALL_BOOKS.findIndex(b => b.id === currentBookId);
-  const hasPrev = bookIndex > 0;
-  const hasNext = bookIndex < ALL_BOOKS.length - 1;
+  // Chapter navigation within the current book
+  const chapterIdx = chapterKeys.indexOf(chapterNum);
+  const hasPrev = chapterIdx > 0;
+  const hasNext = chapterIdx < chapterKeys.length - 1;
 
   const { displayMode, setDisplayMode, isBookmarked, addBookmark, removeBookmark, saveReadingProgress } = useBible();
 
@@ -198,15 +210,20 @@ export default function ChapterScreen() {
   }, [currentBookId, chapterNum]);
 
   const navigateBook = useCallback((dir: 'prev' | 'next') => {
-    const nextIdx = dir === 'prev' ? bookIndex - 1 : bookIndex + 1;
-    if (nextIdx < 0 || nextIdx >= ALL_BOOKS.length) return;
+    const nextIdx = dir === 'prev' ? chapterIdx - 1 : chapterIdx + 1;
+    if (nextIdx < 0 || nextIdx >= chapterKeys.length) return;
     if (Platform.OS !== 'web') Haptics.selectionAsync();
-    setCurrentBookId(ALL_BOOKS[nextIdx].id);
+    setCurrentChapter(chapterKeys[nextIdx]);
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
-  }, [bookIndex]);
+  }, [chapterIdx, chapterKeys]);
 
   const handleSelectBook = useCallback((bookId: string) => {
+    const newBook = BIBLE_DATA[bookId];
+    const firstChapter = newBook
+      ? Object.keys(newBook.chapters).map(Number).sort((a, b) => a - b)[0] ?? 1
+      : 1;
     setCurrentBookId(bookId);
+    setCurrentChapter(firstChapter);
     setPickerVisible(false);
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
   }, []);

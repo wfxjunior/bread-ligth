@@ -221,7 +221,7 @@ export default function HomeScreen() {
 
       {/* ── Continue reading strip ── */}
       {readingProgress && (
-        <View style={[styles.section, { marginTop: 8 }]}>
+        <View style={[styles.section, { marginTop: 18 }]}>
           <TouchableOpacity
             onPress={handleContinue}
             activeOpacity={0.85}
