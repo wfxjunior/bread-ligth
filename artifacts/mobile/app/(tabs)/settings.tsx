@@ -885,7 +885,7 @@ export default function SettingsScreen() {
                     ]}
                   >
                     <Text style={[styles.pillText, { color: active ? colors.primaryForeground : colors.mutedForeground }]}>
-                      {l === 'pt' ? '🇧🇷  Português' : '🇺🇸  English'}
+                      {l === 'pt' ? 'Português' : 'English'}
                     </Text>
                   </TouchableOpacity>
                 );
