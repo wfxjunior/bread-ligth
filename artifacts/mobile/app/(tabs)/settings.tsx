@@ -355,7 +355,7 @@ function ToggleRow({
   );
 }
 
-// ── Pill selector ─────────────────────────────────────────────────────────────
+// ── Pill selector (kept for language toggle) ──────────────────────────────────
 function PillSelector({
   options, value, onChange,
 }: { options: string[]; value: string; onChange: (v: string) => void }) {
@@ -382,6 +382,46 @@ function PillSelector({
           >
             <Text style={[styles.pillText, {
               color: active ? colors.primaryForeground : colors.foreground,
+            }]}>
+              {opt}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
+
+// ── Segmented control — equal-width, unified border ────────────────────────────
+function SegmentedControl({
+  options, value, onChange,
+}: { options: string[]; value: string; onChange: (v: string) => void }) {
+  const colors = useColors();
+  return (
+    <View style={[styles.segControl, {
+      borderColor:  colors.border,
+      borderRadius: colors.radius / 2,
+    }]}>
+      {options.map((opt, i) => {
+        const active  = value === opt;
+        const isLast  = i === options.length - 1;
+        return (
+          <TouchableOpacity
+            key={opt}
+            onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); onChange(opt); }}
+            activeOpacity={0.8}
+            style={[
+              styles.segItem,
+              {
+                backgroundColor: active ? colors.primary : 'transparent',
+                borderRightWidth: isLast ? 0 : StyleSheet.hairlineWidth,
+                borderRightColor: colors.border,
+              },
+            ]}
+          >
+            <Text style={[styles.segText, {
+              color:      active ? colors.primaryForeground : colors.mutedForeground,
+              fontFamily: active ? 'Inter_600SemiBold' : 'Inter_400Regular',
             }]}>
               {opt}
             </Text>
@@ -1002,7 +1042,7 @@ export default function SettingsScreen() {
           </View>
           <View style={styles.innerSection}>
             <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>{tl('display_mode')}</Text>
-            <PillSelector options={['EN', 'EN+PT', 'PT']} value={displayMode} onChange={setDisplayMode} />
+            <SegmentedControl options={['EN', 'EN+PT', 'PT']} value={displayMode} onChange={setDisplayMode} />
           </View>
         </SettingsCard>
 
@@ -1020,7 +1060,7 @@ export default function SettingsScreen() {
         <SettingsCard>
           <View style={styles.innerSection}>
             <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>{tl('playback_speed')}</Text>
-            <PillSelector options={['0.75×', 'Normal', '1.25×', '1.5×']} value={audioSpeed} onChange={setAudioSpeed} />
+            <SegmentedControl options={['0.75×', 'Normal', '1.25×', '1.5×']} value={audioSpeed} onChange={setAudioSpeed} />
           </View>
         </SettingsCard>
 
@@ -1207,6 +1247,11 @@ const styles = StyleSheet.create({
   pillText: { fontSize: 13, fontFamily: 'Inter_500Medium', textAlign: 'center' },
   levelPill:{ paddingVertical: 9, gap: 3 },
   cefrCode: { fontSize: 10, fontFamily: 'Inter_700Bold', letterSpacing: 0.5 },
+
+  // Segmented control — equal thirds, single border container
+  segControl: { flexDirection: 'row', borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden', height: 40 },
+  segItem:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  segText:    { fontSize: 13, letterSpacing: 0.1 },
 
   // Support / Apoio card (Apoio section)
   supportHeader:    { padding: 16, paddingBottom: 14, gap: 7, borderBottomWidth: StyleSheet.hairlineWidth },
