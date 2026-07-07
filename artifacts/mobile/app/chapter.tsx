@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   FlatList,
+  LayoutAnimation,
   Modal,
   Platform,
   Pressable,
@@ -191,6 +192,8 @@ export default function ChapterScreen() {
     AsyncStorage.setItem(TEXT_SIZE_KEY, s).catch(() => {});
   }, []);
 
+  const [focusMode, setFocusMode] = useState(false);
+
   const [selectedWord, setSelectedWord] = useState('');
   const [wordContext, setWordContext] = useState('');
   const [wordModalVisible, setWordModalVisible] = useState(false);
@@ -252,6 +255,11 @@ export default function ChapterScreen() {
     }
   }, [book, currentBookId, chapterNum, isBookmarked, addBookmark, removeBookmark]);
 
+  const toggleFocus = useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setFocusMode(f => !f);
+  }, []);
+
   const topPad = Platform.OS === 'web' ? 0 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
@@ -259,101 +267,132 @@ export default function ChapterScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* ── Custom Header ── */}
-      <View style={[styles.header, { paddingTop: topPad + 6, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      {/* ── Custom Header (hidden in focus mode) ── */}
+      {!focusMode && (
+        <View style={[styles.header, { paddingTop: topPad + 6, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
 
-        {/* Back */}
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.headerBtn}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Feather name="arrow-left" size={20} color={colors.primary} />
-        </TouchableOpacity>
+          {/* Back */}
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.headerBtn}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Feather name="arrow-left" size={20} color={colors.primary} />
+          </TouchableOpacity>
 
-        {/* Tappable book title */}
-        <TouchableOpacity
-          onPress={() => setPickerVisible(true)}
-          style={styles.headerCenter}
-          activeOpacity={0.75}
-        >
-          <View style={styles.headerTitleRow}>
-            <Text style={[styles.headerBookEn, { color: colors.foreground }]}>
-              {book?.englishName ?? '—'}
+          {/* Tappable book title */}
+          <TouchableOpacity
+            onPress={() => setPickerVisible(true)}
+            style={styles.headerCenter}
+            activeOpacity={0.75}
+          >
+            <View style={styles.headerTitleRow}>
+              <Text style={[styles.headerBookEn, { color: colors.foreground }]}>
+                {book?.englishName ?? '—'}
+              </Text>
+              <Feather name="chevron-down" size={15} color={colors.primary} style={{ marginTop: 1 }} />
+            </View>
+            <Text style={[styles.headerBookPt, { color: colors.mutedForeground }]}>
+              {book?.name} {chapterNum}
             </Text>
-            <Feather name="chevron-down" size={15} color={colors.primary} style={{ marginTop: 1 }} />
-          </View>
-          <Text style={[styles.headerBookPt, { color: colors.mutedForeground }]}>
-            {book?.name} {chapterNum}
-          </Text>
-        </TouchableOpacity>
+          </TouchableOpacity>
 
-        {/* Text size selector */}
-        <View style={[styles.levelSelector, { backgroundColor: colors.muted, borderRadius: 10 }]}>
-          {TEXT_SIZES.map(s => {
-            const active = textSize === s.key;
-            return (
+          {/* Text size selector */}
+          <View style={[styles.levelSelector, { backgroundColor: colors.muted, borderRadius: 10 }]}>
+            {TEXT_SIZES.map(s => {
+              const active = textSize === s.key;
+              return (
+                <TouchableOpacity
+                  key={s.key}
+                  onPress={() => handleSizeChange(s.key)}
+                  style={[
+                    styles.levelBtn,
+                    active && [styles.levelBtnActive, { backgroundColor: colors.primary, borderRadius: 7 }],
+                  ]}
+                  hitSlop={{ top: 4, bottom: 4, left: 2, right: 2 }}
+                >
+                  <Text style={[styles.levelCode, { fontSize: s.labelSize, color: active ? colors.primaryForeground : colors.mutedForeground }]}>
+                    A
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* Focus / expand button */}
+          <TouchableOpacity
+            onPress={toggleFocus}
+            style={styles.focusBtn}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Feather name="maximize-2" size={17} color={colors.mutedForeground} />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* ── Mode Bar (hidden in focus mode) ── */}
+      {!focusMode && (
+        <View style={[styles.modeBar, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
+          <View style={[styles.modeToggle, { backgroundColor: colors.muted, borderRadius: 10 }]}>
+            {MODE_LABELS.map(({ key, label }) => (
               <TouchableOpacity
-                key={s.key}
-                onPress={() => handleSizeChange(s.key)}
+                key={key}
                 style={[
-                  styles.levelBtn,
-                  active && [styles.levelBtnActive, { backgroundColor: colors.primary, borderRadius: 7 }],
+                  styles.modeBtn,
+                  displayMode === key && [styles.modeBtnActive, { backgroundColor: colors.primary }],
+                  { borderRadius: 8 },
                 ]}
-                hitSlop={{ top: 4, bottom: 4, left: 2, right: 2 }}
+                onPress={() => {
+                  if (Platform.OS !== 'web') Haptics.selectionAsync();
+                  setDisplayMode(key);
+                }}
+                activeOpacity={0.8}
               >
-                <Text style={[styles.levelCode, { fontSize: s.labelSize, color: active ? colors.primaryForeground : colors.mutedForeground }]}>
-                  A
+                <Text style={[styles.modeBtnText, { color: displayMode === key ? colors.primaryForeground : colors.mutedForeground }]}>
+                  {label}
                 </Text>
               </TouchableOpacity>
-            );
-          })}
+            ))}
+          </View>
+          <View style={styles.modeHint}>
+            <Feather name="zap" size={11} color={colors.accent} />
+            <Text style={[styles.modeHintText, { color: colors.mutedForeground }]}>toque nas palavras</Text>
+          </View>
         </View>
-      </View>
+      )}
 
-      {/* ── Mode Bar ── */}
-      <View style={[styles.modeBar, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <View style={[styles.modeToggle, { backgroundColor: colors.muted, borderRadius: 10 }]}>
-          {MODE_LABELS.map(({ key, label }) => (
+      {/* ── Fixed action toolbar (hidden in focus mode) ── */}
+      {!focusMode && (
+        <View style={[styles.actionBar, { backgroundColor: colors.primary, borderBottomColor: colors.border }]}>
+          {ACTIONS.map(({ icon, label }) => (
             <TouchableOpacity
-              key={key}
-              style={[
-                styles.modeBtn,
-                displayMode === key && [styles.modeBtnActive, { backgroundColor: colors.primary }],
-                { borderRadius: 8 },
-              ]}
-              onPress={() => {
-                if (Platform.OS !== 'web') Haptics.selectionAsync();
-                setDisplayMode(key);
-              }}
-              activeOpacity={0.8}
+              key={label}
+              style={styles.actionBtn}
+              onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); }}
+              activeOpacity={0.75}
             >
-              <Text style={[styles.modeBtnText, { color: displayMode === key ? colors.primaryForeground : colors.mutedForeground }]}>
-                {label}
-              </Text>
+              <Feather name={icon} size={16} color={colors.primaryForeground} />
+              <Text style={[styles.actionLabel, { color: colors.primaryForeground }]}>{label}</Text>
             </TouchableOpacity>
           ))}
         </View>
-        <View style={styles.modeHint}>
-          <Feather name="zap" size={11} color={colors.accent} />
-          <Text style={[styles.modeHintText, { color: colors.mutedForeground }]}>toque nas palavras</Text>
-        </View>
-      </View>
+      )}
 
-      {/* ── Fixed action toolbar — always visible above verse list ── */}
-      <View style={[styles.actionBar, { backgroundColor: colors.primary, borderBottomColor: colors.border }]}>
-        {ACTIONS.map(({ icon, label }) => (
-          <TouchableOpacity
-            key={label}
-            style={styles.actionBtn}
-            onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); }}
-            activeOpacity={0.75}
-          >
-            <Feather name={icon} size={16} color={colors.primaryForeground} />
-            <Text style={[styles.actionLabel, { color: colors.primaryForeground }]}>{label}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      {/* ── Floating exit button — only in focus mode ── */}
+      {focusMode && (
+        <TouchableOpacity
+          onPress={toggleFocus}
+          style={[styles.focusExitBtn, {
+            top: topPad + 12,
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+          }]}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          activeOpacity={0.75}
+        >
+          <Feather name="minimize-2" size={15} color={colors.mutedForeground} />
+        </TouchableOpacity>
+      )}
 
       {/* ── Verse list ── */}
       {verses.length === 0 ? (
@@ -367,6 +406,7 @@ export default function ChapterScreen() {
           ref={listRef}
           data={verses}
           keyExtractor={(item) => `${currentBookId}-${chapterNum}-${item.v}`}
+          extraData={[focusMode, displayMode, chapterNum, textSize, currentBookId]}
           renderItem={({ item }) => (
             <VerseRow
               verse={item}
@@ -380,28 +420,30 @@ export default function ChapterScreen() {
           ListHeaderComponent={
             <View style={[styles.chapterHeader, { borderBottomColor: colors.border }]}>
 
-              {/* ── Navigation row ── */}
-              <View style={styles.chapterNavRow}>
-                <TouchableOpacity
-                  onPress={() => navigateBook('prev')} disabled={!hasPrev}
-                  style={[styles.chapterNavBtn, !hasPrev && { opacity: 0.22 }]}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Feather name="chevron-left" size={16} color={colors.mutedForeground} />
-                  <Text style={[styles.chapterNavText, { color: colors.mutedForeground }]}>Anterior</Text>
-                </TouchableOpacity>
+              {/* ── Navigation row (hidden in focus mode) ── */}
+              {!focusMode && (
+                <View style={styles.chapterNavRow}>
+                  <TouchableOpacity
+                    onPress={() => navigateBook('prev')} disabled={!hasPrev}
+                    style={[styles.chapterNavBtn, !hasPrev && { opacity: 0.22 }]}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Feather name="chevron-left" size={16} color={colors.mutedForeground} />
+                    <Text style={[styles.chapterNavText, { color: colors.mutedForeground }]}>Anterior</Text>
+                  </TouchableOpacity>
 
-                <View style={[styles.chapterDot, { backgroundColor: colors.accent }]} />
+                  <View style={[styles.chapterDot, { backgroundColor: colors.accent }]} />
 
-                <TouchableOpacity
-                  onPress={() => navigateBook('next')} disabled={!hasNext}
-                  style={[styles.chapterNavBtn, styles.chapterNavBtnRight, !hasNext && { opacity: 0.22 }]}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Text style={[styles.chapterNavText, { color: colors.mutedForeground }]}>Próximo</Text>
-                  <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
-                </TouchableOpacity>
-              </View>
+                  <TouchableOpacity
+                    onPress={() => navigateBook('next')} disabled={!hasNext}
+                    style={[styles.chapterNavBtn, styles.chapterNavBtnRight, !hasNext && { opacity: 0.22 }]}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Text style={[styles.chapterNavText, { color: colors.mutedForeground }]}>Próximo</Text>
+                    <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+                  </TouchableOpacity>
+                </View>
+              )}
 
               {/* ── Book subtitle (small caps) — respects displayMode ── */}
               <Text style={[styles.bookSubtitle, { color: colors.accent }]}>
@@ -513,6 +555,19 @@ const styles = StyleSheet.create({
     height: 34,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  // Focus mode buttons
+  focusBtn: {
+    width: 34, height: 34, alignItems: 'center', justifyContent: 'center',
+  },
+  focusExitBtn: {
+    position: 'absolute', right: 16, zIndex: 99,
+    width: 36, height: 36, borderRadius: 18,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08, shadowRadius: 4, elevation: 3,
   },
 
   // Text size selector (header right side)
