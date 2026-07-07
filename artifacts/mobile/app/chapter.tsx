@@ -378,8 +378,8 @@ export default function ChapterScreen() {
                 {book?.name} {chapterNum} · {verses.length} versículo{verses.length !== 1 ? 's' : ''}
               </Text>
 
-              {/* ── Dark action toolbar ── */}
-              <View style={styles.actionBar}>
+              {/* ── Action toolbar ── */}
+              <View style={[styles.actionBar, { backgroundColor: colors.primary }]}>
                 {ACTIONS.map(({ icon, label }) => (
                   <TouchableOpacity
                     key={label}
@@ -387,8 +387,8 @@ export default function ChapterScreen() {
                     onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); }}
                     activeOpacity={0.75}
                   >
-                    <Feather name={icon} size={16} color="#fff" />
-                    <Text style={styles.actionLabel}>{label}</Text>
+                    <Feather name={icon} size={16} color={colors.primaryForeground} />
+                    <Text style={[styles.actionLabel, { color: colors.primaryForeground }]}>{label}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -481,17 +481,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,
-    paddingVertical: 9,
+    paddingVertical: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     gap: 8,
+    flexWrap: 'nowrap',
   },
-  modeLabel: { fontSize: 12, fontFamily: 'Inter_500Medium' },
-  modeToggle: { flexDirection: 'row', padding: 3, gap: 2 },
-  modeBtn: { paddingHorizontal: 13, paddingVertical: 5 },
+  modeLabel: { fontSize: 12, fontFamily: 'Inter_500Medium', flexShrink: 0 },
+  modeToggle: { flexDirection: 'row', padding: 3, gap: 1, flexShrink: 0 },
+  modeBtn: { paddingHorizontal: 11, paddingVertical: 5 },
   modeBtnActive: {},
   modeBtnText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
-  modeHint: { flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1, justifyContent: 'flex-end' },
-  modeHintText: { fontSize: 10, fontFamily: 'Inter_400Regular' },
+  modeHint: { flexDirection: 'row', alignItems: 'center', gap: 3, flex: 1, justifyContent: 'flex-end', overflow: 'hidden' },
+  modeHintText: { fontSize: 10, fontFamily: 'Inter_400Regular', flexShrink: 1 },
 
   // Chapter header in list (redesigned)
   chapterHeader: {
@@ -550,10 +551,9 @@ const styles = StyleSheet.create({
     marginBottom: 22,
   },
 
-  // Dark action toolbar
+  // Action toolbar — uses theme primary so it adapts to light/dark
   actionBar: {
     flexDirection: 'row',
-    backgroundColor: '#1A1A2E',
     borderRadius: 14,
     paddingVertical: 10,
     paddingHorizontal: 8,
@@ -570,7 +570,6 @@ const styles = StyleSheet.create({
   actionLabel: {
     fontSize: 11,
     fontFamily: 'Inter_500Medium',
-    color: 'rgba(255,255,255,0.8)',
   },
 
   // Empty state

@@ -1,6 +1,5 @@
 import React, { memo } from 'react';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Feather } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
@@ -23,26 +22,28 @@ function VerseRow({ verse, displayMode, isBookmarked, onWordPress, onBookmarkTog
     onBookmarkToggle();
   };
 
+  const showEn = displayMode === 'both' || displayMode === 'english';
+  const showPt = displayMode === 'both' || displayMode === 'portuguese';
+  const showBoth = displayMode === 'both';
+
   const renderTappableWords = (text: string) => {
     const words = text.split(' ');
     return (
-      <Text>
+      <Text style={[styles.verseEnText, { color: colors.englishText }]}>
         {words.map((rawWord, i) => {
           const clean = rawWord.replace(/[^a-zA-Z']/g, '').toLowerCase();
           return (
             <Text
               key={i}
-              onPress={() => {
-                if (clean.length > 1) onWordPress(clean, text);
-              }}
+              onPress={() => { if (clean.length > 1) onWordPress(clean, text); }}
               style={[
-                styles.englishWord,
+                styles.enWord,
                 { color: colors.englishText },
                 clean.length > 1 && styles.tappableWord,
               ]}
+              suppressHighlighting
             >
-              {rawWord}
-              {i < words.length - 1 ? ' ' : ''}
+              {rawWord}{i < words.length - 1 ? ' ' : ''}
             </Text>
           );
         })}
@@ -52,34 +53,58 @@ function VerseRow({ verse, displayMode, isBookmarked, onWordPress, onBookmarkTog
 
   return (
     <View style={[styles.container, { borderBottomColor: colors.border }]}>
-      <View style={[styles.verseNumber, { backgroundColor: colors.accent + '22' }]}>
+      {/* Verse number pill */}
+      <View style={[styles.verseNumber, { backgroundColor: colors.accent + '18' }]}>
         <Text style={[styles.verseNumText, { color: colors.verseNumber }]}>{verse.v}</Text>
       </View>
 
+      {/* Text area */}
       <View style={styles.textContainer}>
-        {(displayMode === 'both' || displayMode === 'english') && (
+
+        {/* English block */}
+        {showEn && (
           <View style={styles.languageBlock}>
-            <Text style={[styles.langLabel, { color: colors.mutedForeground }]}>EN</Text>
-            <Text style={[styles.verseText, { color: colors.englishText }]}>
-              {renderTappableWords(verse.en)}
+            {showBoth && (
+              <View style={[styles.langBadge, { backgroundColor: colors.englishText + '12' }]}>
+                <Text style={[styles.langBadgeText, { color: colors.englishText }]}>EN</Text>
+              </View>
+            )}
+            {renderTappableWords(verse.en)}
+          </View>
+        )}
+
+        {/* Separator */}
+        {showBoth && (
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        )}
+
+        {/* Portuguese block */}
+        {showPt && (
+          <View style={styles.languageBlock}>
+            {showBoth && (
+              <View style={[styles.langBadge, { backgroundColor: colors.portugueseText + '14' }]}>
+                <Text style={[styles.langBadgeText, { color: colors.portugueseText }]}>PT</Text>
+              </View>
+            )}
+            <Text style={[styles.versePtText, { color: colors.portugueseText }]}>
+              {verse.pt}
             </Text>
           </View>
         )}
-        {displayMode === 'both' && <View style={[styles.divider, { backgroundColor: colors.border }]} />}
-        {(displayMode === 'both' || displayMode === 'portuguese') && (
-          <View style={styles.languageBlock}>
-            <Text style={[styles.langLabel, { color: colors.mutedForeground }]}>PT</Text>
-            <Text style={[styles.verseText, { color: colors.portugueseText }]}>{verse.pt}</Text>
-          </View>
-        )}
+
       </View>
 
-      <TouchableOpacity onPress={handleBookmark} style={styles.bookmarkBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+      {/* Bookmark button */}
+      <TouchableOpacity
+        onPress={handleBookmark}
+        style={styles.bookmarkBtn}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      >
         <Ionicons
           name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
-          size={20}
+          size={19}
           color={isBookmarked ? colors.accent : colors.mutedForeground}
-          style={{ opacity: isBookmarked ? 1 : 0.45 }}
+          style={{ opacity: isBookmarked ? 1 : 0.4 }}
         />
       </TouchableOpacity>
     </View>
@@ -89,59 +114,83 @@ function VerseRow({ verse, displayMode, isBookmarked, onWordPress, onBookmarkTog
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    paddingVertical: 14,
+    paddingVertical: 16,
     paddingHorizontal: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
     alignItems: 'flex-start',
     gap: 12,
   },
+
+  // Verse number circle
   verseNumber: {
     width: 28,
     height: 28,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 2,
+    marginTop: 3,
     flexShrink: 0,
   },
   verseNumText: {
     fontSize: 11,
-    fontWeight: '700' as const,
     fontFamily: 'Inter_700Bold',
   },
+
+  // Text layout
   textContainer: {
     flex: 1,
-    gap: 6,
+    gap: 8,
   },
   languageBlock: {
-    gap: 2,
+    gap: 5,
   },
-  langLabel: {
-    fontSize: 10,
-    fontWeight: '600' as const,
-    fontFamily: 'Inter_600SemiBold',
+
+  // Language badge (EN / PT chip)
+  langBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 5,
+  },
+  langBadgeText: {
+    fontSize: 9,
+    fontFamily: 'Inter_700Bold',
     letterSpacing: 0.8,
-    marginBottom: 2,
   },
-  verseText: {
-    fontSize: 16,
-    lineHeight: 26,
+
+  // English verse
+  verseEnText: {
+    fontSize: 17,
+    lineHeight: 28,
     fontFamily: 'Inter_400Regular',
   },
-  englishWord: {
-    fontSize: 16,
-    lineHeight: 26,
+  enWord: {
+    fontSize: 17,
+    lineHeight: 28,
+    fontFamily: 'Inter_400Regular',
   },
   tappableWord: {
     textDecorationLine: 'underline',
     textDecorationStyle: 'solid',
   },
+
+  // Portuguese verse
+  versePtText: {
+    fontSize: 16,
+    lineHeight: 26,
+    fontFamily: 'Inter_400Regular',
+    fontStyle: 'italic',
+  },
+
+  // Separator between EN and PT
   divider: {
     height: StyleSheet.hairlineWidth,
-    marginVertical: 4,
+    marginVertical: 2,
   },
+
+  // Bookmark
   bookmarkBtn: {
-    paddingTop: 2,
+    paddingTop: 3,
     flexShrink: 0,
   },
 });
