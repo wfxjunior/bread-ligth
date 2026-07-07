@@ -30,11 +30,22 @@ const TEXT_SIZES = [
 type TextSize = typeof TEXT_SIZES[number]['key'];
 const TEXT_SIZE_KEY = '@bibliaeN:textSize';
 
-// Chapter number → English word (covers all chapters in the app's data)
+// Chapter number → English word
 const CH_WORDS = [
   'One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten',
   'Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen',
   'Eighteen','Nineteen','Twenty','Twenty-One','Twenty-Two','Twenty-Three',
+  'Twenty-Four','Twenty-Five','Twenty-Six','Twenty-Seven','Twenty-Eight',
+  'Twenty-Nine','Thirty','Thirty-One',
+];
+
+// Chapter number → Portuguese word
+const CH_WORDS_PT = [
+  'Um','Dois','Três','Quatro','Cinco','Seis','Sete','Oito','Nove','Dez',
+  'Onze','Doze','Treze','Quatorze','Quinze','Dezesseis','Dezessete',
+  'Dezoito','Dezenove','Vinte','Vinte e Um','Vinte e Dois','Vinte e Três',
+  'Vinte e Quatro','Vinte e Cinco','Vinte e Seis','Vinte e Sete','Vinte e Oito',
+  'Vinte e Nove','Trinta','Trinta e Um',
 ];
 
 // Chapter action bar items
@@ -383,9 +394,12 @@ export default function ChapterScreen() {
               {/* ── Gold rule ── */}
               <View style={[styles.subtitleRule, { backgroundColor: colors.accent + '35' }]} />
 
-              {/* ── Chapter heading — Lora serif ── */}
+              {/* ── Chapter heading — EN Lora serif + PT subtitle ── */}
               <Text style={[styles.chapterBig, { color: colors.foreground }]}>
                 Chapter {CH_WORDS[chapterNum - 1] ?? String(chapterNum)}
+              </Text>
+              <Text style={[styles.chapterBigPt, { color: colors.mutedForeground }]}>
+                Capítulo {CH_WORDS_PT[chapterNum - 1] ?? String(chapterNum)}
               </Text>
 
               {/* ── Chapter meta ── */}
@@ -541,6 +555,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: -0.5,
     marginBottom: 6,
+  },
+
+  // PT subtitle below English chapter heading
+  chapterBigPt: {
+    fontSize: 14,
+    fontFamily: 'Lora_400Regular_Italic',
+    textAlign: 'center',
+    marginBottom: 8,
   },
 
   chapterMeta: {

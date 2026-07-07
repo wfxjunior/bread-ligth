@@ -297,7 +297,7 @@ export default function SettingsScreen() {
               <Text style={[styles.profileEmail, { color: colors.mutedForeground }]}>wilson@email.com</Text>
             </View>
             <View style={[styles.planBadge, { backgroundColor: colors.accent + '20', borderColor: colors.accent + '40' }]}>
-              <Text style={[styles.planText, { color: colors.accent }]}>Free</Text>
+              <Text style={[styles.planText, { color: colors.accent }]}>Gratuito</Text>
             </View>
           </View>
           <View style={[styles.statsRow, { borderTopColor: colors.border }]}>
