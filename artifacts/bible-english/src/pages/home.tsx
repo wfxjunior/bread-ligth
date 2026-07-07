@@ -1,7 +1,15 @@
-import React from 'react';
 import { Layout } from '../components/layout';
 import { BookOpen, TrendingUp, CheckCircle, Clock, ChevronRight, Search, BookText, Bookmark, Feather } from 'lucide-react';
 import { Link } from 'wouter';
+import { motion } from 'framer-motion';
+
+const FEATURED_PASSAGES = [
+  { book: "John 1", snippet: "In the beginning was the Word...", badge: "In Progress", bg: "bg-[#4A1C23]", text: "text-white/90", badgeClass: "bg-white/20 text-white", initial: "I" },
+  { book: "Psalms 23", snippet: "The Lord is my shepherd...", badge: "Classic", bg: "bg-[#F3EFE9]", text: "text-[#2F2C2A]", badgeClass: "bg-black/5 text-[#2F2C2A]", initial: "XXIII" },
+  { book: "Proverbs 3", snippet: "Trust in the Lord with all your heart...", badge: "Wisdom", bg: "bg-[#3B4231]", text: "text-[#F3EFE9]", badgeClass: "bg-white/20 text-[#F3EFE9]", initial: "III" },
+  { book: "Matthew 5", snippet: "Blessed are the pure in heart...", badge: "Sermon", bg: "bg-[#C5A059]", text: "text-[#2F2C2A]", badgeClass: "bg-black/5 text-[#2F2C2A]", initial: "V" },
+  { book: "Romans 8", snippet: "There is now no condemnation...", badge: "Grace", bg: "bg-[#2D3A4B]", text: "text-[#F3EFE9]", badgeClass: "bg-white/20 text-[#F3EFE9]", initial: "VIII" },
+];
 
 export default function HomePage() {
   return (
@@ -41,6 +49,57 @@ export default function HomePage() {
                 <div className="bg-secondary h-full w-[4%]" />
               </div>
             </div>
+          </div>
+        </section>
+
+        <section className="mb-12">
+          <div className="bg-gradient-to-br from-card to-primary/5 border border-border p-8 md:p-10 rounded-2xl shadow-sm relative overflow-hidden group">
+            <span className="absolute -top-4 -left-4 text-9xl font-serif text-primary/5 select-none pointer-events-none leading-none">"</span>
+            
+            <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+              <div className="flex-1">
+                <p className="text-xs font-bold uppercase tracking-widest text-secondary mb-4">Versículo do Dia</p>
+                <h2 className="font-serif text-3xl md:text-4xl text-foreground leading-snug mb-2 max-w-2xl">
+                  "In him was life; and the life was the light of men."
+                </h2>
+                <p className="text-muted-foreground font-serif italic text-lg">— John 1:4</p>
+              </div>
+              
+              <Link href="/" className="inline-flex items-center justify-center gap-2 bg-transparent border border-primary/20 text-primary px-6 py-3 rounded-lg font-medium text-sm hover:bg-primary/5 transition-colors shrink-0">
+                Read in Context
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section className="mb-12">
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="font-serif text-2xl text-foreground">Featured Passages</h3>
+          </div>
+          <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory scrollbar-hide -mx-8 px-8 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
+            {FEATURED_PASSAGES.map((card, i) => (
+              <Link href="/" key={i} className="snap-start shrink-0 block">
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  className={`w-60 h-44 p-6 rounded-xl relative overflow-hidden cursor-pointer shadow-sm flex flex-col ${card.bg} ${card.text}`}
+                >
+                  <div className="absolute -bottom-4 -right-2 text-8xl font-serif opacity-10 pointer-events-none select-none">
+                    {card.initial}
+                  </div>
+                  <div className="flex justify-between items-start mb-auto relative z-10">
+                    <span className={`text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded-full ${card.badgeClass}`}>
+                      {card.badge}
+                    </span>
+                  </div>
+                  <div className="relative z-10 mt-auto">
+                    <h4 className="font-serif text-xl mb-1">{card.book}</h4>
+                    <p className="text-xs opacity-80 leading-relaxed font-sans line-clamp-2">
+                      "{card.snippet}"
+                    </p>
+                  </div>
+                </motion.div>
+              </Link>
+            ))}
           </div>
         </section>
 

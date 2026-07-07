@@ -1,7 +1,17 @@
-import React from 'react';
+import { useRef } from 'react';
 import { Layout } from '../components/layout';
-import { BookMarked, ChevronRight } from 'lucide-react';
+import { BookMarked, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Link } from 'wouter';
+import { motion } from 'framer-motion';
+
+const FEATURED_BOOKS = [
+  { name: 'John', testament: 'New Testament', chapters: 21, bg: 'bg-gradient-to-br from-[#4A1C23] to-[#2E1015]', initial: 'IV', badge: 'In Progress' },
+  { name: 'Genesis', testament: 'Old Testament', chapters: 50, bg: 'bg-gradient-to-br from-[#1E3329] to-[#121F19]', initial: 'I' },
+  { name: 'Psalms', testament: 'Old Testament', chapters: 150, bg: 'bg-gradient-to-br from-[#B38030] to-[#8C6221]', initial: 'XIX' },
+  { name: 'Proverbs', testament: 'Old Testament', chapters: 31, bg: 'bg-gradient-to-br from-[#2D3A4B] to-[#1C242F]', initial: 'XX' },
+  { name: 'Matthew', testament: 'New Testament', chapters: 28, bg: 'bg-gradient-to-br from-[#3E141D] to-[#250A10]', initial: 'I' },
+  { name: 'Romans', testament: 'New Testament', chapters: 16, bg: 'bg-gradient-to-br from-[#2F2C2A] to-[#1C1A18]', initial: 'VI' },
+];
 
 const OLD_TESTAMENT = [
   { name: 'Genesis', chapters: 50, progress: 0 },
@@ -21,6 +31,16 @@ const NEW_TESTAMENT = [
 ];
 
 export default function LibraryPage() {
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (carouselRef.current) {
+      const { scrollLeft, clientWidth } = carouselRef.current;
+      const scrollTo = direction === 'left' ? scrollLeft - clientWidth + 40 : scrollLeft + clientWidth - 40;
+      carouselRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
+    }
+  };
+
   return (
     <Layout>
       <div className="max-w-5xl mx-auto w-full p-8 md:p-12 overflow-y-auto">
@@ -28,6 +48,66 @@ export default function LibraryPage() {
           <h1 className="font-serif text-4xl text-primary mb-2">Library</h1>
           <p className="text-muted-foreground font-medium">Browse books of the Bible to study</p>
         </header>
+
+        <section className="mb-12">
+          <div className="flex items-end justify-between border-b border-border pb-4 mb-6">
+            <h2 className="font-serif text-2xl text-foreground">Featured Books</h2>
+            <div className="flex items-center gap-4">
+              <Link href="/" className="text-sm font-medium text-primary hover:underline">
+                View All
+              </Link>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => scroll('left')}
+                  className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-primary/5 text-foreground transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={() => scroll('right')}
+                  className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-primary/5 text-foreground transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div 
+            ref={carouselRef}
+            className="flex overflow-x-auto gap-4 pb-6 pt-2 snap-x snap-mandatory scrollbar-hide -mx-8 px-8 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden" 
+            style={{ scrollbarWidth: 'none' }}
+          >
+            {FEATURED_BOOKS.map((book) => (
+              <Link href={`/book/${book.name.toLowerCase()}`} key={book.name} className="snap-start shrink-0 block">
+                <motion.div
+                  whileHover={{ scale: 1.03 }}
+                  className={`w-[200px] h-[280px] rounded-xl p-6 relative overflow-hidden cursor-pointer shadow-md hover:shadow-xl transition-shadow flex flex-col justify-between text-white ${book.bg}`}
+                >
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-9xl font-serif opacity-5 pointer-events-none select-none">
+                    {book.initial}
+                  </div>
+                  
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+
+                  <div className="relative z-10">
+                    {book.badge && (
+                      <span className="inline-block px-2 py-1 bg-white/20 backdrop-blur-sm text-[10px] uppercase tracking-widest font-bold rounded-full mb-4">
+                        {book.badge}
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="relative z-10 text-center mt-auto pb-2">
+                    <p className="text-[10px] uppercase tracking-widest font-bold opacity-70 mb-1">{book.testament}</p>
+                    <h3 className="font-serif text-3xl mb-1">{book.name}</h3>
+                    <p className="text-xs opacity-80">{book.chapters} Chapters</p>
+                  </div>
+                </motion.div>
+              </Link>
+            ))}
+          </div>
+        </section>
 
         <section className="mb-12">
           <h2 className="font-serif text-2xl text-foreground border-b border-border pb-4 mb-6">New Testament</h2>
