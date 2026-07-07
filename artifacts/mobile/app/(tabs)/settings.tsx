@@ -1196,7 +1196,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_600SemiBold',
     letterSpacing: 1.2,
     marginTop: 14,
-    marginBottom: 4,
+    marginBottom: 10,
     marginHorizontal: 2,
   },
 
@@ -1268,11 +1268,11 @@ const styles = StyleSheet.create({
   segText:    { fontSize: 13, letterSpacing: 0.1 },
 
   // Support / Apoio card (Apoio section)
-  supportHeader:    { padding: 16, paddingBottom: 14, gap: 7, borderBottomWidth: StyleSheet.hairlineWidth },
-  supportBadge:     { alignSelf: 'flex-start', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 20, borderWidth: 1 },
+  supportHeader:    { padding: 20, paddingBottom: 18, gap: 7, borderBottomWidth: StyleSheet.hairlineWidth, alignItems: 'center' },
+  supportBadge:     { alignSelf: 'center', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 20, borderWidth: 1 },
   supportBadgeText: { fontSize: 10, fontFamily: 'Inter_700Bold', letterSpacing: 1.2 },
-  supportTitle:     { fontSize: 22, fontFamily: 'Lora_700Bold', letterSpacing: -0.3 },
-  supportDesc:      { fontSize: 13, fontFamily: 'Inter_400Regular', lineHeight: 20 },
+  supportTitle:     { fontSize: 22, fontFamily: 'Lora_700Bold', letterSpacing: -0.3, textAlign: 'center' },
+  supportDesc:      { fontSize: 13, fontFamily: 'Inter_400Regular', lineHeight: 20, textAlign: 'center' },
 
   // SupportModal sheet
   supportBackdrop:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
