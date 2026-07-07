@@ -60,6 +60,7 @@ router.get("/devotional", async (req, res) => {
   const verse   = typeof q.verse   === "string" ? q.verse.slice(0, 4)    : "";
   const en      = typeof q.en      === "string" ? q.en.slice(0, 500)     : "";
   const pt      = typeof q.pt      === "string" ? q.pt.slice(0, 500)     : "";
+  const lang    = typeof q.lang    === "string" && q.lang === "en" ? "en" : "pt";
 
   if (!en || !pt) {
     res.status(400).json({ error: "Missing required query params: en, pt" });
@@ -68,20 +69,21 @@ router.get("/devotional", async (req, res) => {
 
   const reference = [book, chapter, verse].filter(Boolean).join(" ");
 
+  const systemPrompt = lang === "en"
+    ? "You are a warm, encouraging evangelical pastor. Write short, practical morning devotionals in clear, accessible American English. Be direct, avoid religious jargon, and keep it under 120 words."
+    : "Você é um pastor evangélico gentil e encorajador. Escreva reflexões devocionais curtas, calorosas e práticas em português brasileiro. Seja direto, use linguagem acessível, evite jargão religioso excessivo. Nunca ultrapasse 120 palavras.";
+
+  const userPrompt = lang === "en"
+    ? `Write a morning devotional reflection for ${reference}:\n\n"${en}"\n\nThe reflection should: (1) highlight the central truth of the verse, (2) offer a practical application for today, (3) close with a brief prayer or encouragement. Max 120 words.`
+    : `Escreva uma reflexão devocional de uma manhã para o versículo ${reference}:\n\n"${en}"\n\n"${pt}"\n\nA reflexão deve: (1) destacar a verdade central do versículo, (2) trazer uma aplicação prática para o dia de hoje, (3) terminar com uma breve oração ou encorajamento. Máximo 120 palavras.`;
+
   try {
     const completion = await openai.chat.completions.create({
       model: "gpt-5-mini",
       max_completion_tokens: 2000,
       messages: [
-        {
-          role: "system",
-          content:
-            "Você é um pastor evangélico gentil e encorajador. Escreva reflexões devocionais curtas, calorosas e práticas em português brasileiro. Seja direto, use linguagem acessível, evite jargão religioso excessivo. Nunca ultrapasse 120 palavras.",
-        },
-        {
-          role: "user",
-          content: `Escreva uma reflexão devocional de uma manhã para o versículo ${reference}:\n\n"${en}"\n\n"${pt}"\n\nA reflexão deve: (1) destacar a verdade central do versículo, (2) trazer uma aplicação prática para o dia de hoje, (3) terminar com uma breve oração ou encorajamento. Máximo 120 palavras.`,
-        },
+        { role: "system", content: systemPrompt },
+        { role: "user",   content: userPrompt   },
       ],
     });
 

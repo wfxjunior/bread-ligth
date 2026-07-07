@@ -74,41 +74,46 @@ function TappableVerse({ text, onWordPress }: {
 }
 
 // ── Devotional bottom-sheet modal ─────────────────────────────────────────────
-function DevotionalModal({ visible, text, loading, error, onClose, verseRef, verseEn, versePt, dateStr }: {
-  visible: boolean;
-  text: string;
-  loading: boolean;
-  error: string;
-  onClose: () => void;
-  verseRef: string;
-  verseEn: string;
-  versePt: string;
-  dateStr: string;
+function DevotionalModal({
+  visible, text, loading, error, onClose,
+  verseRef, verseEn, versePt, dateStr,
+  textEn, loadingEn, errorEn, onRequestEnglish,
+}: {
+  visible: boolean; text: string; loading: boolean; error: string;
+  onClose: () => void; verseRef: string; verseEn: string; versePt: string; dateStr: string;
+  textEn: string; loadingEn: boolean; errorEn: string; onRequestEnglish: () => void;
 }) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const [lang, setLang] = useState<'pt' | 'en'>('pt');
 
-  const hasText = !loading && !error && text.length > 0;
+  const activeText    = lang === 'pt' ? text    : textEn;
+  const activeLoading = lang === 'pt' ? loading : loadingEn;
+  const activeError   = lang === 'pt' ? error   : errorEn;
+  const hasText = !activeLoading && !activeError && activeText.length > 0;
+
+  const handleLangSwitch = (l: 'pt' | 'en') => {
+    setLang(l);
+    if (l === 'en' && !textEn && !loadingEn && !errorEn) onRequestEnglish();
+  };
 
   const handleShare = useCallback(async () => {
     if (!hasText) return;
     if (Platform.OS !== 'web') Haptics.selectionAsync();
-    const message = [
-      `✨ Devocional do Dia — ${dateStr}`,
+    const isEn = lang === 'en';
+    const parts = [
+      isEn ? `✨ Daily Devotional — ${dateStr}` : `✨ Devocional do Dia — ${dateStr}`,
       '',
       `📖 ${verseRef}`,
       '',
-      text,
+      activeText,
       '',
       `"${verseEn}"`,
-      `${versePt}`,
-      '',
-      '— BíbliaEN',
-    ].join('\n');
-    try {
-      await Share.share({ message });
-    } catch {}
-  }, [hasText, text, verseRef, verseEn, versePt, dateStr]);
+    ];
+    if (!isEn) parts.push(versePt);
+    parts.push('', '— BíbliaEN');
+    try { await Share.share({ message: parts.join('\n') }); } catch {}
+  }, [hasText, lang, activeText, verseRef, verseEn, versePt, dateStr]);
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -120,23 +125,34 @@ function DevotionalModal({ visible, text, loading, error, onClose, verseRef, ver
           <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
 
           <View style={styles.sheetHeader}>
-            <View style={styles.sheetTitleRow}>
-              <Feather name="feather" size={15} color={D.wine} />
-              <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Devocional do Dia</Text>
-            </View>
+            {/* Title — no icon */}
+            <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Devocional do Dia</Text>
 
-            {/* Actions — share + close */}
+            {/* Right: PT/EN toggle + share icon + close */}
             <View style={styles.sheetActions}>
+              <View style={[styles.langToggle, { backgroundColor: colors.muted }]}>
+                {(['pt', 'en'] as const).map(l => (
+                  <TouchableOpacity
+                    key={l}
+                    onPress={() => handleLangSwitch(l)}
+                    style={[styles.langBtn, lang === l && { backgroundColor: colors.card }]}
+                  >
+                    <Text style={[styles.langBtnText, {
+                      color:      lang === l ? colors.foreground : colors.mutedForeground,
+                      fontFamily: lang === l ? 'Inter_600SemiBold' : 'Inter_400Regular',
+                    }]}>
+                      {l.toUpperCase()}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
               {hasText && (
-                <TouchableOpacity
-                  onPress={handleShare}
-                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                  style={[styles.sheetShareBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
-                >
-                  <Feather name="share-2" size={14} color={colors.mutedForeground} />
-                  <Text style={[styles.sheetShareLabel, { color: colors.mutedForeground }]}>Compartilhar</Text>
+                <TouchableOpacity onPress={handleShare} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                  <Feather name="share-2" size={18} color={colors.mutedForeground} />
                 </TouchableOpacity>
               )}
+
               <TouchableOpacity onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
                 <Feather name="x" size={20} color={colors.mutedForeground} />
               </TouchableOpacity>
@@ -146,21 +162,21 @@ function DevotionalModal({ visible, text, loading, error, onClose, verseRef, ver
           <View style={[styles.sheetGoldRule, { backgroundColor: D.wine }]} />
 
           <ScrollView contentContainerStyle={styles.sheetBody} showsVerticalScrollIndicator={false}>
-            {loading ? (
+            {activeLoading ? (
               <View style={styles.sheetCenter}>
                 <ActivityIndicator color={D.wine} size="large" />
-                <Text style={[styles.sheetHint, { color: colors.mutedForeground }]}>Gerando sua reflexão…</Text>
+                <Text style={[styles.sheetHint, { color: colors.mutedForeground }]}>
+                  {lang === 'pt' ? 'Gerando sua reflexão…' : 'Generating your reflection…'}
+                </Text>
               </View>
-            ) : error ? (
+            ) : activeError ? (
               <View style={styles.sheetCenter}>
                 <Feather name="alert-circle" size={30} color={colors.border} />
-                <Text style={[styles.sheetHint, { color: colors.mutedForeground }]}>{error}</Text>
+                <Text style={[styles.sheetHint, { color: colors.mutedForeground }]}>{activeError}</Text>
               </View>
             ) : (
               <>
-                <Text style={[styles.sheetText, { color: colors.foreground }]}>{text}</Text>
-
-                {/* Verse attribution at bottom of text */}
+                <Text style={[styles.sheetText, { color: colors.foreground }]}>{activeText}</Text>
                 <View style={[styles.sheetVerseBlock, { borderColor: D.wineBorder, backgroundColor: D.wineFaint }]}>
                   <Text style={styles.sheetVerseRef}>{verseRef}</Text>
                   <Text style={styles.sheetVerseEn} numberOfLines={3}>"{verseEn}"</Text>
@@ -224,7 +240,13 @@ export default function DailyScreen() {
   const [devLoading, setDevLoading] = useState(false);
   const [devError,   setDevError]   = useState('');
   const [devVisible, setDevVisible] = useState(false);
-  const DEVOTIONAL_KEY = `${todayKey()}:devotional`;
+  const DEVOTIONAL_KEY    = `${todayKey()}:devotional`;
+
+  // English devotional — lazy loaded when user taps EN toggle
+  const [devTextEn,    setDevTextEn]    = useState('');
+  const [devLoadingEn, setDevLoadingEn] = useState(false);
+  const [devErrorEn,   setDevErrorEn]   = useState('');
+  const DEVOTIONAL_EN_KEY = `${todayKey()}:devotional:en`;
 
   const openDevotional = useCallback(async () => {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
@@ -255,6 +277,31 @@ export default function DailyScreen() {
       setDevLoading(false);
     }
   }, [verseObj, entry, DEVOTIONAL_KEY]);
+
+  const openDevotionalEn = useCallback(async () => {
+    if (devLoadingEn || devTextEn) return;
+    try {
+      const cached = await AsyncStorage.getItem(DEVOTIONAL_EN_KEY);
+      if (cached) { setDevTextEn(cached); return; }
+    } catch {}
+    if (!verseObj || !API_BASE) { setDevErrorEn('Service unavailable.'); return; }
+    setDevLoadingEn(true); setDevErrorEn(''); setDevTextEn('');
+    try {
+      const params = new URLSearchParams({
+        book: entry.bookEn, chapter: String(entry.chapter),
+        verse: String(entry.verse), en: verseObj.en, pt: verseObj.pt, lang: 'en',
+      });
+      const res  = await fetch(`${API_BASE}/devotional?${params}`);
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error ?? 'Unknown error');
+      setDevTextEn(data.text);
+      await AsyncStorage.setItem(DEVOTIONAL_EN_KEY, data.text).catch(() => {});
+    } catch (err: any) {
+      setDevErrorEn(err.message ?? 'Failed to generate devotional.');
+    } finally {
+      setDevLoadingEn(false);
+    }
+  }, [devLoadingEn, devTextEn, verseObj, entry, DEVOTIONAL_EN_KEY]);
 
   if (!verseObj) return null;
 
@@ -356,6 +403,10 @@ export default function DailyScreen() {
         text={devText}
         loading={devLoading}
         error={devError}
+        textEn={devTextEn}
+        loadingEn={devLoadingEn}
+        errorEn={devErrorEn}
+        onRequestEnglish={openDevotionalEn}
         onClose={() => setDevVisible(false)}
         verseRef={`${entry.bookEn} ${entry.chapter}:${entry.verse}`}
         verseEn={verseObj.en}
@@ -546,7 +597,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
-  sheetTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   sheetTitle:    { fontSize: 17, fontFamily: 'Inter_700Bold' },
   sheetGoldRule: {
     height: 2, borderRadius: 1, opacity: 0.4,
@@ -557,14 +607,13 @@ const styles = StyleSheet.create({
   sheetHint:   { fontSize: 14, fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 22 },
   sheetText:   { fontSize: 16, lineHeight: 28, fontFamily: 'Inter_400Regular', marginBottom: 20 },
 
-  // Header action row (share + close)
-  sheetActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  sheetShareBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 10, paddingVertical: 6,
-    borderRadius: 20, borderWidth: StyleSheet.hairlineWidth,
-  },
-  sheetShareLabel: { fontSize: 12, fontFamily: 'Inter_500Medium' },
+  // Header action row
+  sheetActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+
+  // PT / EN language toggle pill
+  langToggle:  { flexDirection: 'row', borderRadius: 8, padding: 2, gap: 1 },
+  langBtn:     { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6 },
+  langBtnText: { fontSize: 12 },
 
   // Verse attribution block at bottom of devotional text
   sheetVerseBlock: {
