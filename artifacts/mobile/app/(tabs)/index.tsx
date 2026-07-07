@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   AppState,
   LayoutAnimation,
   Platform,
@@ -12,7 +13,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -40,6 +41,7 @@ function getGreeting() {
 
 type VerseSize = 'S' | 'M' | 'L';
 const VERSE_SIZE_KEY = '@bibliaeN:dailyVerseSize';
+const VERSE_HEART_KEY = '@bibliaeN:verseHeart'; // suffix :today.toDateString() appended at runtime
 const SIZES: VerseSize[] = ['S', 'M', 'L'];
 const SIZE_FONT: Record<VerseSize, number> = { S: 14, M: 17, L: 21 };
 const SIZE_LINE: Record<VerseSize, number> = { S: 22, M: 27, L: 33 };
@@ -77,6 +79,27 @@ function DailyPill() {
     );
     setExpanded(e => !e);
   };
+
+  // ── Heart like — one per person, persisted per day's verse ─────────────────
+  const likeScale = useRef(new Animated.Value(1)).current;
+  const [liked, setLiked] = useState(false);
+  const heartKey = `${VERSE_HEART_KEY}:${today.toDateString()}`;
+
+  useEffect(() => {
+    AsyncStorage.getItem(heartKey).then(v => { if (v === '1') setLiked(true); }).catch(() => {});
+  }, [heartKey]);
+
+  const handleLike = () => {
+    if (liked) return;                            // already liked — lock it
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setLiked(true);
+    AsyncStorage.setItem(heartKey, '1').catch(() => {});
+    Animated.sequence([
+      Animated.spring(likeScale, { toValue: 1.5,  useNativeDriver: true, tension: 400, friction: 4 }),
+      Animated.spring(likeScale, { toValue: 1,    useNativeDriver: true, tension: 200, friction: 8 }),
+    ]).start();
+  };
+  // ───────────────────────────────────────────────────────────────────────────
 
   const entry = getEntryForDate(today);
   const verse = resolveVerse(entry);
@@ -119,8 +142,27 @@ function DailyPill() {
           )}
         </TouchableOpacity>
 
-        {/* ── Footer: spacer | size buttons | chevron | Abrir ── */}
+        {/* ── Footer: heart | spacer | size buttons | chevron | Abrir ── */}
         <View style={styles.pillFooter}>
+          {/* Heart — bottom left, one like per verse per day */}
+          <TouchableOpacity
+            onPress={handleLike}
+            activeOpacity={liked ? 1 : 0.72}
+            style={styles.pillHeartBtn}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Animated.View style={{ transform: [{ scale: likeScale }] }}>
+              <MaterialCommunityIcons
+                name={liked ? 'heart' : 'heart-outline'}
+                size={19}
+                color={liked ? '#E8294B' : colors.mutedForeground}
+              />
+            </Animated.View>
+            <Text style={[styles.pillHeartCount, { color: liked ? '#E8294B' : colors.mutedForeground }]}>
+              {liked ? '125.001' : '125k'}
+            </Text>
+          </TouchableOpacity>
+
           <View style={{ flex: 1 }} />
           {/* Font-size selector */}
           <View style={[styles.pillSizeRow, { borderColor: colors.border, borderRadius: colors.radius }]}>
@@ -716,7 +758,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   pillAccent: { width: 4 },
-  pillBody:   { flex: 1, paddingHorizontal: 16, paddingVertical: 16, gap: 10 },
+  pillBody:   { flex: 1, paddingHorizontal: 16, paddingVertical: 20, gap: 12 },
+  pillHeartBtn:   { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  pillHeartCount: { fontSize: 12, fontFamily: 'Inter_500Medium' },
   pillTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
