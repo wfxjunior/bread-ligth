@@ -1,0 +1,490 @@
+Você é um Product Designer Sênior, UX/UI Designer e Front-end Engineer especializado em criar produtos digitais de nível mundial.
+
+Sua missão é criar o front-end completo de uma plataforma chamada provisoriamente Bible English, uma experiência premium para aprender inglês através da Bíblia.
+
+Objetivo
+
+Este NÃO é um aplicativo de Bíblia comum.
+
+Também NÃO é um curso tradicional de inglês.
+
+O objetivo é criar a experiência mais bonita, intuitiva e prazerosa para estudar inglês usando a Bíblia como conteúdo principal.
+
+Neste momento, o produto será apenas para uso pessoal.
+
+Não haverá monetização, publicidade ou marketplace.
+
+⸻
+
+Principal referência visual
+
+Toda a identidade visual deve ser inspirada no design do meu site:
+
+https://manuscrito.ai
+
+Use o Manuscrito como referência de:
+
+* identidade visual;
+* nível de sofisticação;
+* espaçamento;
+* minimalismo;
+* tipografia;
+* elegância;
+* sensação premium.
+
+Quero que a nova plataforma pareça pertencer à mesma família de produtos do Manuscrito.
+
+Não copie telas.
+
+Capture o mesmo DNA visual.
+
+⸻
+
+Sensação que desejo transmitir
+
+Ao abrir o aplicativo, o usuário deve sentir que está abrindo uma edição de luxo de uma Bíblia de estudo.
+
+A interface deve transmitir:
+
+* calma;
+* silêncio;
+* inteligência;
+* sofisticação;
+* foco;
+* profundidade.
+
+Nada deve parecer infantil.
+
+Nada deve parecer exageradamente religioso.
+
+Nada deve parecer um aplicativo barato.
+
+Quero um design que lembre Apple, Notion, Kindle Scribe e Manuscrito ao mesmo tempo.
+
+⸻
+
+Paleta
+
+Inspirada diretamente no Manuscrito.
+
+Cor principal:
+
+Vermelho vinho profundo, elegante e sofisticado.
+
+Sem vermelho vibrante.
+
+Sem tons alaranjados.
+
+Sem aparência chamativa.
+
+Complementar com:
+
+* branco quente;
+* tons de papel;
+* marrom couro;
+* dourado fosco apenas em pequenos detalhes;
+* cinza quente;
+* preto tinta.
+
+Muito espaço em branco.
+
+Interface extremamente limpa.
+
+⸻
+
+Tipografia
+
+Use uma serif elegante para títulos.
+
+Como:
+
+* Cormorant Garamond
+* Libre Baskerville
+* EB Garamond
+
+Para interface:
+
+* Inter
+* SF Pro
+* Source Sans
+
+Misture tradição e tecnologia.
+
+⸻
+
+Ícones
+
+Não utilizar emojis.
+
+Criar uma biblioteca própria de ícones minimalistas.
+
+Inspirados em:
+
+* livro aberto;
+* pena;
+* marcador;
+* biblioteca;
+* pergaminho;
+* lupa;
+* notas;
+* mapa;
+* bússola;
+* selo;
+* vela.
+
+Todos seguindo o mesmo estilo.
+
+⸻
+
+MVP
+
+Construir apenas a experiência inicial.
+
+Livros disponíveis:
+
+* John
+* Psalms
+* Proverbs
+* Genesis
+* Matthew
+* Romans
+
+O layout deve estar preparado para futuramente suportar os 66 livros.
+
+⸻
+
+Páginas
+
+Criar:
+
+Home
+
+Mostrar:
+
+Good Morning, Wilson
+
+Continue your Journey
+
+Livro atual
+
+Capítulo atual
+
+Progresso
+
+Palavras aprendidas
+
+Dias consecutivos
+
+Tempo estudado
+
+Botões rápidos:
+
+Search
+
+Vocabulary
+
+Favorites
+
+Notes
+
+⸻
+
+Library
+
+Uma biblioteca elegante.
+
+Cada livro parece uma edição premium.
+
+Mostrar:
+
+progresso
+
+capítulos
+
+status
+
+⸻
+
+Book
+
+Tela do livro.
+
+Lista de capítulos.
+
+Tempo estimado.
+
+Progresso.
+
+Botão Continue.
+
+⸻
+
+Reader
+
+Esta deve ser a melhor tela do produto.
+
+Centro:
+
+Texto bíblico.
+
+Topo:
+
+Minimalista.
+
+Com apenas:
+
+Livro
+
+Capítulo
+
+Busca
+
+Favoritos
+
+Notas
+
+Marcar como concluído.
+
+Ao tocar em uma palavra:
+
+Abrir painel lateral elegante.
+
+Mostrar:
+
+pronúncia
+
+significado
+
+contexto
+
+explicação
+
+salvar vocabulário
+
+criar nota
+
+Ao tocar em um versículo:
+
+Explain
+
+Highlight
+
+Save
+
+Comment
+
+Note
+
+Nunca interromper a leitura.
+
+Tudo deve aparecer de maneira natural.
+
+⸻
+
+Search
+
+Busca universal.
+
+Pesquisar:
+
+palavras
+
+frases
+
+temas
+
+personagens
+
+gramática
+
+livros
+
+versículos
+
+A barra de pesquisa deve ser extremamente minimalista.
+
+Inspirada no Spotlight da Apple.
+
+⸻
+
+Vocabulary
+
+Palavras aprendidas.
+
+Status:
+
+New
+
+Learning
+
+Mastered
+
+Cada palavra mostra:
+
+pronúncia
+
+significado
+
+capítulo
+
+revisão
+
+⸻
+
+Notes
+
+Notas pessoais.
+
+Organizadas por:
+
+Livro
+
+Capítulo
+
+Versículo
+
+⸻
+
+Favorites
+
+Versículos favoritos.
+
+Capítulos favoritos.
+
+Livros favoritos.
+
+Interface elegante.
+
+⸻
+
+Journey
+
+Mostrar:
+
+Capítulos concluídos
+
+Palavras aprendidas
+
+Notas
+
+Favoritos
+
+Dias consecutivos
+
+Tempo estudado
+
+Progresso geral
+
+Sem gamificação infantil.
+
+Quero uma sensação de evolução pessoal.
+
+⸻
+
+Settings
+
+Permitir escolher:
+
+Classic Parchment
+
+Oxford Paper
+
+Scholar
+
+Night Study
+
+Study Notebook
+
+Também permitir:
+
+tamanho da fonte
+
+altura da linha
+
+velocidade do áudio
+
+nível de inglês
+
+⸻
+
+Componentes
+
+Criar componentes reutilizáveis.
+
+Header
+
+Sidebar
+
+Search
+
+Book Card
+
+Chapter Card
+
+Verse
+
+Vocabulary Card
+
+Notes
+
+Favorites
+
+Progress
+
+Custom Icons
+
+Settings
+
+⸻
+
+Interações
+
+Animações discretas.
+
+Elegantes.
+
+Fluidas.
+
+Nada exagerado.
+
+⸻
+
+Dados
+
+Usar dados mockados.
+
+Utilizar apenas o Evangelho de João como exemplo.
+
+⸻
+
+Responsividade
+
+Desktop primeiro.
+
+Depois adaptar perfeitamente para tablet e mobile.
+
+⸻
+
+Filosofia do produto
+
+Nunca interromper a leitura.
+
+Sempre enriquecer a leitura.
+
+A Bíblia deve ser o centro da experiência.
+
+Todo recurso existe para ajudar o usuário a aprender inglês naturalmente enquanto estuda as Escrituras.
+
+⸻
+
+Resultado esperado
+
+Quero um front-end que pareça um produto pronto para lançamento.
+
+Não quero uma landing page.
+
+Quero um sistema navegável, elegante, extremamente refinado e com atenção obsessiva aos detalhes.
+
+Se alguém abrir este projeto pela primeira vez, a reação deve ser:
+
+“Este é o aplicativo de estudo bíblico mais bonito e sofisticado que já vi.”
