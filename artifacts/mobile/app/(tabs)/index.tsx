@@ -70,7 +70,9 @@ function DailyPill() {
   };
 
   const toggle = () => {
-    if (Platform.OS !== 'web') LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    if (Platform.OS !== 'web') LayoutAnimation.configureNext(
+      LayoutAnimation.create(160, LayoutAnimation.Types.easeInEaseOut, LayoutAnimation.Properties.opacity)
+    );
     setExpanded(e => !e);
   };
 
@@ -115,12 +117,9 @@ function DailyPill() {
           )}
         </TouchableOpacity>
 
-        {/* ── Footer: PT ref | size buttons | chevron | Abrir ── */}
+        {/* ── Footer: spacer | size buttons | chevron | Abrir ── */}
         <View style={styles.pillFooter}>
-          <Text style={[styles.pillPt, { color: colors.mutedForeground }]} numberOfLines={1}>
-            {entry.bookPt} {entry.chapter}:{entry.verse}
-          </Text>
-
+          <View style={{ flex: 1 }} />
           {/* Font-size selector */}
           <View style={[styles.pillSizeRow, { borderColor: colors.border, borderRadius: colors.radius }]}>
             {SIZES.map((s, i) => (
@@ -402,7 +401,6 @@ const styles = StyleSheet.create({
   pillVerse:     { fontFamily: 'Lora_400Regular_Italic' },   // fontSize/lineHeight set inline
   pillPtFull:    { fontFamily: 'Inter_400Regular', marginTop: 8 },
   pillFooter:    { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  pillPt:        { fontSize: 11, fontFamily: 'Inter_400Regular', flex: 1 },
 
   // Font-size buttons
   pillSizeRow:  {

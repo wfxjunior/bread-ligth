@@ -43,7 +43,7 @@ export default function WordModal({ visible, word, context, onClose }: WordModal
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Pressable style={[styles.sheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[styles.handle, { backgroundColor: colors.border }]} />
