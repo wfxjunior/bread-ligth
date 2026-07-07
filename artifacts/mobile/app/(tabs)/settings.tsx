@@ -38,7 +38,6 @@ const ACCENT_COLORS: { id: AccentColor; hex: string; label: string }[] = [
   { id: 'forest',     hex: '#1E4D2B', label: 'Floresta'  },
   { id: 'slate',      hex: '#3D4A5C', label: 'Ardósia'   },
   { id: 'violet',     hex: '#3B1E6B', label: 'Violeta'   },
-  { id: 'amber',      hex: '#7A5C1E', label: 'Âmbar'     },
 ];
 
 const AVATAR_KEY = '@bibliaeN:avatar';
@@ -698,7 +697,7 @@ const styles = StyleSheet.create({
   themeCardDesc:{ fontSize: 9,  fontFamily: 'Inter_400Regular', opacity: 0.7 },
 
   // Accent circles
-  accentRow:       { flexDirection: 'row', gap: 12, flexWrap: 'wrap', alignItems: 'center' },
-  accentCircleOuter:{ width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', borderColor: 'transparent' },
-  accentCircle:    { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  accentRow:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  accentCircleOuter:{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', borderColor: 'transparent' },
+  accentCircle:     { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
 });

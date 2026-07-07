@@ -1,6 +1,6 @@
 // ── Reading themes ────────────────────────────────────────────────────────────
 export type ReadingTheme = 'classic' | 'oxford' | 'scholar' | 'night' | 'notebook';
-export type AccentColor  = 'royal-blue' | 'burgundy' | 'forest' | 'slate' | 'violet' | 'amber';
+export type AccentColor  = 'royal-blue' | 'burgundy' | 'forest' | 'slate' | 'violet';
 
 interface ThemeBase {
   background: string; card: string; foreground: string;
@@ -88,7 +88,6 @@ const ACCENTS: Record<AccentColor, AccentBase> = {
   forest:       { primary: '#1E4D2B', primaryForeground: '#FFFFFF',  englishTextLight: '#1E4D2B', englishTextDark: '#7BBF8B' },
   slate:        { primary: '#3D4A5C', primaryForeground: '#FFFFFF',  englishTextLight: '#3D4A5C', englishTextDark: '#8FA0B8' },
   violet:       { primary: '#3B1E6B', primaryForeground: '#FFFFFF',  englishTextLight: '#3B1E6B', englishTextDark: '#9A7BD5' },
-  amber:        { primary: '#7A5C1E', primaryForeground: '#FFFFFF',  englishTextLight: '#7A5C1E', englishTextDark: '#C4A060' },
 };
 
 // ── Palette builder ───────────────────────────────────────────────────────────

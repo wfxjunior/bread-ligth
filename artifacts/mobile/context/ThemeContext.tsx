@@ -6,7 +6,7 @@ const THEME_KEY  = '@bibliaeN:readingTheme';
 const ACCENT_KEY = '@bibliaeN:accentColor';
 
 const VALID_THEMES:  ReadingTheme[] = ['classic', 'oxford', 'scholar', 'night', 'notebook'];
-const VALID_ACCENTS: AccentColor[]  = ['royal-blue', 'burgundy', 'forest', 'slate', 'violet', 'amber'];
+const VALID_ACCENTS: AccentColor[]  = ['royal-blue', 'burgundy', 'forest', 'slate', 'violet'];
 
 interface ThemeCtx {
   readingTheme:    ReadingTheme;
