@@ -574,7 +574,7 @@ export default function SettingsScreen() {
         {/* ── Sobre ── */}
         <SectionLabel title="Sobre" />
         <SettingsCard>
-          <SettingsRow icon="info" label="Versão" sub="1.0.0 (beta)" border={false} />
+          <SettingsRow icon="info" label="Versão" sub="1.1.26" border={false} />
         </SettingsCard>
 
       </ScrollView>
