@@ -588,7 +588,10 @@ export default function HomeScreen() {
             {/* CTA button */}
             <TouchableOpacity
               activeOpacity={0.88}
-              onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); }}
+              onPress={() => {
+                if (Platform.OS !== 'web') Haptics.selectionAsync();
+                router.push('/daily');
+              }}
               style={[styles.studyBtn, { backgroundColor: colors.primary, borderRadius: colors.radius }]}
             >
               <Text style={[styles.studyBtnText, { color: colors.primaryForeground }]}>
@@ -659,7 +662,10 @@ export default function HomeScreen() {
 
         <TouchableOpacity
           activeOpacity={0.82}
-          onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); }}
+          onPress={() => {
+            if (Platform.OS !== 'web') Haptics.selectionAsync();
+            router.push('/(tabs)/vocab');
+          }}
           style={[styles.outlineBtn, { borderColor: colors.primary, borderRadius: colors.radius, marginTop: 12 }]}
         >
           <Text style={[styles.outlineBtnText, { color: colors.primary }]}>Review Vocabulary</Text>
@@ -693,7 +699,10 @@ export default function HomeScreen() {
 
         <TouchableOpacity
           activeOpacity={0.82}
-          onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); }}
+          onPress={() => {
+            if (Platform.OS !== 'web') Haptics.selectionAsync();
+            router.push('/(tabs)/bookmarks');
+          }}
           style={[styles.outlineBtn, { borderColor: colors.primary, borderRadius: colors.radius, marginTop: 12 }]}
         >
           <Text style={[styles.outlineBtnText, { color: colors.primary }]}>Open Notes</Text>

@@ -752,6 +752,8 @@ export default function SettingsScreen() {
   const [audioSpeed,  setAudioSpeed]  = useState('Normal');
   const [supportVisible, setSupportVisible] = useState(false);
   const [avatarUri,   setAvatarUri]   = useState<string | null>(null);
+  const [userName,    setUserName]    = useState('');
+  const [userEmail,   setUserEmail]   = useState('');
 
   const { readingTheme, setReadingTheme, accentColor, setAccentColor, backgroundTemplate, setBackgroundTemplate } = useTheme();
   const { lang, setLang, t: tl } = useLanguage();
@@ -795,6 +797,8 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     AsyncStorage.getItem(AVATAR_KEY).then(v => { if (v) setAvatarUri(v); }).catch(() => {});
+    AsyncStorage.getItem('@bibliaeN:userName').then(v => { if (v) setUserName(v); }).catch(() => {});
+    AsyncStorage.getItem('@bibliaeN:userEmail').then(v => { if (v) setUserEmail(v); }).catch(() => {});
   }, []);
 
   const handlePickAvatar = async () => {
@@ -891,7 +895,9 @@ export default function SettingsScreen() {
                 <Image source={{ uri: avatarUri }} style={styles.avatar} />
               ) : (
                 <View style={[styles.avatar, { backgroundColor: colors.primary + '18' }]}>
-                  <Text style={[styles.avatarText, { color: colors.primary }]}>W</Text>
+                  <Text style={[styles.avatarText, { color: colors.primary }]}>
+                    {userName ? userName[0].toUpperCase() : '?'}
+                  </Text>
                 </View>
               )}
               <View style={[styles.avatarCam, { backgroundColor: colors.primary }]}>
@@ -899,8 +905,12 @@ export default function SettingsScreen() {
               </View>
             </TouchableOpacity>
             <View style={styles.profileInfo}>
-              <Text style={[styles.profileName, { color: colors.foreground }]}>Wilson</Text>
-              <Text style={[styles.profileEmail, { color: colors.mutedForeground }]}>wilson@email.com</Text>
+              <Text style={[styles.profileName, { color: colors.foreground }]}>
+                {userName || (lang === 'pt' ? 'Visitante' : 'Guest')}
+              </Text>
+              <Text style={[styles.profileEmail, { color: colors.mutedForeground }]}>
+                {userEmail || (lang === 'pt' ? 'Faça login para salvar seu progresso' : 'Sign in to save your progress')}
+              </Text>
             </View>
             <TouchableOpacity
               onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); router.push('/auth'); }}
@@ -1138,8 +1148,37 @@ export default function SettingsScreen() {
           onLayout={e => { sectionOffsets.current['share'] = e.nativeEvent.layout.y; }}
         />
         <SettingsCard>
-          <SettingsRow icon="share-2"   label={tl('share_verse')}   sub={tl('share_verse_sub')} onPress={() => {}} />
-          <SettingsRow icon="user-plus" label={tl('invite_friend')} sub={tl('invite_sub')}       onPress={() => {}} border={false} />
+          <SettingsRow
+            icon="share-2"
+            label={tl('share_verse')}
+            sub={tl('share_verse_sub')}
+            onPress={async () => {
+              if (Platform.OS !== 'web') Haptics.selectionAsync();
+              try {
+                await Share.share({
+                  message: lang === 'pt'
+                    ? 'Estou aprendendo inglês com o Bread&Light — leitura da Bíblia em inglês com tradução palavra a palavra. Experimente!'
+                    : "I'm learning English with Bread&Light — read the Bible in English with word-by-word translation. Try it!",
+                });
+              } catch {}
+            }}
+          />
+          <SettingsRow
+            icon="user-plus"
+            label={tl('invite_friend')}
+            sub={tl('invite_sub')}
+            onPress={async () => {
+              if (Platform.OS !== 'web') Haptics.selectionAsync();
+              try {
+                await Share.share({
+                  message: lang === 'pt'
+                    ? 'Convido você para o Bread&Light: aprenda inglês lendo a Bíblia. Grátis!'
+                    : 'Join me on Bread&Light: learn English by reading the Bible. Free!',
+                });
+              } catch {}
+            }}
+            border={false}
+          />
         </SettingsCard>
 
         {/* ── Apoio ── */}
