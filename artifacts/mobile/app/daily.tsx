@@ -425,25 +425,25 @@ export default function DailyScreen() {
 
         {/* ── Community engagement ── */}
         <View style={styles.communityRow}>
-          {/* Heart like button */}
+          {/* Share verse — left */}
+          <TouchableOpacity onPress={handleShareVerse} activeOpacity={0.75} style={styles.shareVerseBtn}>
+            <Feather name="share" size={16} color="#FFFFFF" />
+            <Text style={[styles.shareVerseBtnText, { color: '#FFFFFF' }]}>
+              {lang === 'pt' ? 'Compartilhar' : 'Share'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Heart like button — right */}
           <TouchableOpacity onPress={handleHeartToggle} activeOpacity={0.75} style={styles.heartBtn}>
             <Animated.View style={{ transform: [{ scale: heartScale }] }}>
               <MaterialCommunityIcons
                 name={hearted ? 'heart' : 'heart-outline'}
                 size={22}
-                color={hearted ? colors.primary : D.whiteLow}
+                color={hearted ? '#E8294B' : D.whiteLow}
               />
             </Animated.View>
-            <Text style={[styles.heartCount, { color: hearted ? colors.primary : D.whiteLow }]}>
+            <Text style={[styles.heartCount, { color: hearted ? '#E8294B' : D.whiteLow }]}>
               {hearted ? '125.001' : '125k'}
-            </Text>
-          </TouchableOpacity>
-
-          {/* Share verse */}
-          <TouchableOpacity onPress={handleShareVerse} activeOpacity={0.75} style={styles.shareVerseBtn}>
-            <Feather name="share" size={16} color={D.whiteLow} />
-            <Text style={[styles.shareVerseBtnText, { color: D.whiteLow }]}>
-              {lang === 'pt' ? 'Compartilhar' : 'Share'}
             </Text>
           </TouchableOpacity>
         </View>
