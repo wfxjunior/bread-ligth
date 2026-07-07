@@ -39,6 +39,7 @@ const READING_THEMES: { id: ReadingTheme; name: string; desc: string; bg: string
   { id: 'scholar',  name: 'Estudioso',  desc: 'Tom neutro',     bg: '#ECEAE6', dark: false },
   { id: 'night',    name: 'Noturno',    desc: 'Modo escuro',    bg: '#1C1E22', dark: true  },
   { id: 'notebook', name: 'Caderno',    desc: 'Leve e casual',  bg: '#FEF9F0', dark: false },
+  { id: 'sepia',    name: 'Sépia',      desc: 'Âmbar quente',   bg: '#1A1006', dark: true  },
 ];
 
 const ACCENT_COLORS: { id: AccentColor; hex: string; label: string }[] = [
@@ -672,8 +673,9 @@ export default function SettingsScreen() {
   const topPad    = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = useTabBarHeight();
 
-  // 3-column grid card width: screen - h-padding (32) - two gaps (16)
-  const themeCardW = Math.floor((width - 32 - 16) / 3);
+  // 2-column grid — measured from the actual grid container (works on web + native)
+  const [themeGridW, setThemeGridW] = useState(0);
+  const themeCardW = themeGridW > 0 ? Math.floor((themeGridW - 8) / 2) : 0;
 
   const [level,       setLevel]       = useState<LevelKey>('intermediate');
   const [displayMode, setDisplayMode] = useState('EN+PT');
@@ -703,6 +705,7 @@ export default function SettingsScreen() {
     scholar:  tl('theme_scholar'),
     night:    tl('theme_night'),
     notebook: tl('theme_notebook'),
+    sepia:    tl('theme_sepia'),
   };
   const themeDescs: Record<string, string> = {
     classic:  lang === 'pt' ? 'Quente, suave'  : 'Warm, soft',
@@ -710,6 +713,7 @@ export default function SettingsScreen() {
     scholar:  lang === 'pt' ? 'Tom neutro'     : 'Neutral tone',
     night:    lang === 'pt' ? 'Modo escuro'    : 'Dark mode',
     notebook: lang === 'pt' ? 'Leve e casual'  : 'Light & casual',
+    sepia:    lang === 'pt' ? 'Âmbar quente'   : 'Warm amber',
   };
 
   useEffect(() => {
@@ -899,8 +903,11 @@ export default function SettingsScreen() {
           {/* Reading theme grid */}
           <View style={[styles.innerSection, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
             <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>{tl('reading_theme')}</Text>
-            <View style={styles.themeGrid}>
-              {READING_THEMES.map(t => {
+            <View
+              style={styles.themeGrid}
+              onLayout={e => setThemeGridW(e.nativeEvent.layout.width)}
+            >
+              {themeCardW > 0 && READING_THEMES.map(t => {
                 const active = readingTheme === t.id;
                 return (
                   <TouchableOpacity
@@ -1316,15 +1323,15 @@ const styles = StyleSheet.create({
   ambassadorShareBtn:    { marginHorizontal: 20, paddingVertical: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: StyleSheet.hairlineWidth, marginBottom: 6 },
   ambassadorShareText:   { fontSize: 14, fontFamily: 'Inter_400Regular' },
 
-  // Reading theme grid
+  // Reading theme grid — 2-column, fills width
   themeGrid:    { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   themeCard:    { overflow: 'hidden' },
-  themePreview: { height: 52, padding: 8, justifyContent: 'flex-end', gap: 4 },
-  themeLine:    { height: 3, borderRadius: 2 },
-  themeCheck:   { position: 'absolute', top: 5, right: 5, width: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  themeCardBody:{ paddingHorizontal: 7, paddingTop: 5, paddingBottom: 7, gap: 1 },
-  themeCardName:{ fontSize: 11, fontFamily: 'Inter_600SemiBold' },
-  themeCardDesc:{ fontSize: 9,  fontFamily: 'Inter_400Regular', opacity: 0.7 },
+  themePreview: { height: 72, padding: 10, justifyContent: 'flex-end', gap: 5 },
+  themeLine:    { height: 3.5, borderRadius: 2 },
+  themeCheck:   { position: 'absolute', top: 6, right: 6, width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  themeCardBody:{ paddingHorizontal: 9, paddingTop: 6, paddingBottom: 9, gap: 2 },
+  themeCardName:{ fontSize: 12, fontFamily: 'Inter_600SemiBold' },
+  themeCardDesc:{ fontSize: 10, fontFamily: 'Inter_400Regular', opacity: 0.7 },
 
   // Accent circles
   accentRow:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

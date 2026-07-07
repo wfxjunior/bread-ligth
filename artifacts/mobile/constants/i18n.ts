@@ -58,6 +58,7 @@ const strings = {
   theme_scholar:   { pt: 'Estudioso',   en: 'Scholar'    },
   theme_night:     { pt: 'Noturno',     en: 'Night'      },
   theme_notebook:  { pt: 'Caderno',     en: 'Notebook'   },
+  theme_sepia:     { pt: 'Sépia',       en: 'Sepia'      },
 
   // ── Background template names (already in BACKGROUND_TEMPLATES — kept here for fallback)
   bg_none:         { pt: 'Padrão',    en: 'Default'  },

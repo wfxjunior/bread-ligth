@@ -1,5 +1,5 @@
 // ── Reading themes ────────────────────────────────────────────────────────────
-export type ReadingTheme = 'classic' | 'oxford' | 'scholar' | 'night' | 'notebook';
+export type ReadingTheme = 'classic' | 'oxford' | 'scholar' | 'night' | 'notebook' | 'sepia';
 export type AccentColor  = 'royal-blue' | 'burgundy' | 'forest' | 'slate' | 'violet';
 
 interface ThemeBase {
@@ -71,6 +71,19 @@ const THEMES: Record<ReadingTheme, ThemeBase> = {
     accentForeground:'#1A1A2E',
     portugueseText:  '#4A3520',
     isDark: false,
+  },
+  // Warm candlelight dark — a warmer alternative to night
+  sepia: {
+    background:      '#1A1006',
+    card:            '#231608',
+    foreground:      '#EDD9A3',
+    secondary:       '#2B1C09',
+    muted:           '#2B1C09',
+    mutedForeground: '#9A7D4A',
+    border:          '#3A2810',
+    accentForeground:'#EDD9A3',
+    portugueseText:  '#C8A05A',
+    isDark: true,
   },
 };
 
