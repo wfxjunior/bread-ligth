@@ -16,12 +16,12 @@ import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
 import type { I18nKey } from '@/constants/i18n';
 
-const TAB_DEFS: { name: string; icon: 'book-open' | 'layers' | 'search' | 'bookmark' | 'settings'; labelKey: I18nKey }[] = [
+const TAB_DEFS: { name: string; icon: 'book-open' | 'layers' | 'search' | 'bookmark' | 'user'; labelKey: I18nKey }[] = [
   { name: 'index',     icon: 'book-open', labelKey: 'tab_home'      },
   { name: 'vocab',     icon: 'layers',    labelKey: 'tab_vocab'     },
   { name: 'search',    icon: 'search',    labelKey: 'tab_search'    },
   { name: 'bookmarks', icon: 'bookmark',  labelKey: 'tab_bookmarks' },
-  { name: 'settings',  icon: 'settings',  labelKey: 'tab_settings'  },
+  { name: 'settings',  icon: 'user',      labelKey: 'tab_settings'  },
 ];
 
 const H      = 62;

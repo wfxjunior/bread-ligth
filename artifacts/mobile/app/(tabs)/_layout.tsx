@@ -12,7 +12,7 @@ export default function TabLayout() {
       <Tabs.Screen name="vocab"     options={{ title: 'Vocabulário' }} />
       <Tabs.Screen name="search"    options={{ title: 'Buscar'      }} />
       <Tabs.Screen name="bookmarks" options={{ title: 'Favoritos'   }} />
-      <Tabs.Screen name="settings"  options={{ title: 'Config.'     }} />
+      <Tabs.Screen name="settings"  options={{ title: 'Você'        }} />
     </Tabs>
   );
 }

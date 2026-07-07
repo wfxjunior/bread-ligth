@@ -12,7 +12,7 @@ const strings = {
   tab_vocab:         { pt: 'Vocabulário', en: 'Vocab.'    },
   tab_search:        { pt: 'Buscar',      en: 'Search'    },
   tab_bookmarks:     { pt: 'Favoritos',   en: 'Favorites' },
-  tab_settings:      { pt: 'Config.',     en: 'Settings'  },
+  tab_settings:      { pt: 'Você',        en: 'You'       },
 
   // ── Drawer
   drawer_stat_favorites: { pt: 'Favoritos', en: 'Favorites' },
@@ -43,7 +43,7 @@ const strings = {
   drawer_nav_data:       { pt: 'Dados',        en: 'Data'         },
 
   // ── Settings screen title
-  settings_title:    { pt: 'Configurações', en: 'Settings' },
+  settings_title:    { pt: 'Você',          en: 'You'      },
 
   // ── Section headers
   section_language:    { pt: 'IDIOMA',         en: 'LANGUAGE'    },
