@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   AppState,
+  LayoutAnimation,
   Platform,
   ScrollView,
   StyleSheet,
@@ -9,6 +10,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -34,44 +36,66 @@ function getGreeting() {
   return 'Boa noite!';
 }
 
-// ── Daily verse compact pill ──────────────────────────────────────────────────
+type VerseSize = 'S' | 'M' | 'L';
+const VERSE_SIZE_KEY = '@bibliaeN:dailyVerseSize';
+const SIZES: VerseSize[] = ['S', 'M', 'L'];
+const SIZE_FONT: Record<VerseSize, number> = { S: 14, M: 17, L: 21 };
+const SIZE_LINE: Record<VerseSize, number> = { S: 22, M: 27, L: 33 };
+const SIZE_LABEL: Record<VerseSize, number> = { S: 10, M: 13, L: 16 };
+
+// ── Daily verse card ──────────────────────────────────────────────────────────
 function DailyPill() {
   const colors = useColors();
 
-  const [today, setToday] = useState(() => new Date());
+  const [today,    setToday]    = useState(() => new Date());
+  const [expanded, setExpanded] = useState(false);
+  const [size,     setSize]     = useState<VerseSize>('M');
+
   useEffect(() => {
+    AsyncStorage.getItem(VERSE_SIZE_KEY)
+      .then(v => { if (v === 'S' || v === 'M' || v === 'L') setSize(v); })
+      .catch(() => {});
     const sub = AppState.addEventListener('change', s => {
-      if (s === 'active') setToday(new Date());
+      if (s === 'active') {
+        setToday(new Date());
+        setExpanded(false);
+      }
     });
     return () => sub.remove();
   }, []);
+
+  const pickSize = (s: VerseSize) => {
+    setSize(s);
+    AsyncStorage.setItem(VERSE_SIZE_KEY, s).catch(() => {});
+  };
+
+  const toggle = () => {
+    if (Platform.OS !== 'web') LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded(e => !e);
+  };
 
   const entry = getEntryForDate(today);
   const verse = resolveVerse(entry);
   if (!verse) return null;
 
-  const preview = verse.en.length > 90 ? verse.en.slice(0, 90).trimEnd() + '…' : verse.en;
+  const preview = verse.en.length > 100 ? verse.en.slice(0, 100).trimEnd() + '…' : verse.en;
+  const fSize   = SIZE_FONT[size];
+  const lHeight = SIZE_LINE[size];
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.88}
-      onPress={() => {
-        if (Platform.OS !== 'web') Haptics.selectionAsync();
-        router.push('/daily');
-      }}
-      style={[styles.pill, {
-        backgroundColor: colors.card,
-        borderColor: colors.border,
-        borderRadius: colors.radius,
-      }]}
-    >
+    <View style={[styles.pill, {
+      backgroundColor: colors.card,
+      borderColor:     colors.border,
+      borderRadius:    colors.radius,
+    }]}>
+      {/* Left accent bar */}
       <View style={[styles.pillAccent, { backgroundColor: colors.accent }]} />
 
       <View style={styles.pillBody}>
-        {/* Top row: badge + ref */}
+        {/* ── Top row: badge + ref ── */}
         <View style={styles.pillTopRow}>
           <View style={styles.pillBadge}>
-            <Feather name="sun" size={10} color={colors.accent} />
+            <Feather name="sun" size={11} color={colors.accent} />
             <Text style={[styles.pillBadgeText, { color: colors.accent }]}>Versículo do dia</Text>
           </View>
           <Text style={[styles.pillRef, { color: colors.mutedForeground }]}>
@@ -79,23 +103,67 @@ function DailyPill() {
           </Text>
         </View>
 
-        {/* Verse preview — Lora italic */}
-        <Text style={[styles.pillVerse, { color: colors.foreground }]} numberOfLines={2}>
-          "{preview}"
-        </Text>
+        {/* ── Verse text (tap to expand) ── */}
+        <TouchableOpacity activeOpacity={0.85} onPress={toggle}>
+          <Text style={[styles.pillVerse, { color: colors.foreground, fontSize: fSize, lineHeight: lHeight }]}>
+            "{expanded ? verse.en : preview}"
+          </Text>
+          {expanded && (
+            <Text style={[styles.pillPtFull, { color: colors.mutedForeground, fontSize: fSize - 2, lineHeight: lHeight - 3 }]}>
+              {verse.pt}
+            </Text>
+          )}
+        </TouchableOpacity>
 
-        {/* Footer: PT ref + open button */}
+        {/* ── Footer: PT ref | size buttons | chevron | Abrir ── */}
         <View style={styles.pillFooter}>
           <Text style={[styles.pillPt, { color: colors.mutedForeground }]} numberOfLines={1}>
             {entry.bookPt} {entry.chapter}:{entry.verse}
           </Text>
-          <View style={styles.pillOpenBtn}>
+
+          {/* Font-size selector */}
+          <View style={[styles.pillSizeRow, { borderColor: colors.border, borderRadius: colors.radius }]}>
+            {SIZES.map((s, i) => (
+              <TouchableOpacity
+                key={s}
+                onPress={() => pickSize(s)}
+                style={[
+                  styles.pillSizeBtn,
+                  i < 2 && { borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: colors.border },
+                  size === s && { backgroundColor: colors.accent + '22' },
+                ]}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              >
+                <Text style={[styles.pillSizeTxt, {
+                  fontSize:    SIZE_LABEL[s],
+                  color:       size === s ? colors.accent : colors.mutedForeground,
+                  fontFamily:  size === s ? 'Inter_700Bold' : 'Inter_400Regular',
+                }]}>
+                  A
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Expand toggle */}
+          <TouchableOpacity onPress={toggle} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Feather name={expanded ? 'chevron-up' : 'chevron-down'} size={16} color={colors.mutedForeground} />
+          </TouchableOpacity>
+
+          {/* Abrir → */}
+          <TouchableOpacity
+            style={styles.pillOpenBtn}
+            onPress={() => {
+              if (Platform.OS !== 'web') Haptics.selectionAsync();
+              router.push('/daily');
+            }}
+          >
             <Text style={[styles.pillOpenText, { color: colors.accent }]}>Abrir</Text>
             <Feather name="arrow-right" size={12} color={colors.accent} />
-          </View>
+          </TouchableOpacity>
         </View>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }
 
@@ -315,27 +383,42 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 11, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.2 },
   sectionCount: { fontSize: 11, fontFamily: 'Inter_500Medium' },
 
-  // Daily pill
+  // Daily verse card
   pill: {
     flexDirection: 'row',
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },
-  pillAccent: { width: 3 },
-  pillBody:   { flex: 1, paddingHorizontal: 14, paddingVertical: 12, gap: 7 },
+  pillAccent: { width: 4 },
+  pillBody:   { flex: 1, paddingHorizontal: 16, paddingVertical: 16, gap: 10 },
   pillTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   pillBadge:     { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  pillBadgeText: { fontSize: 10, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.6 },
+  pillBadgeText: { fontSize: 11, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.5 },
   pillRef:       { fontSize: 11, fontFamily: 'Inter_400Regular' },
-  pillVerse:     { fontSize: 14, fontFamily: 'Lora_400Regular_Italic', lineHeight: 22 },
-  pillFooter:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  pillVerse:     { fontFamily: 'Lora_400Regular_Italic' },   // fontSize/lineHeight set inline
+  pillPtFull:    { fontFamily: 'Inter_400Regular', marginTop: 8 },
+  pillFooter:    { flexDirection: 'row', alignItems: 'center', gap: 10 },
   pillPt:        { fontSize: 11, fontFamily: 'Inter_400Regular', flex: 1 },
-  pillOpenBtn:   { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  pillOpenText:  { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
+
+  // Font-size buttons
+  pillSizeRow:  {
+    flexDirection: 'row',
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+  },
+  pillSizeBtn:  {
+    width: 26, height: 26,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  pillSizeTxt:  { lineHeight: 18 },
+
+  // Open button
+  pillOpenBtn:  { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  pillOpenText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
 
   // Continue strip
   continueStrip: {
