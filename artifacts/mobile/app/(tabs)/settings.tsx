@@ -12,7 +12,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import * as Clipboard from 'expo-clipboard';
+import { Share } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { useBible } from '@/context/BibleContext';
 
@@ -158,10 +158,12 @@ export default function SettingsScreen() {
   };
 
   const handleCopyLink = async () => {
-    await Clipboard.setStringAsync('bibleenglish.app/invite/wilson');
-    setLinkCopied(true);
-    if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setTimeout(() => setLinkCopied(false), 2500);
+    try {
+      await Share.share({ message: 'bibleenglish.app/invite/wilson', url: 'https://bibleenglish.app/invite/wilson' });
+      setLinkCopied(true);
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setTimeout(() => setLinkCopied(false), 2500);
+    } catch {}
   };
 
   return (
