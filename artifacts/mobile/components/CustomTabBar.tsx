@@ -12,8 +12,6 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withTiming,
-  interpolate,
-  Extrapolation,
 } from 'react-native-reanimated';
 import { Feather } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
@@ -30,42 +28,55 @@ const TABS = [
   { name: 'settings',  icon: 'settings'  as const, label: 'Config.'      },
 ];
 
-const H         = 64;
-const RADIUS    = 20;
-const MARGIN    = 16;
-const SPRING    = { damping: 22, stiffness: 220 };
+const H      = 62;
+const RADIUS = 20;
+const MARGIN = 16;
+
+// Pill is narrow — just wide enough for the icon + padding
+const PILL_H = 34;
+const PILL_W = 44;
+
+// Smooth, over-damped spring so the pill glides rather than bounces
+const SPRING = { damping: 30, stiffness: 160, mass: 0.8 };
 
 export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
-  const colors  = useColors();
+  const colors    = useColors();
   const { isDark } = useTheme();
-  const insets  = useSafeAreaInsets();
-  const isWeb   = Platform.OS === 'web';
-  const isIOS   = Platform.OS === 'ios';
+  const insets    = useSafeAreaInsets();
+  const isWeb     = Platform.OS === 'web';
+  const isIOS     = Platform.OS === 'ios';
 
   const { width: SCREEN_W } = Dimensions.get('window');
-  const BAR_W   = SCREEN_W - MARGIN * 2;
-  const SLOT_W  = BAR_W / TABS.length;
-  const PILL_W  = SLOT_W - 10;
+  const BAR_W  = SCREEN_W - MARGIN * 2;
+  const SLOT_W = BAR_W / TABS.length;
 
-  const pillX    = useSharedValue((state.index ?? 0) * SLOT_W + 5);
+  // Center the small pill within the active slot
+  const pillX = useSharedValue(state.index * SLOT_W + (SLOT_W - PILL_W) / 2);
 
   useEffect(() => {
-    pillX.value = withSpring(state.index * SLOT_W + 5, SPRING);
+    pillX.value = withSpring(
+      state.index * SLOT_W + (SLOT_W - PILL_W) / 2,
+      SPRING,
+    );
   }, [state.index, SLOT_W]);
 
   const pillStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: pillX.value }],
-    width: PILL_W,
   }));
 
   const bar = (
     <View style={[styles.bar, { height: H, borderRadius: RADIUS }]}>
 
-      {/* ── Animated pill ── */}
+      {/* ── Subtle sliding pill (icon-sized, light tint) ── */}
       <Animated.View
         style={[
           styles.pill,
-          { height: H - 12, borderRadius: RADIUS - 4, backgroundColor: colors.primary },
+          {
+            width:  PILL_W,
+            height: PILL_H,
+            borderRadius: PILL_H / 2,
+            backgroundColor: colors.primary + '1A', // ~10% opacity
+          },
           pillStyle,
         ]}
       />
@@ -79,7 +90,7 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
             tab={tab}
             isActive={isActive}
             width={SLOT_W}
-            activeColor={colors.primaryForeground ?? '#fff'}
+            activeColor={colors.primary}
             inactiveColor={colors.mutedForeground}
             onPress={() => navigation.navigate(tab.name as never)}
           />
@@ -102,7 +113,7 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
     >
       {isIOS && !isWeb ? (
         <BlurView
-          intensity={85}
+          intensity={80}
           tint={isDark ? 'dark' : 'extraLight'}
           style={[styles.blurContainer, { borderRadius: RADIUS }]}
         >
@@ -137,23 +148,17 @@ function TabItem({
   inactiveColor: string;
   onPress: () => void;
 }) {
-  const labelOpacity  = useSharedValue(isActive ? 1 : 0);
-  const iconScale     = useSharedValue(isActive ? 1.08 : 1);
+  // Only animate the color — no scale, no label slide
+  const progress = useSharedValue(isActive ? 1 : 0);
 
   useEffect(() => {
-    labelOpacity.value  = withTiming(isActive ? 1 : 0, { duration: 180 });
-    iconScale.value     = withSpring(isActive ? 1.1 : 1, { damping: 18, stiffness: 260 });
+    progress.value = withTiming(isActive ? 1 : 0, { duration: 200 });
   }, [isActive]);
 
-  const labelStyle = useAnimatedStyle(() => ({
-    opacity: labelOpacity.value,
-    transform: [
-      { translateY: interpolate(labelOpacity.value, [0, 1], [4, 0], Extrapolation.CLAMP) },
-    ],
-  }));
-
-  const iconStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: iconScale.value }],
+  // Small dot below icon (fades in on active)
+  const dotStyle = useAnimatedStyle(() => ({
+    opacity: progress.value,
+    transform: [{ scaleX: progress.value }],
   }));
 
   return (
@@ -162,24 +167,30 @@ function TabItem({
       style={[styles.tabItem, { width }]}
       hitSlop={{ top: 8, bottom: 8 }}
     >
-      <Animated.View style={[styles.iconWrap, iconStyle]}>
-        <Feather
-          name={tab.icon}
-          size={20}
-          color={isActive ? activeColor : inactiveColor}
-        />
-      </Animated.View>
+      <Feather
+        name={tab.icon}
+        size={20}
+        color={isActive ? activeColor : inactiveColor}
+      />
 
-      <Animated.Text
+      <Text
         style={[
           styles.tabLabel,
           { color: isActive ? activeColor : inactiveColor },
-          labelStyle,
         ]}
         numberOfLines={1}
       >
         {tab.label}
-      </Animated.Text>
+      </Text>
+
+      {/* Tiny dot indicator */}
+      <Animated.View
+        style={[
+          styles.dot,
+          { backgroundColor: activeColor },
+          dotStyle,
+        ]}
+      />
     </Pressable>
   );
 }
@@ -188,16 +199,13 @@ function TabItem({
 const styles = StyleSheet.create({
   wrapper: {
     position: 'absolute',
-    // left/right/bottom set dynamically
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.10,
-    shadowRadius: 18,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    elevation: 10,
   },
-  blurContainer: {
-    overflow: 'hidden',
-  },
+  blurContainer: { overflow: 'hidden' },
   solidContainer: {
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
@@ -209,8 +217,7 @@ const styles = StyleSheet.create({
   },
   pill: {
     position: 'absolute',
-    top: 6,
-    // translateX set by animation
+    top: (H - PILL_H) / 2,
   },
   tabItem: {
     alignItems: 'center',
@@ -219,13 +226,15 @@ const styles = StyleSheet.create({
     gap: 3,
     zIndex: 1,
   },
-  iconWrap: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   tabLabel: {
     fontSize: 10,
     fontFamily: 'Inter_600SemiBold',
     letterSpacing: 0.2,
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginTop: 1,
   },
 });
