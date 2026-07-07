@@ -79,8 +79,8 @@ function ToggleRow({
         <Switch
           value={value}
           onValueChange={handleChange}
-          trackColor={{ false: colors.border, true: colors.accent }}
-          thumbColor={Platform.OS === 'android' ? (value ? colors.accent : colors.muted) : '#fff'}
+          trackColor={{ false: colors.border, true: colors.primary }}
+          thumbColor={Platform.OS === 'android' ? (value ? colors.primary : colors.muted) : '#fff'}
           ios_backgroundColor={colors.border}
         />
       }
