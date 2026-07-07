@@ -31,6 +31,7 @@ import { BACKGROUND_TEMPLATES } from '@/constants/colors';
 import type { ReadingTheme, AccentColor, BackgroundTemplate } from '@/constants/colors';
 import { LinearGradient } from 'expo-linear-gradient';
 import SettingsDrawer from '@/components/SettingsDrawer';
+import { router } from 'expo-router';
 
 // ── Reading theme data ────────────────────────────────────────────────────────
 const READING_THEMES: { id: ReadingTheme; name: string; desc: string; bg: string; dark: boolean }[] = [
@@ -835,12 +836,18 @@ export default function SettingsScreen() {
               <Text style={[styles.profileName, { color: colors.foreground }]}>Wilson</Text>
               <Text style={[styles.profileEmail, { color: colors.mutedForeground }]}>wilson@email.com</Text>
             </View>
-            <View style={[styles.planBadge, {
-              backgroundColor: colors.primary + '14',
-              borderColor:     colors.primary + '30',
-            }]}>
-              <Text style={[styles.planText, { color: colors.primary }]}>Free</Text>
-            </View>
+            <TouchableOpacity
+              onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); router.push('/auth'); }}
+              activeOpacity={0.8}
+              style={[styles.planBadge, {
+                backgroundColor: colors.primary + '14',
+                borderColor:     colors.primary + '30',
+              }]}
+            >
+              <Text style={[styles.planText, { color: colors.primary }]}>
+                {tl('auth_login')} →
+              </Text>
+            </TouchableOpacity>
           </View>
           <View style={[styles.statsRow, { borderTopColor: colors.border }]}>
             {[

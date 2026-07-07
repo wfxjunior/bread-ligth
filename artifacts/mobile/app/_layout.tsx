@@ -39,6 +39,10 @@ function RootLayoutNav() {
         name="daily"
         options={{ headerShown: false, presentation: 'modal' }}
       />
+      <Stack.Screen
+        name="auth"
+        options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom' }}
+      />
     </Stack>
   );
 }
