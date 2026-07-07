@@ -27,6 +27,13 @@ const CARD_H = 196;
 const WEEKDAYS_PT = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const MONTHS_PT   = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Bom dia!';
+  if (h < 18) return 'Boa tarde!';
+  return 'Boa noite!';
+}
+
 // ── Daily verse compact pill ──────────────────────────────────────────────────
 function DailyPill() {
   const colors = useColors();
@@ -176,8 +183,9 @@ export default function HomeScreen() {
   const topPad    = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = useTabBarHeight();
 
-  const today   = new Date();
-  const dateStr = `${WEEKDAYS_PT[today.getDay()]}, ${today.getDate()} ${MONTHS_PT[today.getMonth()]}`;
+  const today    = new Date();
+  const dateStr  = `${WEEKDAYS_PT[today.getDay()]}, ${today.getDate()} ${MONTHS_PT[today.getMonth()]}`;
+  const greeting = getGreeting();
 
   const handleContinue = () => {
     if (!readingProgress) return;
@@ -203,15 +211,14 @@ export default function HomeScreen() {
       {/* ── Header ── */}
       <View style={[
         styles.header,
-        { paddingTop: topPad + 14, borderBottomColor: colors.border },
+        { paddingTop: topPad + 6, borderBottomColor: colors.border },
       ]}>
-        <View style={styles.headerLeft}>
-          <Text style={[styles.headerName, { color: colors.foreground }]}>BíbliaEN</Text>
-          <Text style={[styles.headerTagline, { color: colors.mutedForeground }]}>
-            APRENDA INGLÊS COM A PALAVRA
-          </Text>
+        <Text style={[styles.headerName, { color: colors.foreground }]}>BíbliaEN</Text>
+        <View style={styles.headerSubRow}>
+          <Text style={[styles.headerGreeting, { color: colors.mutedForeground }]}>{greeting}</Text>
+          <Text style={[styles.headerDot, { color: colors.border }]}>·</Text>
+          <Text style={[styles.headerDate, { color: colors.mutedForeground }]}>{dateStr}</Text>
         </View>
-        <Text style={[styles.headerDate, { color: colors.mutedForeground }]}>{dateStr}</Text>
       </View>
 
       {/* ── Daily verse pill ── */}
@@ -268,29 +275,33 @@ const styles = StyleSheet.create({
 
   // Header
   header: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingBottom: 18,
+    paddingBottom: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
+    gap: 5,
   },
-  headerLeft:    { gap: 4 },
   headerName: {
     fontSize: 34,
     fontFamily: 'Lora_700Bold',
     letterSpacing: -0.5,
     lineHeight: 40,
   },
-  headerTagline: {
-    fontSize: 9,
-    fontFamily: 'Inter_600SemiBold',
-    letterSpacing: 1.5,
+  headerSubRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+  },
+  headerGreeting: {
+    fontSize: 13,
+    fontFamily: 'Inter_500Medium',
+  },
+  headerDot: {
+    fontSize: 13,
+    fontFamily: 'Inter_400Regular',
   },
   headerDate: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: 'Inter_400Regular',
-    paddingBottom: 5,
   },
 
   // Section wrapper

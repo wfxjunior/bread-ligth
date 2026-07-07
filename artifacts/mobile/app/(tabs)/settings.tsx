@@ -248,11 +248,12 @@ const ISSUE_TYPES: { icon: string; label: string }[] = [
 function SupportModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const [selected, setSelected]     = useState<string[]>([]);
+  const [selected, setSelected]       = useState<string[]>([]);
   const [description, setDescription] = useState('');
-  const [sent, setSent]             = useState(false);
+  const [sent, setSent]               = useState(false);
+  const [sending, setSending]         = useState(false);
 
-  const canSend = selected.length > 0 || description.trim().length > 0;
+  const canSend = !sending && (selected.length > 0 || description.trim().length > 0);
 
   const handleClose = () => {
     setSelected([]); setDescription(''); setSent(false);
@@ -266,9 +267,25 @@ function SupportModal({ visible, onClose }: { visible: boolean; onClose: () => v
     );
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!canSend) return;
+    setSending(true);
     if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+    // Persist report so support can review issue patterns
+    try {
+      const raw      = await AsyncStorage.getItem('@bibliaeN:supportReports');
+      const parsed   = raw ? JSON.parse(raw) : null;
+      const existing: object[] = Array.isArray(parsed) ? parsed : [];
+      existing.push({
+        timestamp:   new Date().toISOString(),
+        types:       selected,
+        description: description.trim(),
+      });
+      await AsyncStorage.setItem('@bibliaeN:supportReports', JSON.stringify(existing));
+    } catch (_) { /* storage errors must not block the UI */ }
+
+    setSending(false);
     setSent(true);
     setTimeout(() => { setSent(false); setSelected([]); setDescription(''); onClose(); }, 2000);
   };
