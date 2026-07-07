@@ -1066,18 +1066,6 @@ export default function SettingsScreen() {
           <ToggleRow icon="bell"  label={tl('vocab_reminder')} sub={tl('vocab_rem_sub')}    value={vocabRemind} onChange={setVocabRemind} border={false} />
         </SettingsCard>
 
-        {/* ── Áudio ── */}
-        <SectionLabel
-          title={tl('section_audio')}
-          onLayout={e => { sectionOffsets.current['audio'] = e.nativeEvent.layout.y; }}
-        />
-        <SettingsCard>
-          <View style={styles.innerSection}>
-            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>{tl('playback_speed')}</Text>
-            <SegmentedControl options={['0.75×', 'Normal', '1.25×', '1.5×']} value={audioSpeed} onChange={setAudioSpeed} />
-          </View>
-        </SettingsCard>
-
         {/* ── Compartilhar ── */}
         <SectionLabel
           title={tl('section_share')}
