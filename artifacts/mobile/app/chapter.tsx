@@ -21,14 +21,14 @@ import { BIBLE_DATA, type BibleVerse } from '@/constants/bibleData';
 import VerseRow from '@/components/VerseRow';
 import WordModal from '@/components/WordModal';
 
-// ── CEFR level ────────────────────────────────────────────────────────────────
-const CEFR_LEVELS = [
-  { key: 'beginner',     code: 'A2' },
-  { key: 'intermediate', code: 'B1' },
-  { key: 'advanced',     code: 'C1' },
+// ── Text size selector ────────────────────────────────────────────────────────
+const TEXT_SIZES = [
+  { key: 'small',  labelSize: 11 },
+  { key: 'medium', labelSize: 15 },
+  { key: 'large',  labelSize: 19 },
 ] as const;
-type EnglishLevel = typeof CEFR_LEVELS[number]['key'];
-const LEVEL_KEY = '@bibliaeN:level';
+type TextSize = typeof TEXT_SIZES[number]['key'];
+const TEXT_SIZE_KEY = '@bibliaeN:textSize';
 
 // Chapter number → English word (covers all chapters in the app's data)
 const CH_WORDS = [
@@ -155,17 +155,17 @@ export default function ChapterScreen() {
 
   const { displayMode, setDisplayMode, isBookmarked, addBookmark, removeBookmark, saveReadingProgress } = useBible();
 
-  // CEFR level — persisted separately from BibleContext
-  const [englishLevel, setEnglishLevel] = useState<EnglishLevel>('intermediate');
+  // Text size — persisted in AsyncStorage
+  const [textSize, setTextSize] = useState<TextSize>('medium');
   useEffect(() => {
-    AsyncStorage.getItem(LEVEL_KEY)
-      .then(v => { if (v === 'beginner' || v === 'advanced') setEnglishLevel(v as EnglishLevel); })
+    AsyncStorage.getItem(TEXT_SIZE_KEY)
+      .then(v => { if (v === 'small' || v === 'large') setTextSize(v as TextSize); })
       .catch(() => {});
   }, []);
-  const handleLevelChange = useCallback((l: EnglishLevel) => {
+  const handleSizeChange = useCallback((s: TextSize) => {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
-    setEnglishLevel(l);
-    AsyncStorage.setItem(LEVEL_KEY, l).catch(() => {});
+    setTextSize(s);
+    AsyncStorage.setItem(TEXT_SIZE_KEY, s).catch(() => {});
   }, []);
 
   const [selectedWord, setSelectedWord] = useState('');
@@ -260,22 +260,22 @@ export default function ChapterScreen() {
           </Text>
         </TouchableOpacity>
 
-        {/* CEFR level selector */}
+        {/* Text size selector */}
         <View style={[styles.levelSelector, { backgroundColor: colors.muted, borderRadius: 10 }]}>
-          {CEFR_LEVELS.map(l => {
-            const active = englishLevel === l.key;
+          {TEXT_SIZES.map(s => {
+            const active = textSize === s.key;
             return (
               <TouchableOpacity
-                key={l.key}
-                onPress={() => handleLevelChange(l.key)}
+                key={s.key}
+                onPress={() => handleSizeChange(s.key)}
                 style={[
                   styles.levelBtn,
                   active && [styles.levelBtnActive, { backgroundColor: colors.primary, borderRadius: 7 }],
                 ]}
                 hitSlop={{ top: 4, bottom: 4, left: 2, right: 2 }}
               >
-                <Text style={[styles.levelCode, { color: active ? colors.primaryForeground : colors.mutedForeground }]}>
-                  {l.code}
+                <Text style={[styles.levelCode, { fontSize: s.labelSize, color: active ? colors.primaryForeground : colors.mutedForeground }]}>
+                  A
                 </Text>
               </TouchableOpacity>
             );
@@ -343,6 +343,7 @@ export default function ChapterScreen() {
             <VerseRow
               verse={item}
               displayMode={displayMode}
+              textSize={textSize}
               isBookmarked={isBookmarked(currentBookId, chapterNum, item.v)}
               onWordPress={handleWordPress}
               onBookmarkToggle={() => handleBookmarkToggle(item)}
@@ -469,11 +470,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  // CEFR level selector (header right side)
-  levelSelector: { flexDirection: 'row', padding: 3, gap: 2 },
-  levelBtn:      { paddingHorizontal: 10, paddingVertical: 5 },
+  // Text size selector (header right side)
+  levelSelector: { flexDirection: 'row', padding: 3, gap: 2, alignItems: 'center' },
+  levelBtn:      { paddingHorizontal: 9, paddingVertical: 5, alignItems: 'center', justifyContent: 'center', minWidth: 30 },
   levelBtnActive:{},
-  levelCode:     { fontSize: 12, fontFamily: 'Inter_700Bold', fontWeight: '700' as const },
+  levelCode:     { fontFamily: 'Inter_700Bold' },
 
   // Mode bar
   modeBar: {

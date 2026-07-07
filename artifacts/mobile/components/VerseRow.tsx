@@ -6,15 +6,24 @@ import { useColors } from '@/hooks/useColors';
 import { type DisplayMode } from '@/context/BibleContext';
 import { type BibleVerse } from '@/constants/bibleData';
 
+type TextSize = 'small' | 'medium' | 'large';
+
+const TEXT_SCALE: Record<TextSize, { en: number; enLine: number; pt: number; ptLine: number }> = {
+  small:  { en: 15, enLine: 25, pt: 14, ptLine: 22 },
+  medium: { en: 18, enLine: 30, pt: 17, ptLine: 28 },
+  large:  { en: 22, enLine: 35, pt: 20, ptLine: 33 },
+};
+
 interface VerseRowProps {
   verse: BibleVerse;
   displayMode: DisplayMode;
+  textSize?: TextSize;
   isBookmarked: boolean;
   onWordPress: (word: string, context: string) => void;
   onBookmarkToggle: () => void;
 }
 
-function VerseRow({ verse, displayMode, isBookmarked, onWordPress, onBookmarkToggle }: VerseRowProps) {
+function VerseRow({ verse, displayMode, textSize = 'medium', isBookmarked, onWordPress, onBookmarkToggle }: VerseRowProps) {
   const colors = useColors();
 
   const handleBookmark = () => {
@@ -26,10 +35,12 @@ function VerseRow({ verse, displayMode, isBookmarked, onWordPress, onBookmarkTog
   const showPt = displayMode === 'both' || displayMode === 'portuguese';
   const showBoth = displayMode === 'both';
 
+  const scale = TEXT_SCALE[textSize];
+
   const renderTappableWords = (text: string) => {
     const words = text.split(' ');
     return (
-      <Text style={[styles.verseEnText, { color: colors.englishText }]}>
+      <Text style={[styles.verseEnText, { color: colors.englishText, fontSize: scale.en, lineHeight: scale.enLine }]}>
         {words.map((rawWord, i) => {
           const clean = rawWord.replace(/[^a-zA-Z']/g, '').toLowerCase();
           return (
@@ -38,7 +49,7 @@ function VerseRow({ verse, displayMode, isBookmarked, onWordPress, onBookmarkTog
               onPress={() => { if (clean.length > 1) onWordPress(clean, text); }}
               style={[
                 styles.enWord,
-                { color: colors.englishText },
+                { color: colors.englishText, fontSize: scale.en, lineHeight: scale.enLine },
                 clean.length > 1 && styles.tappableWord,
               ]}
               suppressHighlighting
@@ -86,7 +97,7 @@ function VerseRow({ verse, displayMode, isBookmarked, onWordPress, onBookmarkTog
                 <Text style={[styles.langBadgeText, { color: colors.portugueseText }]}>PT</Text>
               </View>
             )}
-            <Text style={[styles.versePtText, { color: colors.portugueseText }]}>
+            <Text style={[styles.versePtText, { color: colors.portugueseText, fontSize: scale.pt, lineHeight: scale.ptLine }]}>
               {verse.pt}
             </Text>
           </View>
