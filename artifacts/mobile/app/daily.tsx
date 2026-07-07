@@ -28,9 +28,9 @@ const D = {
   bg1:       '#0A1628',
   bg2:       '#111E35',
   bg3:       '#162442',
-  wine:      '#D4A870',           // warm gold — harmonious with dark navy
-  wineFaint: 'rgba(212,168,112,0.13)',
-  wineBorder:'rgba(212,168,112,0.38)',
+  wine:      '#EDD9A8',           // parchment cream — biblical manuscript on dark navy
+  wineFaint: 'rgba(237,217,168,0.12)',
+  wineBorder:'rgba(237,217,168,0.28)',
   white:     '#FFFFFF',
   whiteHi:   'rgba(255,255,255,0.90)',
   whiteMid:  'rgba(255,255,255,0.55)',
@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: D.wine,
   },
-  completeBtnText: { fontSize: 14, fontFamily: 'Inter_500Medium', color: D.white },
+  completeBtnText: { fontSize: 14, fontFamily: 'Inter_500Medium', color: D.bg1 },
 
   // Done state
   doneRow: {
