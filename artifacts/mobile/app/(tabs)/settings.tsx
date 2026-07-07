@@ -17,7 +17,7 @@ import {
   Share,
   useWindowDimensions,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
@@ -610,6 +610,18 @@ function SupportModal({ visible, onClose }: { visible: boolean; onClose: () => v
   );
 }
 
+// ── Background template icon map (MaterialCommunityIcons) ────────────────────
+const TEMPLATE_ICONS: Record<BackgroundTemplate, string> = {
+  none:     'book-open-variant',
+  golf:     'golf',
+  soccer:   'soccer',
+  business: 'briefcase-outline',
+  sky:      'weather-sunny',
+  forest:   'pine-tree',
+  sunset:   'weather-sunset-down',
+  car:      'steering',
+};
+
 // ── Settings Screen ───────────────────────────────────────────────────────────
 export default function SettingsScreen() {
   const colors   = useColors();
@@ -950,7 +962,18 @@ export default function SettingsScreen() {
                         borderTopRightRadius: colors.radius / 1.5 - 1,
                       }]}
                     >
-                      <Text style={styles.bgTmplEmoji}>{tmpl.emoji}</Text>
+                      {/* Premium icon — translucent circle + vector icon */}
+                      <View style={[styles.bgTmplIconBg, {
+                        backgroundColor: tmpl.isDark
+                          ? 'rgba(255,255,255,0.13)'
+                          : 'rgba(0,0,0,0.07)',
+                      }]}>
+                        <MaterialCommunityIcons
+                          name={TEMPLATE_ICONS[id] as any}
+                          size={20}
+                          color={tmpl.isDark ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.50)'}
+                        />
+                      </View>
                       {active && (
                         <View style={[styles.bgTmplCheck, { backgroundColor: colors.primary }]}>
                           <Feather name="check" size={8} color={colors.primaryForeground} />
@@ -1267,10 +1290,10 @@ const styles = StyleSheet.create({
   headerTopRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 2 },
 
   // Background template picker
-  bgTmplRow:     { gap: 8, paddingBottom: 4 },
-  bgTmplCard:    { width: 68, overflow: 'hidden' },
-  bgTmplGradient:{ height: 56, alignItems: 'center', justifyContent: 'center' },
-  bgTmplEmoji:   { fontSize: 22 },
-  bgTmplCheck:   { position: 'absolute', top: 4, right: 4, width: 14, height: 14, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
-  bgTmplName:    { fontSize: 9, fontFamily: 'Inter_500Medium', textAlign: 'center', paddingHorizontal: 4, paddingVertical: 5 },
+  bgTmplRow:     { gap: 10, paddingBottom: 4 },
+  bgTmplCard:    { width: 76, overflow: 'hidden' },
+  bgTmplGradient:{ height: 72, alignItems: 'center', justifyContent: 'center' },
+  bgTmplIconBg:  { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  bgTmplCheck:   { position: 'absolute', top: 5, right: 5, width: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  bgTmplName:    { fontSize: 10, fontFamily: 'Inter_500Medium', textAlign: 'center', paddingHorizontal: 4, paddingVertical: 6, letterSpacing: 0.1 },
 });
