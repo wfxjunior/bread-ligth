@@ -98,9 +98,9 @@ type BookMeta = {
 const BOOK_CATALOGUE: BookMeta[] = [
   { bookId: 'genesis',      gradient: ['#1E3D29', '#0D1F15'] as const, roman: 'I',    testamentEn: 'Old Testament', testamentPt: 'Antigo Testamento' },
   { bookId: 'psalms',       gradient: ['#7A5218', '#4A3010'] as const, roman: 'XIX',  testamentEn: 'Old Testament', testamentPt: 'Antigo Testamento' },
+  { bookId: 'proverbs',     gradient: ['#5A3A10', '#301E08'] as const, roman: 'XX',   testamentEn: 'Old Testament', testamentPt: 'Antigo Testamento' },
   { bookId: 'matthew',      gradient: ['#3E141D', '#200A0F'] as const, roman: 'I',    testamentEn: 'New Testament', testamentPt: 'Novo Testamento' },
-  { bookId: 'john1',        gradient: ['#2A1845', '#160D28'] as const, roman: 'IV',   testamentEn: 'New Testament', testamentPt: 'Novo Testamento' },
-  { bookId: 'john',         gradient: ['#4A1C23', '#261018'] as const, roman: 'IV',   testamentEn: 'New Testament', testamentPt: 'Novo Testamento' },
+  { bookId: 'john',         gradient: ['#2A1845', '#160D28'] as const, roman: 'IV',   testamentEn: 'New Testament', testamentPt: 'Novo Testamento' },
   { bookId: 'romans',       gradient: ['#2C2A28', '#1A1816'] as const, roman: 'VI',   testamentEn: 'New Testament', testamentPt: 'Novo Testamento' },
   { bookId: 'philippians',  gradient: ['#1B3A5A', '#0D1F35'] as const, roman: 'XI',   testamentEn: 'New Testament', testamentPt: 'Novo Testamento' },
   { bookId: '1corinthians', gradient: ['#4A1230', '#28091A'] as const, roman: 'VII',  testamentEn: 'New Testament', testamentPt: 'Novo Testamento' },

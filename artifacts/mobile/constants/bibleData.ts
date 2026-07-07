@@ -12,7 +12,12 @@ export interface BibleBook {
   chapters: Record<number, BibleVerse[]>;
 }
 
+import { johnBook } from './bible/john';
+import { proverbsBook } from './bible/proverbs';
+
 export const BIBLE_DATA: Record<string, BibleBook> = {
+  john: johnBook,
+  proverbs: proverbsBook,
   genesis: {
     id: 'genesis',
     name: 'Gênesis',
@@ -92,62 +97,6 @@ export const BIBLE_DATA: Record<string, BibleBook> = {
       ],
     },
   },
-  john: {
-    id: 'john',
-    name: 'João',
-    englishName: 'John',
-    testament: 'new',
-    chapters: {
-      3: [
-        { v: 1, en: 'There was a man of the Pharisees, named Nicodemus, a ruler of the Jews.', pt: 'E havia entre os fariseus um homem chamado Nicodemos, príncipe dos judeus.' },
-        { v: 2, en: 'The same came to Jesus by night, and said unto him, Rabbi, we know that thou art a teacher come from God: for no man can do these miracles that thou doest, except God be with him.', pt: 'Este foi ter com Jesus de noite e disse-lhe: Rabi, sabemos que és Mestre vindo da parte de Deus, porque ninguém pode fazer estes sinais que tu fazes, se Deus não estiver com ele.' },
-        { v: 3, en: 'Jesus answered and said unto him, Verily, verily, I say unto thee, Except a man be born again, he cannot see the kingdom of God.', pt: 'Jesus respondeu e disse-lhe: Em verdade, em verdade te digo que aquele que não nascer de novo não pode ver o reino de Deus.' },
-        { v: 4, en: 'Nicodemus saith unto him, How can a man be born when he is old? can he enter the second time into his mother\'s womb, and be born?', pt: 'Nicodemos disse-lhe: Como pode um homem nascer, sendo velho? Pode entrar segunda vez no ventre de sua mãe e nascer?' },
-        { v: 5, en: 'Jesus answered, Verily, verily, I say unto thee, Except a man be born of water and of the Spirit, he cannot enter into the kingdom of God.', pt: 'Jesus respondeu: Em verdade, em verdade te digo que aquele que não nascer da água e do Espírito não pode entrar no reino de Deus.' },
-        { v: 6, en: 'That which is born of the flesh is flesh; and that which is born of the Spirit is spirit.', pt: 'O que é nascido da carne é carne, e o que é nascido do Espírito é espírito.' },
-        { v: 7, en: 'Marvel not that I said unto thee, Ye must be born again.', pt: 'Não te maravilhes de eu te dizer: Tendes de nascer de novo.' },
-        { v: 8, en: 'The wind bloweth where it listeth, and thou hearest the sound thereof, but canst not tell whence it cometh, and whither it goeth: so is every one that is born of the Spirit.', pt: 'O vento sopra onde quer, e ouves a sua voz, mas não sabes de onde vem nem para onde vai; assim é todo o que é nascido do Espírito.' },
-        { v: 9, en: 'Nicodemus answered and said unto him, How can these things be?', pt: 'Nicodemos respondeu e disse-lhe: Como podem ser assim estas coisas?' },
-        { v: 10, en: 'Jesus answered and said unto him, Art thou a master of Israel, and knowest not these things?', pt: 'Respondeu-lhe Jesus: Tu és mestre em Israel e não sabes estas coisas?' },
-        { v: 11, en: 'Verily, verily, I say unto thee, We speak that we do know, and testify that we have seen; and ye receive not our witness.', pt: 'Em verdade, em verdade te digo que falamos do que sabemos e testificamos do que vimos; mas não aceitais o nosso testemunho.' },
-        { v: 12, en: 'If I have told you earthly things, and ye believe not, how shall ye believe, if I tell you of heavenly things?', pt: 'Se vos falei de coisas terrenas e não credes, como crereis se vos falar das celestiais?' },
-        { v: 13, en: 'And no man hath ascended up to heaven, but he that came down from heaven, even the Son of man which is in heaven.', pt: 'Ninguém sobe ao céu, senão o que desceu do céu, o Filho do homem, que está no céu.' },
-        { v: 14, en: 'And as Moses lifted up the serpent in the wilderness, even so must the Son of man be lifted up.', pt: 'E, assim como Moisés levantou a serpente no deserto, assim importa que o Filho do homem seja levantado.' },
-        { v: 15, en: 'That whosoever believeth in him should not perish, but have eternal life.', pt: 'Para que todo aquele que nele crê não pereça, mas tenha a vida eterna.' },
-        { v: 16, en: 'For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life.', pt: 'Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito, para que todo aquele que nele crê não pereça, mas tenha a vida eterna.' },
-        { v: 17, en: 'For God sent not his Son into the world to condemn the world; but that the world through him might be saved.', pt: 'Porque Deus enviou o seu Filho ao mundo, não para que condenasse o mundo, mas para que o mundo fosse salvo por ele.' },
-        { v: 18, en: 'He that believeth on him is not condemned: but he that believeth not is condemned already, because he hath not believed in the name of the only begotten Son of God.', pt: 'Quem crê nele não é condenado; mas quem não crê já está condenado, porquanto não crê no nome do unigênito Filho de Deus.' },
-        { v: 19, en: 'And this is the condemnation, that light is come into the world, and men loved darkness rather than light, because their deeds were evil.', pt: 'E é este o julgamento: que a luz veio ao mundo, e os homens amaram mais as trevas do que a luz, porque as suas obras eram más.' },
-        { v: 20, en: 'For every one that doeth evil hateth the light, neither cometh to the light, lest his deeds should be reproved.', pt: 'Pois todo aquele que faz o mal odeia a luz e não vem para a luz, para que as suas obras não sejam reprovadas.' },
-        { v: 21, en: 'But he that doeth truth cometh to the light, that his deeds may be made manifest, that they are wrought in God.', pt: 'Mas quem pratica a verdade vem para a luz, a fim de que as suas obras sejam manifestas, porque são feitas em Deus.' },
-      ],
-    },
-  },
-  john1: {
-    id: 'john1',
-    name: 'João',
-    englishName: 'John',
-    testament: 'new',
-    chapters: {
-      1: [
-        { v: 1,  en: 'In the beginning was the Word, and the Word was with God, and the Word was God.',                        pt: 'No princípio era o Verbo, e o Verbo estava com Deus, e o Verbo era Deus.' },
-        { v: 2,  en: 'The same was in the beginning with God.',                                                                 pt: 'Ele estava no princípio com Deus.' },
-        { v: 3,  en: 'All things were made by him; and without him was not any thing made that was made.',                     pt: 'Todas as coisas foram feitas por intermédio dele, e sem ele nada do que foi feito se fez.' },
-        { v: 4,  en: 'In him was life; and the life was the light of men.',                                                    pt: 'Nele estava a vida, e a vida era a luz dos homens.' },
-        { v: 5,  en: 'And the light shineth in darkness; and the darkness comprehended it not.',                               pt: 'E a luz resplandece nas trevas, e as trevas não a compreenderam.' },
-        { v: 6,  en: 'There was a man sent from God, whose name was John.',                                                    pt: 'Houve um homem enviado por Deus, cujo nome era João.' },
-        { v: 7,  en: 'The same came for a witness, to bear witness of the Light, that all men through him might believe.',     pt: 'Este veio para testemunho, para que testificasse da Luz, para que todos cressem por meio dele.' },
-        { v: 8,  en: 'He was not that Light, but was sent to bear witness of that Light.',                                     pt: 'Ele não era a Luz, mas enviado para testificar da Luz.' },
-        { v: 9,  en: 'That was the true Light, which lighteth every man that cometh into the world.',                         pt: 'Havia a Luz verdadeira, que, chegando ao mundo, ilumina todo o homem.' },
-        { v: 10, en: 'He was in the world, and the world was made by him, and the world knew him not.',                       pt: 'Ele estava no mundo, e o mundo foi feito por ele, e o mundo não o conheceu.' },
-        { v: 11, en: 'He came unto his own, and his own received him not.',                                                    pt: 'Veio para o que era seu, e os seus não o receberam.' },
-        { v: 12, en: 'But as many as received him, to them gave he power to become the sons of God, even to them that believe on his name.', pt: 'Mas a todos quantos o receberam deu-lhes o poder de serem feitos filhos de Deus, a saber, aos que creem no seu nome.' },
-        { v: 14, en: 'And the Word was made flesh, and dwelt among us, (and we beheld his glory, the glory as of the only begotten of the Father,) full of grace and truth.', pt: 'E o Verbo se fez carne e habitou entre nós, e vimos a sua glória, como a glória do unigênito do Pai, cheio de graça e de verdade.' },
-        { v: 17, en: 'For the law was given by Moses, but grace and truth came by Jesus Christ.',                             pt: 'Porque a lei foi dada por Moisés; a graça e a verdade vieram por Jesus Cristo.' },
-        { v: 29, en: 'The next day John seeth Jesus coming unto him, and saith, Behold the Lamb of God, which taketh away the sin of the world.', pt: 'No dia seguinte, João viu Jesus a aproximar-se dele e disse: Eis o Cordeiro de Deus, que tira o pecado do mundo.' },
-      ],
-    },
-  },
   romans: {
     id: 'romans',
     name: 'Romanos',
@@ -223,14 +172,18 @@ export interface FeaturedPassage {
 }
 
 export const FEATURED_PASSAGES: FeaturedPassage[] = [
-  { bookId: 'genesis',      chapter: 1,  titlePt: 'A Criação',          titleEn: 'The Creation',       gradient: ['#1B3A6B', '#2A5298'] },
-  { bookId: 'psalms',       chapter: 23, titlePt: 'O Bom Pastor',       titleEn: 'The Good Shepherd',  gradient: ['#3D6B41', '#5A9E60'] },
-  { bookId: 'john1',        chapter: 1,  titlePt: 'O Verbo',            titleEn: 'The Word',           gradient: ['#2A1B4A', '#5B3FA0'] },
-  { bookId: 'john',         chapter: 3,  titlePt: 'Nascer de Novo',     titleEn: 'Born Again',         gradient: ['#6B3A1B', '#A0582A'] },
+  { bookId: 'genesis',      chapter: 1,  titlePt: 'A Criação',          titleEn: 'The Creation',          gradient: ['#1B3A6B', '#2A5298'] },
+  { bookId: 'psalms',       chapter: 23, titlePt: 'O Bom Pastor',       titleEn: 'The Good Shepherd',     gradient: ['#3D6B41', '#5A9E60'] },
+  { bookId: 'john',         chapter: 1,  titlePt: 'O Verbo',            titleEn: 'The Word',              gradient: ['#2A1B4A', '#5B3FA0'] },
+  { bookId: 'john',         chapter: 3,  titlePt: 'Nascer de Novo',     titleEn: 'Born Again',            gradient: ['#6B3A1B', '#A0582A'] },
+  { bookId: 'john',         chapter: 14, titlePt: 'Eu Sou o Caminho',   titleEn: 'I Am the Way',          gradient: ['#1B3A4A', '#2E6B8E'] },
+  { bookId: 'john',         chapter: 15, titlePt: 'A Videira',          titleEn: 'The True Vine',         gradient: ['#2A4A1B', '#4E8E2E'] },
+  { bookId: 'proverbs',     chapter: 3,  titlePt: 'Confia no Senhor',   titleEn: 'Trust in the LORD',     gradient: ['#4A3A1B', '#8E6E2E'] },
+  { bookId: 'proverbs',     chapter: 8,  titlePt: 'A Sabedoria Clama',  titleEn: 'Wisdom Cries Out',      gradient: ['#3A1B4A', '#7B3FAA'] },
   { bookId: 'romans',       chapter: 8,  titlePt: 'Mais que Vencedores', titleEn: 'More Than Conquerors', gradient: ['#1B4A3A', '#2E8B6E'] },
-  { bookId: 'matthew',      chapter: 5,  titlePt: 'Bem-aventuranças',   titleEn: 'The Beatitudes',     gradient: ['#4A1B6B', '#7B3FAA'] },
-  { bookId: 'philippians',  chapter: 4,  titlePt: 'A Paz de Deus',      titleEn: 'Peace of God',       gradient: ['#1B3A5A', '#2E6B9E'] },
-  { bookId: '1corinthians', chapter: 13, titlePt: 'O Amor',             titleEn: 'The Love Chapter',   gradient: ['#6B1B3A', '#AA3F5F'] },
+  { bookId: 'matthew',      chapter: 5,  titlePt: 'Bem-aventuranças',   titleEn: 'The Beatitudes',        gradient: ['#4A1B6B', '#7B3FAA'] },
+  { bookId: 'philippians',  chapter: 4,  titlePt: 'A Paz de Deus',      titleEn: 'Peace of God',          gradient: ['#1B3A5A', '#2E6B9E'] },
+  { bookId: '1corinthians', chapter: 13, titlePt: 'O Amor',             titleEn: 'The Love Chapter',      gradient: ['#6B1B3A', '#AA3F5F'] },
 ];
 
 export function searchBible(query: string): Array<{ bookId: string; chapter: number; verse: BibleVerse }> {
