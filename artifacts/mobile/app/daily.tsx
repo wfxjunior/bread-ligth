@@ -264,7 +264,7 @@ export default function DailyScreen() {
       <LinearGradient colors={[D.bg1, D.bg2, D.bg3]} style={StyleSheet.absoluteFill} />
 
       {/* ── Header ── */}
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+      <View style={[styles.header, { paddingTop: (Platform.OS === 'web' ? 67 : insets.top) + 16 }]}>
         <TouchableOpacity
           onPress={() => router.back()}
           style={styles.backBtn}
@@ -322,7 +322,6 @@ export default function DailyScreen() {
             activeOpacity={0.8}
             style={styles.devBtn}
           >
-            <Feather name="feather" size={16} color={D.wine} />
             <Text style={styles.devBtnText}>Ler Devocional</Text>
           </TouchableOpacity>
 
@@ -344,7 +343,6 @@ export default function DailyScreen() {
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                 style={styles.completeBtnGrad}
               >
-                <Feather name="check-circle" size={20} color={D.white} />
                 <Text style={styles.completeBtnText}>Marcar como concluído</Text>
               </LinearGradient>
             </TouchableOpacity>
