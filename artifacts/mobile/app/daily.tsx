@@ -249,8 +249,11 @@ export default function DailyScreen() {
   const [devErrorEn,   setDevErrorEn]   = useState('');
   const DEVOTIONAL_EN_KEY = `${todayKey()}:devotional:en`;
 
-  // Language preference for devotional (synced between bottom bar toggle and modal)
+  // Language preference for the devotional modal (controlled inside the modal's own toggle)
   const [devLang, setDevLang] = useState<'pt' | 'en'>('pt');
+
+  // Controls whether the Portuguese verse translation is revealed below the English verse
+  const [showPt, setShowPt] = useState(false);
 
   const openDevotional = useCallback(async () => {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
@@ -356,7 +359,22 @@ export default function DailyScreen() {
 
         <TappableVerse text={verseObj.en} onWordPress={openWord} />
 
-        <Text style={styles.versePt}>{verseObj.pt}</Text>
+        {/* PT translation reveal toggle */}
+        <TouchableOpacity
+          onPress={() => {
+            if (Platform.OS !== 'web') Haptics.selectionAsync();
+            setShowPt(v => !v);
+          }}
+          style={[styles.ptToggleBtn, showPt && { backgroundColor: D.wineFaint, borderColor: D.wineBorder }]}
+          activeOpacity={0.7}
+        >
+          <Feather name={showPt ? 'eye-off' : 'eye'} size={13} color={showPt ? D.wine : D.whiteLow} />
+          <Text style={[styles.ptToggleText, { color: showPt ? D.wine : D.whiteLow }]}>
+            {showPt ? 'Ocultar tradução' : 'Ver tradução em PT'}
+          </Text>
+        </TouchableOpacity>
+
+        {showPt && <Text style={styles.versePt}>{verseObj.pt}</Text>}
 
         <View style={styles.bookTag}>
           <Feather name="book-open" size={12} color={D.wineBorder} />
@@ -365,7 +383,11 @@ export default function DailyScreen() {
 
         <View style={styles.tipRow}>
           <Feather name="zap" size={12} color={D.whiteLow} />
-          <Text style={styles.tipText}>Toque em qualquer palavra em inglês para ver sua tradução</Text>
+          <Text style={styles.tipText}>
+            {showPt
+              ? 'Toque em qualquer palavra em inglês para ver sua definição'
+              : 'Toque em qualquer palavra · Toque em PT para revelar a tradução'}
+          </Text>
         </View>
       </ScrollView>
 
@@ -383,22 +405,6 @@ export default function DailyScreen() {
               <Text style={styles.devBtnText}>Ler Devocional</Text>
             </TouchableOpacity>
 
-            <View style={[styles.devLangPill, { borderColor: D.wineBorder, backgroundColor: D.wineFaint }]}>
-              {(['pt', 'en'] as const).map(l => (
-                <TouchableOpacity
-                  key={l}
-                  onPress={() => {
-                    if (Platform.OS !== 'web') Haptics.selectionAsync();
-                    setDevLang(l);
-                  }}
-                  style={[styles.devLangBtn, devLang === l && { backgroundColor: D.wine }]}
-                >
-                  <Text style={[styles.devLangText, { color: devLang === l ? D.white : D.wine }]}>
-                    {l.toUpperCase()}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
           </View>
 
           {/* Complete / done row */}
@@ -538,6 +544,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
     lineHeight: 18,
+  },
+
+  // Translation reveal button
+  ptToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: D.border,
+    backgroundColor: D.whiteFaint,
+    marginBottom: 18,
+  },
+  ptToggleText: {
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
   },
 
   // Bottom bar
