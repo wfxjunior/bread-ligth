@@ -29,8 +29,9 @@ const CARD_H = 196;
 
 const VIEW_MODE_KEY = '@bibliaeN:libraryViewMode';
 
-const WEEKDAYS_PT = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-const MONTHS_PT   = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const WEEKDAYS_PT      = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const WEEKDAYS_FULL_PT = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+const MONTHS_PT        = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -423,16 +424,15 @@ export default function HomeScreen() {
       {/* ── Header ── */}
       <View style={[
         styles.header,
-        { paddingTop: topPad + 20, borderBottomColor: colors.border },
+        { paddingTop: topPad + 16, borderBottomColor: colors.border },
       ]}>
-        <Text style={[styles.headerName, { color: colors.foreground }]}>Bread{'&'}Light</Text>
-        <View style={styles.headerSubRow}>
-          <Text style={[styles.headerGreeting, { color: colors.mutedForeground }]}>
-            {greeting}{userName ? `, ${userName}` : ''}
-          </Text>
-          <Text style={[styles.headerDot, { color: colors.border }]}>·</Text>
-          <Text style={[styles.headerDate, { color: colors.mutedForeground }]}>{dateStr}</Text>
-        </View>
+        <Text style={[styles.headerGreeting, { color: colors.mutedForeground }]}>
+          {greeting}{userName ? `, ${userName}` : ''}
+        </Text>
+        <Text style={[styles.headerName, { color: colors.foreground }]}>Hoje</Text>
+        <Text style={[styles.headerDate, { color: colors.mutedForeground }]}>
+          {WEEKDAYS_FULL_PT[today.getDay()]}  ·  {today.getDate()} {MONTHS_PT[today.getMonth()]}
+        </Text>
       </View>
 
       {/* ── Daily verse pill ── */}
@@ -714,30 +714,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 22,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    gap: 6,
-  },
-  headerName: {
-    fontSize: 34,
-    fontFamily: 'Lora_700Bold',
-    letterSpacing: -0.5,
-    lineHeight: 40,
-  },
-  headerSubRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
+    gap: 2,
   },
   headerGreeting: {
     fontSize: 13,
-    fontFamily: 'Inter_500Medium',
-  },
-  headerDot: {
-    fontSize: 13,
     fontFamily: 'Inter_400Regular',
+    marginBottom: 2,
+  },
+  headerName: {
+    fontSize: 30,
+    fontFamily: 'Inter_700Bold',
+    letterSpacing: -0.6,
+    lineHeight: 36,
   },
   headerDate: {
     fontSize: 13,
     fontFamily: 'Inter_400Regular',
+    marginTop: 4,
   },
 
   // Section wrapper
