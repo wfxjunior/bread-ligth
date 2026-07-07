@@ -23,12 +23,15 @@ interface VerseRowProps {
   onBookmarkToggle: () => void;
   selected?: boolean;
   onVersePress?: (v: number, pageY: number, height: number) => void;
+  hasNote?: boolean;
+  isMarked?: boolean;
 }
 
 function VerseRow({
   verse, displayMode, textSize = 'medium', isBookmarked,
   onWordPress, onBookmarkToggle,
   selected = false, onVersePress,
+  hasNote = false, isMarked = false,
 }: VerseRowProps) {
   const colors  = useColors();
   const rowRef  = useRef<View>(null);
@@ -82,15 +85,25 @@ function VerseRow({
       style={[
         styles.container,
         { borderBottomColor: colors.border },
-        selected && { backgroundColor: colors.accent + '12' },
+        selected  && { backgroundColor: colors.accent + '12' },
+        isMarked  && { backgroundColor: colors.accent + '08' },
       ]}
     >
       {/* Tappable background — catches taps on empty space; word/bookmark taps take priority */}
       <Pressable style={StyleSheet.absoluteFillObject} onPress={handleRowPress} />
 
+      {/* Left accent strip — shown when verse is highlighted */}
+      {isMarked && (
+        <View style={[styles.markedStrip, { backgroundColor: colors.accent }]} />
+      )}
+
       {/* Verse number pill */}
       <View style={[styles.verseNumber, { backgroundColor: colors.accent + '18' }]}>
         <Text style={[styles.verseNumText, { color: colors.verseNumber }]}>{verse.v}</Text>
+        {/* Note dot — shown when verse has a saved note */}
+        {hasNote && (
+          <View style={[styles.noteDot, { backgroundColor: colors.primary }]} />
+        )}
       </View>
 
       {/* Text area */}
@@ -185,6 +198,25 @@ const styles = StyleSheet.create({
 
   // Bookmark
   bookmarkBtn: { paddingTop: 3, flexShrink: 0 },
+
+  // Marked (highlighted) verse — left accent strip
+  markedStrip: {
+    position: 'absolute',
+    left: 0, top: 0, bottom: 0,
+    width: 3,
+    borderTopRightRadius: 2,
+    borderBottomRightRadius: 2,
+  },
+
+  // Note dot — overlaid on verse number circle
+  noteDot: {
+    position: 'absolute',
+    bottom: 0, right: 0,
+    width: 8, height: 8,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    borderColor: 'white',
+  },
 });
 
 export default memo(VerseRow);

@@ -1,8 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Animated,
   Dimensions,
   FlatList,
+  KeyboardAvoidingView,
   LayoutAnimation,
   Modal,
   Platform,
@@ -10,6 +12,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -31,7 +34,19 @@ const TEXT_SIZES = [
   { key: 'large',  labelSize: 19 },
 ] as const;
 type TextSize = typeof TEXT_SIZES[number]['key'];
-const TEXT_SIZE_KEY = '@bibliaeN:textSize';
+const TEXT_SIZE_KEY  = '@bibliaeN:textSize';
+const VERSE_NOTES_KEY = '@bibliaeN:verseNotes';
+const VERSE_MARKS_KEY = '@bibliaeN:verseMarks';
+
+// API base — same pattern as daily.tsx
+const _domain = process.env.EXPO_PUBLIC_DOMAIN;
+const API_BASE = _domain ? `https://${_domain}/api` : null;
+
+// Stable key for a verse across book/chapter
+const vKey = (bookId: string, chapter: number, v: number) => `${bookId}:${chapter}:${v}`;
+
+type NoteSheetState    = { v: number; text: string };
+type ExplainSheetState = { v: number; loading: boolean; text: string; error?: string };
 
 // Chapter number → English word
 const CH_WORDS = [
@@ -206,6 +221,12 @@ export default function ChapterScreen() {
   const [wordContext, setWordContext] = useState('');
   const [wordModalVisible, setWordModalVisible] = useState(false);
 
+  // Verse annotations
+  const [notes, setNotes]               = useState<Record<string, string>>({});
+  const [marks, setMarks]               = useState<Set<string>>(new Set());
+  const [noteSheet, setNoteSheet]       = useState<NoteSheetState | null>(null);
+  const [explainSheet, setExplainSheet] = useState<ExplainSheetState | null>(null);
+
   const listRef = useRef<FlatList>(null);
 
   // Save reading progress
@@ -262,6 +283,88 @@ export default function ChapterScreen() {
       });
     }
   }, [book, currentBookId, chapterNum, isBookmarked, addBookmark, removeBookmark]);
+
+  // ── Verse annotations ─────────────────────────────────────────────────────
+  useEffect(() => {
+    (async () => {
+      try {
+        const [nRaw, mRaw] = await Promise.all([
+          AsyncStorage.getItem(VERSE_NOTES_KEY),
+          AsyncStorage.getItem(VERSE_MARKS_KEY),
+        ]);
+        if (nRaw) setNotes(JSON.parse(nRaw) as Record<string, string>);
+        if (mRaw) setMarks(new Set(JSON.parse(mRaw) as string[]));
+      } catch {}
+    })();
+  }, []);
+
+  const toggleMark = useCallback((v: number) => {
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const key = vKey(currentBookId, chapterNum, v);
+    setMarks(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      AsyncStorage.setItem(VERSE_MARKS_KEY, JSON.stringify([...next])).catch(() => {});
+      return next;
+    });
+  }, [currentBookId, chapterNum]);
+
+  const openNote = useCallback((v: number) => {
+    const key = vKey(currentBookId, chapterNum, v);
+    setNoteSheet({ v, text: notes[key] ?? '' });
+  }, [currentBookId, chapterNum, notes]);
+
+  const closeNote = useCallback(() => setNoteSheet(null), []);
+
+  const saveNote = useCallback(() => {
+    if (!noteSheet) return;
+    const key  = vKey(currentBookId, chapterNum, noteSheet.v);
+    const text = noteSheet.text.trim();
+    setNotes(prev => {
+      const next = { ...prev };
+      if (text) next[key] = text; else delete next[key];
+      AsyncStorage.setItem(VERSE_NOTES_KEY, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+    setNoteSheet(null);
+  }, [noteSheet, currentBookId, chapterNum]);
+
+  const deleteNote = useCallback((v: number) => {
+    const key = vKey(currentBookId, chapterNum, v);
+    setNotes(prev => {
+      const next = { ...prev };
+      delete next[key];
+      AsyncStorage.setItem(VERSE_NOTES_KEY, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+    setNoteSheet(null);
+  }, [currentBookId, chapterNum]);
+
+  const openExplain = useCallback(async (v: number) => {
+    if (!API_BASE) return;
+    const vrs = verses.find(vr => vr.v === v);
+    if (!vrs) return;
+    setExplainSheet({ v, loading: true, text: '' });
+    try {
+      const params = new URLSearchParams({
+        book:    book?.englishName ?? '',
+        chapter: String(chapterNum),
+        verse:   String(v),
+        en:      vrs.en,
+      });
+      const res  = await fetch(`${API_BASE}/explain?${params}`);
+      const data = await res.json() as { text?: string; error?: string };
+      if (!res.ok || !data.text) {
+        setExplainSheet(s => s ? { ...s, loading: false, text: '', error: data.error ?? 'Erro ao carregar.' } : s);
+      } else {
+        setExplainSheet(s => s ? { ...s, loading: false, text: data.text! } : s);
+      }
+    } catch {
+      setExplainSheet(s => s ? { ...s, loading: false, text: '', error: 'Sem conexão. Tente novamente.' } : s);
+    }
+  }, [verses, book, chapterNum]);
+
+  const closeExplain = useCallback(() => setExplainSheet(null), []);
 
   const handleVerseSelect = useCallback((v: number, pageY: number, height: number) => {
     const { height: screenH } = Dimensions.get('window');
@@ -416,7 +519,7 @@ export default function ChapterScreen() {
           ref={listRef}
           data={verses}
           keyExtractor={(item) => `${currentBookId}-${chapterNum}-${item.v}`}
-          extraData={[focusMode, displayMode, chapterNum, textSize, currentBookId, selectedVerse?.v]}
+          extraData={[focusMode, displayMode, chapterNum, textSize, currentBookId, selectedVerse?.v, marks, notes]}
           onScrollBeginDrag={handleVerseDeselect}
           renderItem={({ item }) => (
             <VerseRow
@@ -428,6 +531,8 @@ export default function ChapterScreen() {
               onBookmarkToggle={() => handleBookmarkToggle(item)}
               selected={selectedVerse?.v === item.v}
               onVersePress={handleVerseSelect}
+              hasNote={!!notes[vKey(currentBookId, chapterNum, item.v)]}
+              isMarked={marks.has(vKey(currentBookId, chapterNum, item.v))}
             />
           )}
           ListHeaderComponent={
@@ -512,21 +617,157 @@ export default function ChapterScreen() {
             },
           ]}
         >
-          {ACTIONS.map(({ icon, label }) => (
-            <TouchableOpacity
-              key={label}
-              style={styles.versePopupBtn}
-              onPress={() => {
-                if (Platform.OS !== 'web') Haptics.selectionAsync();
-                handleVerseDeselect();
-              }}
-              activeOpacity={0.7}
-            >
-              <Feather name={icon} size={17} color="#FFFFFF" />
-              <Text style={styles.versePopupLabel}>{label}</Text>
-            </TouchableOpacity>
-          ))}
+          {ACTIONS.map(({ icon, label }) => {
+            const isActive =
+              (label === 'Salvar' && selectedVerse && isBookmarked(currentBookId, chapterNum, selectedVerse.v)) ||
+              (label === 'Marcar' && selectedVerse && marks.has(vKey(currentBookId, chapterNum, selectedVerse.v))) ||
+              (label === 'Nota'   && selectedVerse && !!notes[vKey(currentBookId, chapterNum, selectedVerse.v)]);
+            return (
+              <TouchableOpacity
+                key={label}
+                style={styles.versePopupBtn}
+                onPress={() => {
+                  if (Platform.OS !== 'web') Haptics.selectionAsync();
+                  if (!selectedVerse) return;
+                  const { v } = selectedVerse;
+                  switch (label) {
+                    case 'Explicar':
+                      handleVerseDeselect();
+                      openExplain(v);
+                      break;
+                    case 'Marcar':
+                      toggleMark(v);
+                      handleVerseDeselect();
+                      break;
+                    case 'Salvar': {
+                      const vrs = verses.find(vr => vr.v === v);
+                      if (vrs) handleBookmarkToggle(vrs);
+                      handleVerseDeselect();
+                      break;
+                    }
+                    case 'Nota':
+                      handleVerseDeselect();
+                      openNote(v);
+                      break;
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                <Feather name={icon} size={17} color={isActive ? colors.accent : '#FFFFFF'} />
+                <Text style={[styles.versePopupLabel, isActive && { color: colors.accent }]}>{label}</Text>
+              </TouchableOpacity>
+            );
+          })}
         </Animated.View>
+      )}
+
+      {/* ── Note sheet ── */}
+      {noteSheet !== null && (
+        <Modal visible transparent animationType="slide" onRequestClose={closeNote}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+            <Pressable style={styles.modalBackdrop} onPress={closeNote}>
+              <Pressable
+                style={[styles.annotationSheet, { backgroundColor: colors.card, paddingBottom: (Platform.OS === 'web' ? 34 : insets.bottom) + 16 }]}
+                onPress={e => e.stopPropagation()}
+              >
+                <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
+                <View style={styles.annotationHeader}>
+                  <View>
+                    <Text style={[styles.annotationTitle, { color: colors.foreground }]}>Nota</Text>
+                    <Text style={[styles.annotationRef, { color: colors.mutedForeground }]}>
+                      {book?.englishName} {chapterNum}:{noteSheet.v}
+                    </Text>
+                  </View>
+                  <TouchableOpacity onPress={closeNote} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                    <Feather name="x" size={20} color={colors.mutedForeground} />
+                  </TouchableOpacity>
+                </View>
+
+                <TextInput
+                  value={noteSheet.text}
+                  onChangeText={t => setNoteSheet(s => s ? { ...s, text: t } : s)}
+                  placeholder="Escreva sua reflexão aqui…"
+                  placeholderTextColor={colors.mutedForeground}
+                  multiline
+                  autoFocus
+                  style={[styles.noteInput, {
+                    color:           colors.foreground,
+                    backgroundColor: colors.muted,
+                    borderColor:     colors.border,
+                  }]}
+                  textAlignVertical="top"
+                />
+
+                <View style={styles.noteActionRow}>
+                  {!!notes[vKey(currentBookId, chapterNum, noteSheet.v)] && (
+                    <TouchableOpacity
+                      onPress={() => deleteNote(noteSheet.v)}
+                      style={[styles.noteDeleteBtn, { borderColor: colors.border, borderRadius: colors.radius }]}
+                    >
+                      <Feather name="trash-2" size={16} color={colors.mutedForeground} />
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    onPress={saveNote}
+                    disabled={!noteSheet.text.trim()}
+                    style={[styles.noteSaveBtn, {
+                      backgroundColor: noteSheet.text.trim() ? colors.primary : colors.muted,
+                      borderRadius: colors.radius,
+                      flex: 1,
+                    }]}
+                  >
+                    <Text style={[styles.noteSaveText, {
+                      color: noteSheet.text.trim() ? colors.primaryForeground : colors.mutedForeground,
+                    }]}>
+                      Salvar nota
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </Pressable>
+            </Pressable>
+          </KeyboardAvoidingView>
+        </Modal>
+      )}
+
+      {/* ── Explain sheet ── */}
+      {explainSheet !== null && (
+        <Modal visible transparent animationType="slide" onRequestClose={closeExplain}>
+          <Pressable style={styles.modalBackdrop} onPress={closeExplain}>
+            <Pressable
+              style={[styles.annotationSheet, { backgroundColor: colors.card, paddingBottom: (Platform.OS === 'web' ? 34 : insets.bottom) + 16 }]}
+              onPress={e => e.stopPropagation()}
+            >
+              <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
+              <View style={styles.annotationHeader}>
+                <View>
+                  <Text style={[styles.annotationTitle, { color: colors.foreground }]}>Explicação</Text>
+                  <Text style={[styles.annotationRef, { color: colors.mutedForeground }]}>
+                    {book?.englishName} {chapterNum}:{explainSheet.v}
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={closeExplain} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                  <Feather name="x" size={20} color={colors.mutedForeground} />
+                </TouchableOpacity>
+              </View>
+
+              {explainSheet.loading ? (
+                <View style={styles.explainCenter}>
+                  <ActivityIndicator size="large" color={colors.accent} />
+                  <Text style={[styles.explainCenterText, { color: colors.mutedForeground }]}>Gerando explicação…</Text>
+                </View>
+              ) : explainSheet.error ? (
+                <View style={styles.explainCenter}>
+                  <Feather name="alert-circle" size={32} color={colors.mutedForeground} />
+                  <Text style={[styles.explainCenterText, { color: colors.mutedForeground }]}>{explainSheet.error}</Text>
+                </View>
+              ) : (
+                <ScrollView style={styles.explainBody} showsVerticalScrollIndicator={false}>
+                  <Text style={[styles.explainText, { color: colors.foreground }]}>{explainSheet.text}</Text>
+                </ScrollView>
+              )}
+            </Pressable>
+          </Pressable>
+        </Modal>
       )}
 
       {/* ── Book picker sheet ── */}
@@ -781,4 +1022,59 @@ const styles = StyleSheet.create({
   bookItemPt: { fontSize: 12, fontFamily: 'Inter_400Regular' },
   bookItemRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   bookChapterBadge: { fontSize: 12, fontFamily: 'Inter_400Regular' },
+
+  // Note + Explain shared sheet
+  annotationSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '80%',
+    paddingTop: 10,
+  },
+  annotationHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+  },
+  annotationTitle: { fontSize: 17, fontFamily: 'Inter_700Bold' },
+  annotationRef:   { fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 2 },
+
+  // Note sheet
+  noteInput: {
+    marginHorizontal: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 12,
+    padding: 14,
+    minHeight: 120,
+    maxHeight: 200,
+    fontSize: 15,
+    fontFamily: 'Inter_400Regular',
+    lineHeight: 24,
+  },
+  noteActionRow: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 20,
+    paddingTop: 14,
+  },
+  noteDeleteBtn: {
+    width: 48, height: 48,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  noteSaveBtn: {
+    height: 48,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  noteSaveText: { fontSize: 15, fontFamily: 'Inter_600SemiBold' },
+
+  // Explain sheet
+  explainCenter: {
+    alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 52, paddingHorizontal: 24, gap: 12,
+  },
+  explainCenterText: { fontSize: 14, fontFamily: 'Inter_400Regular', textAlign: 'center' },
+  explainBody: { paddingHorizontal: 20, paddingBottom: 8 },
+  explainText: { fontSize: 16, fontFamily: 'Lora_400Regular', lineHeight: 28 },
 });
