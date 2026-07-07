@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "BíbliaEN",
-    "slug": "mobile",
+    "name": "GodEN",
+    "slug": "goden",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "scheme": "goden",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -14,9 +14,12 @@
       "backgroundColor": "#1B3A6B"
     },
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.goden.app"
     },
-    "android": {},
+    "android": {
+      "package": "com.goden.app"
+    },
     "web": {
       "favicon": "./assets/images/icon.png"
     },

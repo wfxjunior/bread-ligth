@@ -1,4 +1,6 @@
-import { BibleBook } from '../bibleData';
+import type { BibleBook } from '../bibleData';
+import { GENESIS_CH13_31 } from './genesis-ch13-31';
+import { GENESIS_CH32_50 } from './genesis-ch32-50';
 
 export const genesisBook: BibleBook = {
   id: 'genesis',
@@ -193,5 +195,7 @@ export const genesisBook: BibleBook = {
       { v: 7,  en: 'And the LORD appeared unto Abram, and said, Unto thy seed will I give this land: and there builded he an altar unto the LORD, who appeared unto him.', pt: 'E apareceu o Senhor a Abrão, e disse: À tua semente darei esta terra. E edificou ali um altar ao Senhor, que lhe aparecera.' },
       { v: 8,  en: 'And he removed from thence unto a mountain on the east of Bethel, and pitched his tent, having Bethel on the west, and Hai on the east: and there he builded an altar unto the LORD, and called upon the name of the LORD.', pt: 'E mudou-se dali para um monte ao oriente de Betel, e armou a sua tenda, ficando Betel ao ocidente e Ai ao oriente; e ali edificou um altar ao Senhor, e invocou o nome do Senhor.' },
     ],
+    ...GENESIS_CH13_31,
+    ...GENESIS_CH32_50,
   },
 };
