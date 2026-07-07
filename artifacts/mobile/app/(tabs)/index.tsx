@@ -283,7 +283,7 @@ export default function HomeScreen() {
       {/* ── Header ── */}
       <View style={[
         styles.header,
-        { paddingTop: topPad + 6, borderBottomColor: colors.border },
+        { paddingTop: topPad + 20, borderBottomColor: colors.border },
       ]}>
         <Text style={[styles.headerName, { color: colors.foreground }]}>Bread{'&'}Light</Text>
         <View style={styles.headerSubRow}>
