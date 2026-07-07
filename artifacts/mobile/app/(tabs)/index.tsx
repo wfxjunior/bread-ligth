@@ -426,12 +426,19 @@ export default function HomeScreen() {
         styles.header,
         { paddingTop: topPad + 16, borderBottomColor: colors.border },
       ]}>
+        {/* Greeting — comma when name follows, exclamation when alone */}
         <Text style={[styles.headerGreeting, { color: colors.mutedForeground }]}>
-          {greeting}{userName ? `, ${userName}` : ''}
+          {greeting}{userName ? ',' : '!'}
         </Text>
-        <Text style={[styles.headerName, { color: colors.foreground }]}>Hoje</Text>
+
+        {/* Name when logged in, "Hoje" when guest */}
+        <Text style={[styles.headerName, { color: colors.foreground }]}>
+          {userName || 'Hoje'}
+        </Text>
+
+        {/* Date */}
         <Text style={[styles.headerDate, { color: colors.mutedForeground }]}>
-          {WEEKDAYS_FULL_PT[today.getDay()]}  ·  {today.getDate()} {MONTHS_PT[today.getMonth()]}
+          {WEEKDAYS_FULL_PT[today.getDay()]} · {today.getDate()} {MONTHS_PT[today.getMonth()]}
         </Text>
       </View>
 
