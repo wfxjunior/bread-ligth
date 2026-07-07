@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
   statDivider: { width: 1, marginVertical: 4 },
 
   // Section
-  section: { paddingHorizontal: 16, marginBottom: 4 },
+  section: { paddingHorizontal: 16, marginBottom: 16 },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -374,6 +374,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: 'Inter_600SemiBold',
     letterSpacing: 1.2,
+    marginBottom: 10,
   },
   sectionCount: {
     fontSize: 11,
