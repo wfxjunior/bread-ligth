@@ -11,6 +11,7 @@ import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useBible, type Bookmark } from '@/context/BibleContext';
 import * as Haptics from 'expo-haptics';
 
@@ -82,7 +83,7 @@ export default function BookmarksScreen() {
   const { bookmarks, removeBookmark } = useBible();
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
-  const bottomPad = Platform.OS === 'web' ? 84 : 0;
+  const bottomPad = useTabBarHeight();
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

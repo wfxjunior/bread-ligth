@@ -10,6 +10,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useBible } from '@/context/BibleContext';
 import FlashCard from '@/components/FlashCard';
 
@@ -28,7 +29,7 @@ export default function VocabScreen() {
   });
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
-  const bottomPad = Platform.OS === 'web' ? 84 : 0;
+  const bottomPad = useTabBarHeight();
 
   const filters: { key: Filter; label: string }[] = [
     { key: 'all', label: `Todas (${vocabulary.length})` },

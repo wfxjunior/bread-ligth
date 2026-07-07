@@ -14,6 +14,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
+import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useBible } from '@/context/BibleContext';
 import { BIBLE_DATA } from '@/constants/bibleData';
 import { getEntryForDate, resolveVerse } from '@/utils/dailyVerse';
@@ -170,7 +171,8 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { bookmarks, vocabulary, readingProgress } = useBible();
 
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const topPad    = Platform.OS === 'web' ? 67 : insets.top;
+  const bottomPad = useTabBarHeight();
 
   const handleContinue = () => {
     if (!readingProgress) return;
@@ -189,7 +191,7 @@ export default function HomeScreen() {
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
-      contentContainerStyle={{ paddingBottom: Platform.OS === 'web' ? 100 : 110 }}
+      contentContainerStyle={{ paddingBottom: bottomPad }}
       showsVerticalScrollIndicator={false}
     >
       {/* ── Hero ── */}

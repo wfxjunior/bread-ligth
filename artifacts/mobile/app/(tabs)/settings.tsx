@@ -17,6 +17,7 @@ import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColors } from '@/hooks/useColors';
+import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useBible } from '@/context/BibleContext';
 import { useTheme, type ThemeMode } from '@/context/ThemeContext';
 
@@ -134,7 +135,7 @@ export default function SettingsScreen() {
   const { vocabulary, bookmarks, clearVocabulary } = useBible();
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
-  const bottomPad = Platform.OS === 'web' ? 84 : insets.bottom + 20;
+  const bottomPad = useTabBarHeight();
 
   // Preferences state (all local — no backend)
   const [level,       setLevel]       = useState('Intermediário');

@@ -12,6 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { BIBLE_DATA, searchBible } from '@/constants/bibleData';
 
 export default function SearchScreen() {
@@ -20,7 +21,7 @@ export default function SearchScreen() {
   const [query, setQuery] = useState('');
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
-  const bottomPad = Platform.OS === 'web' ? 84 : 0;
+  const bottomPad = useTabBarHeight();
 
   const results = query.trim().length >= 3 ? searchBible(query) : [];
 
