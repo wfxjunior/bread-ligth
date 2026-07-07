@@ -23,6 +23,10 @@ const strings = {
   drawer_nav_share:      { pt: 'Compartilhar', en: 'Share'        },
   drawer_nav_support:    { pt: 'Apoio',        en: 'Support'      },
   drawer_nav_about:      { pt: 'Sobre',        en: 'About'        },
+  drawer_sections_label: { pt: 'SEÇÕES',       en: 'SECTIONS'     },
+  drawer_nav_language:   { pt: 'Idioma',       en: 'Language'     },
+  drawer_nav_audio:      { pt: 'Áudio',        en: 'Audio'        },
+  drawer_nav_data:       { pt: 'Dados',        en: 'Data'         },
 
   // ── Settings screen title
   settings_title:    { pt: 'Configurações', en: 'Settings' },

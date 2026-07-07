@@ -4,6 +4,7 @@ import {
   Animated,
   Image,
   KeyboardAvoidingView,
+  LayoutChangeEvent,
   Modal,
   Platform,
   Pressable,
@@ -285,10 +286,10 @@ function CustomToggle({ value, onChange }: { value: boolean; onChange: (v: boole
 }
 
 // ── Section label ─────────────────────────────────────────────────────────────
-function SectionLabel({ title }: { title: string }) {
+function SectionLabel({ title, onLayout }: { title: string; onLayout?: (e: LayoutChangeEvent) => void }) {
   const colors = useColors();
   return (
-    <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>
+    <Text onLayout={onLayout} style={[styles.sectionLabel, { color: colors.mutedForeground }]}>
       {title.toUpperCase()}
     </Text>
   );
@@ -392,19 +393,22 @@ function PillSelector({
 }
 
 // ── Level pill selector ───────────────────────────────────────────────────────
-const LEVEL_OPTIONS = [
-  { key: 'beginner',     label: 'Iniciante',    code: 'A2' },
-  { key: 'intermediate', label: 'Intermediário', code: 'B1' },
-  { key: 'advanced',     label: 'Avançado',      code: 'C1' },
-] as const;
-export type LevelKey = typeof LEVEL_OPTIONS[number]['key'];
+export type LevelKey = 'beginner' | 'intermediate' | 'advanced';
 const LEVEL_KEY = '@bibliaeN:level';
 
 function LevelPillSelector({ value, onChange }: { value: LevelKey; onChange: (v: LevelKey) => void }) {
-  const colors = useColors();
+  const colors  = useColors();
+  const { t }   = useLanguage();
+
+  const levels: { key: LevelKey; label: string; code: string }[] = [
+    { key: 'beginner',     label: t('level_beginner'), code: 'A2' },
+    { key: 'intermediate', label: t('level_inter'),    code: 'B1' },
+    { key: 'advanced',     label: t('level_advanced'), code: 'C1' },
+  ];
+
   return (
     <View style={styles.pillRow}>
-      {LEVEL_OPTIONS.map(({ key, label, code }) => {
+      {levels.map(({ key, label, code }) => {
         const active = value === key;
         return (
           <TouchableOpacity
@@ -631,6 +635,31 @@ export default function SettingsScreen() {
   const { readingTheme, setReadingTheme, accentColor, setAccentColor, backgroundTemplate, setBackgroundTemplate } = useTheme();
   const { lang, setLang, t: tl } = useLanguage();
 
+  // ── Scroll-to-section ───────────────────────────────────────────────────────
+  const scrollRef      = useRef<ScrollView>(null);
+  const sectionOffsets = useRef<Record<string, number>>({});
+  const scrollToSection = (key: string) => {
+    const y = sectionOffsets.current[key];
+    if (y !== undefined) scrollRef.current?.scrollTo({ y: Math.max(0, y - 16), animated: true });
+    setDrawerVisible(false);
+  };
+
+  // ── i18n theme names/descs (inside component so tl() is available) ──────────
+  const themeNames: Record<string, string> = {
+    classic:  tl('theme_classic'),
+    oxford:   tl('theme_oxford'),
+    scholar:  tl('theme_scholar'),
+    night:    tl('theme_night'),
+    notebook: tl('theme_notebook'),
+  };
+  const themeDescs: Record<string, string> = {
+    classic:  lang === 'pt' ? 'Quente, suave'  : 'Warm, soft',
+    oxford:   lang === 'pt' ? 'Branco nítido'  : 'Crisp white',
+    scholar:  lang === 'pt' ? 'Tom neutro'     : 'Neutral tone',
+    night:    lang === 'pt' ? 'Modo escuro'    : 'Dark mode',
+    notebook: lang === 'pt' ? 'Leve e casual'  : 'Light & casual',
+  };
+
   useEffect(() => {
     AsyncStorage.getItem(LEVEL_KEY)
       .then(v => { if (v === 'beginner' || v === 'advanced') setLevel(v as LevelKey); })
@@ -726,6 +755,7 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={{ padding: 16, paddingBottom: bottomPad + 8, gap: 6 }}
         showsVerticalScrollIndicator={false}
       >
@@ -774,7 +804,10 @@ export default function SettingsScreen() {
         </SettingsCard>
 
         {/* ── Idioma ── */}
-        <SectionLabel title={tl('section_language')} />
+        <SectionLabel
+          title={tl('section_language')}
+          onLayout={e => { sectionOffsets.current['language'] = e.nativeEvent.layout.y; }}
+        />
         <SettingsCard>
           <View style={styles.innerSection}>
             <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>{tl('app_language')}</Text>
@@ -806,7 +839,10 @@ export default function SettingsScreen() {
         </SettingsCard>
 
         {/* ── Aparência ── */}
-        <SectionLabel title={tl('section_appearance')} />
+        <SectionLabel
+          title={tl('section_appearance')}
+          onLayout={e => { sectionOffsets.current['appearance'] = e.nativeEvent.layout.y; }}
+        />
         <SettingsCard>
           {/* Reading theme grid */}
           <View style={[styles.innerSection, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
@@ -848,10 +884,10 @@ export default function SettingsScreen() {
                     </View>
                     <View style={styles.themeCardBody}>
                       <Text style={[styles.themeCardName, { color: colors.foreground }]} numberOfLines={1}>
-                        {t.name}
+                        {themeNames[t.id] ?? t.name}
                       </Text>
                       <Text style={[styles.themeCardDesc, { color: colors.mutedForeground }]} numberOfLines={1}>
-                        {t.desc}
+                        {themeDescs[t.id] ?? t.desc}
                       </Text>
                     </View>
                   </TouchableOpacity>
@@ -932,7 +968,10 @@ export default function SettingsScreen() {
         </SettingsCard>
 
         {/* ── Aprendizado ── */}
-        <SectionLabel title={tl('section_learning')} />
+        <SectionLabel
+          title={tl('section_learning')}
+          onLayout={e => { sectionOffsets.current['learning'] = e.nativeEvent.layout.y; }}
+        />
         <SettingsCard>
           <View style={[styles.innerSection, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
             <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>{tl('english_level')}</Text>
@@ -951,7 +990,10 @@ export default function SettingsScreen() {
         </SettingsCard>
 
         {/* ── Áudio ── */}
-        <SectionLabel title={tl('section_audio')} />
+        <SectionLabel
+          title={tl('section_audio')}
+          onLayout={e => { sectionOffsets.current['audio'] = e.nativeEvent.layout.y; }}
+        />
         <SettingsCard>
           <View style={styles.innerSection}>
             <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>{tl('playback_speed')}</Text>
@@ -960,14 +1002,20 @@ export default function SettingsScreen() {
         </SettingsCard>
 
         {/* ── Compartilhar ── */}
-        <SectionLabel title={tl('section_share')} />
+        <SectionLabel
+          title={tl('section_share')}
+          onLayout={e => { sectionOffsets.current['share'] = e.nativeEvent.layout.y; }}
+        />
         <SettingsCard>
           <SettingsRow icon="share-2"   label={tl('share_verse')}   sub={tl('share_verse_sub')} onPress={() => {}} />
           <SettingsRow icon="user-plus" label={tl('invite_friend')} sub={tl('invite_sub')}       onPress={() => {}} border={false} />
         </SettingsCard>
 
         {/* ── Apoio ── */}
-        <SectionLabel title={tl('section_support')} />
+        <SectionLabel
+          title={tl('section_support')}
+          onLayout={e => { sectionOffsets.current['support'] = e.nativeEvent.layout.y; }}
+        />
         <SettingsCard>
           {/* Mission header */}
           <View style={[styles.supportHeader, { borderBottomColor: colors.border }]}>
@@ -1003,7 +1051,10 @@ export default function SettingsScreen() {
         </SettingsCard>
 
         {/* ── Dados ── */}
-        <SectionLabel title={tl('section_data')} />
+        <SectionLabel
+          title={tl('section_data')}
+          onLayout={e => { sectionOffsets.current['data'] = e.nativeEvent.layout.y; }}
+        />
         <SettingsCard>
           <SettingsRow
             icon="trash-2"
@@ -1015,7 +1066,10 @@ export default function SettingsScreen() {
         </SettingsCard>
 
         {/* ── Sobre ── */}
-        <SectionLabel title={tl('section_about')} />
+        <SectionLabel
+          title={tl('section_about')}
+          onLayout={e => { sectionOffsets.current['about'] = e.nativeEvent.layout.y; }}
+        />
         <SettingsCard>
           <SettingsRow icon="info"      label={tl('version_label')} sub="1.1.26" />
           <SettingsRow
@@ -1037,8 +1091,7 @@ export default function SettingsScreen() {
       <SettingsDrawer
         visible={drawerVisible}
         onClose={() => setDrawerVisible(false)}
-        avatarUri={avatarUri}
-        onPickAvatar={handlePickAvatar}
+        onScrollToSection={scrollToSection}
       />
     </View>
   );
