@@ -313,6 +313,21 @@ export default function ChapterScreen() {
         </View>
       </View>
 
+      {/* ── Fixed action toolbar — always visible above verse list ── */}
+      <View style={[styles.actionBar, { backgroundColor: colors.primary, borderBottomColor: colors.border }]}>
+        {ACTIONS.map(({ icon, label }) => (
+          <TouchableOpacity
+            key={label}
+            style={styles.actionBtn}
+            onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); }}
+            activeOpacity={0.75}
+          >
+            <Feather name={icon} size={16} color={colors.primaryForeground} />
+            <Text style={[styles.actionLabel, { color: colors.primaryForeground }]}>{label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       {/* ── Verse list ── */}
       {verses.length === 0 ? (
         <View style={styles.empty}>
@@ -368,7 +383,7 @@ export default function ChapterScreen() {
               {/* ── Gold rule ── */}
               <View style={[styles.subtitleRule, { backgroundColor: colors.accent + '35' }]} />
 
-              {/* ── Chapter heading ── */}
+              {/* ── Chapter heading — Lora serif ── */}
               <Text style={[styles.chapterBig, { color: colors.foreground }]}>
                 Chapter {CH_WORDS[chapterNum - 1] ?? String(chapterNum)}
               </Text>
@@ -377,21 +392,6 @@ export default function ChapterScreen() {
               <Text style={[styles.chapterMeta, { color: colors.mutedForeground }]}>
                 {book?.name} {chapterNum} · {verses.length} versículo{verses.length !== 1 ? 's' : ''}
               </Text>
-
-              {/* ── Action toolbar ── */}
-              <View style={[styles.actionBar, { backgroundColor: colors.primary }]}>
-                {ACTIONS.map(({ icon, label }) => (
-                  <TouchableOpacity
-                    key={label}
-                    style={styles.actionBtn}
-                    onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); }}
-                    activeOpacity={0.75}
-                  >
-                    <Feather name={icon} size={16} color={colors.primaryForeground} />
-                    <Text style={[styles.actionLabel, { color: colors.primaryForeground }]}>{label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
 
             </View>
           }
@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
     paddingTop: 28,
-    paddingBottom: 24,
+    paddingBottom: 20,
     borderBottomWidth: StyleSheet.hairlineWidth,
     gap: 0,
   },
@@ -534,11 +534,10 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
 
-  // Large chapter number
+  // Large chapter number — Lora serif
   chapterBig: {
-    fontSize: 32,
-    fontFamily: 'Inter_700Bold',
-    fontWeight: '700' as const,
+    fontSize: 36,
+    fontFamily: 'Lora_700Bold',
     textAlign: 'center',
     letterSpacing: -0.5,
     marginBottom: 6,
@@ -548,24 +547,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
     textAlign: 'center',
-    marginBottom: 22,
+    marginBottom: 4,
   },
 
-  // Action toolbar — uses theme primary so it adapts to light/dark
+  // Fixed action toolbar — always visible, sits between mode bar and list
   actionBar: {
     flexDirection: 'row',
-    borderRadius: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    gap: 0,
-    alignSelf: 'stretch',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   actionBtn: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 5,
-    paddingVertical: 4,
+    paddingVertical: 6,
   },
   actionLabel: {
     fontSize: 11,

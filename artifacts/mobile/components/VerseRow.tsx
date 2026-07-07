@@ -158,28 +158,27 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
 
-  // English verse
+  // English verse — Lora serif for reading comfort
   verseEnText: {
-    fontSize: 17,
-    lineHeight: 28,
-    fontFamily: 'Inter_400Regular',
+    fontSize: 18,
+    lineHeight: 30,
+    fontFamily: 'Lora_400Regular',
   },
   enWord: {
-    fontSize: 17,
-    lineHeight: 28,
-    fontFamily: 'Inter_400Regular',
+    fontSize: 18,
+    lineHeight: 30,
+    fontFamily: 'Lora_400Regular',
   },
   tappableWord: {
     textDecorationLine: 'underline',
     textDecorationStyle: 'solid',
   },
 
-  // Portuguese verse
+  // Portuguese verse — italic serif
   versePtText: {
-    fontSize: 16,
-    lineHeight: 26,
-    fontFamily: 'Inter_400Regular',
-    fontStyle: 'italic',
+    fontSize: 17,
+    lineHeight: 28,
+    fontFamily: 'Lora_400Regular_Italic',
   },
 
   // Separator between EN and PT

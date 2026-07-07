@@ -12,6 +12,11 @@ import {
   Inter_700Bold,
   useFonts,
 } from '@expo-google-fonts/inter';
+import {
+  Lora_400Regular,
+  Lora_400Regular_Italic,
+  Lora_700Bold,
+} from '@expo-google-fonts/lora';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { BibleProvider } from '@/context/BibleContext';
@@ -43,6 +48,9 @@ export default function RootLayout() {
     Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
+    Lora_400Regular,
+    Lora_400Regular_Italic,
+    Lora_700Bold,
   });
 
   useEffect(() => {

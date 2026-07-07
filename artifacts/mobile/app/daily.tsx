@@ -364,31 +364,30 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
 
-  // EN verse
+  // EN verse — Lora serif for immersive reading
   verseEnWrap: {
     fontSize: 26,
-    lineHeight: 40,
-    fontFamily: 'Inter_400Regular',
+    lineHeight: 42,
+    fontFamily: 'Lora_400Regular',
     color: D.white,
     marginBottom: 22,
   },
   verseWord: {
     fontSize: 26,
-    lineHeight: 40,
-    fontFamily: 'Inter_400Regular',
+    lineHeight: 42,
+    fontFamily: 'Lora_400Regular',
     color: D.white,
     textDecorationLine: 'underline',
     textDecorationStyle: 'solid',
     textDecorationColor: 'rgba(255,255,255,0.20)',
   },
 
-  // PT verse
+  // PT verse — italic serif
   versePt: {
-    fontSize: 16,
-    lineHeight: 26,
-    fontFamily: 'Inter_400Regular',
+    fontSize: 17,
+    lineHeight: 28,
+    fontFamily: 'Lora_400Regular_Italic',
     color: D.whiteMid,
-    fontStyle: 'italic',
     marginBottom: 28,
   },
 
