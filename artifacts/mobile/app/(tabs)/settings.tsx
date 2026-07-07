@@ -1,15 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  Animated,
   Image,
   Platform,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TouchableOpacity,
   View,
   Share,
+  useWindowDimensions,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,28 +23,57 @@ import { useBible } from '@/context/BibleContext';
 import { useTheme } from '@/context/ThemeContext';
 import type { ReadingTheme, AccentColor } from '@/constants/colors';
 
-// ── Reading theme data (mirrors web app) ──────────────────────────────────────
+// ── Reading theme data ────────────────────────────────────────────────────────
 const READING_THEMES: { id: ReadingTheme; name: string; desc: string; bg: string; dark: boolean }[] = [
-  { id: 'classic',  name: 'Pergaminho', desc: 'Quente, suave',   bg: '#F7F3EC', dark: false },
-  { id: 'oxford',   name: 'Oxford',     desc: 'Branco nítido',   bg: '#FFFFFF', dark: false },
-  { id: 'scholar',  name: 'Estudioso',  desc: 'Tom neutro',      bg: '#ECEAE6', dark: false },
-  { id: 'night',    name: 'Noturno',    desc: 'Modo escuro',     bg: '#0D1B2A', dark: true  },
-  { id: 'notebook', name: 'Caderno',    desc: 'Leve e casual',   bg: '#FEF9F0', dark: false },
+  { id: 'classic',  name: 'Pergaminho', desc: 'Quente, suave',  bg: '#FAF8F4', dark: false },
+  { id: 'oxford',   name: 'Oxford',     desc: 'Branco nítido',  bg: '#FFFFFF', dark: false },
+  { id: 'scholar',  name: 'Estudioso',  desc: 'Tom neutro',     bg: '#ECEAE6', dark: false },
+  { id: 'night',    name: 'Noturno',    desc: 'Modo escuro',    bg: '#1C1E22', dark: true  },
+  { id: 'notebook', name: 'Caderno',    desc: 'Leve e casual',  bg: '#FEF9F0', dark: false },
 ];
 
 const ACCENT_COLORS: { id: AccentColor; hex: string; label: string }[] = [
-  { id: 'royal-blue', hex: '#1B3A6B', label: 'Azul Real'  },
-  { id: 'burgundy',   hex: '#6B1E2A', label: 'Bordô'      },
-  { id: 'forest',     hex: '#1E4D2B', label: 'Floresta'   },
-  { id: 'slate',      hex: '#3D4A5C', label: 'Ardósia'    },
-  { id: 'violet',     hex: '#3B1E6B', label: 'Violeta'    },
-  { id: 'amber',      hex: '#7A5C1E', label: 'Âmbar'      },
+  { id: 'royal-blue', hex: '#1B3A6B', label: 'Azul Real' },
+  { id: 'burgundy',   hex: '#6B1E2A', label: 'Bordô'     },
+  { id: 'forest',     hex: '#1E4D2B', label: 'Floresta'  },
+  { id: 'slate',      hex: '#3D4A5C', label: 'Ardósia'   },
+  { id: 'violet',     hex: '#3B1E6B', label: 'Violeta'   },
+  { id: 'amber',      hex: '#7A5C1E', label: 'Âmbar'     },
 ];
 
 const AVATAR_KEY = '@bibliaeN:avatar';
 
-// ── Small reusable components ─────────────────────────────────────────────────
+// ── Custom toggle — consistent on all platforms ───────────────────────────────
+function CustomToggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+  const colors = useColors();
+  const anim   = useRef(new Animated.Value(value ? 1 : 0)).current;
 
+  useEffect(() => {
+    Animated.timing(anim, {
+      toValue: value ? 1 : 0,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+  }, [value]);
+
+  const thumbX  = anim.interpolate({ inputRange: [0, 1], outputRange: [2, 22] });
+  const trackBg = anim.interpolate({ inputRange: [0, 1], outputRange: [colors.muted, colors.primary] });
+
+  const handlePress = () => {
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    onChange(!value);
+  };
+
+  return (
+    <TouchableOpacity onPress={handlePress} activeOpacity={0.85}>
+      <Animated.View style={[styles.toggleTrack, { backgroundColor: trackBg }]}>
+        <Animated.View style={[styles.toggleThumb, { transform: [{ translateX: thumbX }] }]} />
+      </Animated.View>
+    </TouchableOpacity>
+  );
+}
+
+// ── Section label ─────────────────────────────────────────────────────────────
 function SectionLabel({ title }: { title: string }) {
   const colors = useColors();
   return (
@@ -53,15 +83,21 @@ function SectionLabel({ title }: { title: string }) {
   );
 }
 
+// ── Settings card ─────────────────────────────────────────────────────────────
 function SettingsCard({ children }: { children: React.ReactNode }) {
   const colors = useColors();
   return (
-    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
+    <View style={[styles.card, {
+      backgroundColor: colors.card,
+      borderColor: colors.border,
+      borderRadius: colors.radius,
+    }]}>
       {children}
     </View>
   );
 }
 
+// ── Settings row ──────────────────────────────────────────────────────────────
 function SettingsRow({
   icon, label, sub, right, onPress, border = true,
 }: {
@@ -73,84 +109,82 @@ function SettingsRow({
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={onPress ? 0.7 : 1}
-      style={[styles.row, border && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}
+      style={[
+        styles.row,
+        border && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+      ]}
     >
-      <View style={[styles.rowIcon, { backgroundColor: colors.primary + '15' }]}>
+      <View style={[styles.rowIcon, { backgroundColor: colors.primary + '14' }]}>
         <Feather name={icon as any} size={16} color={colors.primary} />
       </View>
       <View style={styles.rowText}>
         <Text style={[styles.rowLabel, { color: colors.foreground }]}>{label}</Text>
         {sub ? <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>{sub}</Text> : null}
       </View>
-      {right ?? (onPress ? <Feather name="chevron-right" size={16} color={colors.mutedForeground} /> : null)}
+      {right ?? (onPress
+        ? <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+        : null)}
     </TouchableOpacity>
   );
 }
 
+// ── Toggle row ────────────────────────────────────────────────────────────────
 function ToggleRow({
   icon, label, sub, value, onChange, border = true,
 }: {
   icon: string; label: string; sub?: string;
   value: boolean; onChange: (v: boolean) => void; border?: boolean;
 }) {
-  const colors = useColors();
-  const handleChange = (v: boolean) => {
-    if (Platform.OS !== 'web') Haptics.selectionAsync();
-    onChange(v);
-  };
   return (
     <SettingsRow
       icon={icon} label={label} sub={sub} border={border}
-      right={
-        <Switch
-          value={value}
-          onValueChange={handleChange}
-          trackColor={{ false: colors.border, true: colors.primary }}
-          thumbColor={Platform.OS === 'android' ? (value ? colors.primary : colors.muted) : '#fff'}
-          ios_backgroundColor={colors.border}
-        />
-      }
+      right={<CustomToggle value={value} onChange={onChange} />}
     />
   );
 }
 
+// ── Pill selector ─────────────────────────────────────────────────────────────
 function PillSelector({
   options, value, onChange,
-}: {
-  options: string[]; value: string; onChange: (v: string) => void;
-}) {
+}: { options: string[]; value: string; onChange: (v: string) => void }) {
   const colors = useColors();
   return (
     <View style={styles.pillRow}>
-      {options.map(opt => (
-        <TouchableOpacity
-          key={opt}
-          onPress={() => {
-            if (Platform.OS !== 'web') Haptics.selectionAsync();
-            onChange(opt);
-          }}
-          style={[
-            styles.pill,
-            {
-              backgroundColor: value === opt ? colors.primary : colors.secondary,
-              borderRadius: colors.radius / 2,
-            },
-          ]}
-        >
-          <Text style={[styles.pillText, { color: value === opt ? colors.primaryForeground : colors.foreground }]}>
-            {opt}
-          </Text>
-        </TouchableOpacity>
-      ))}
+      {options.map(opt => {
+        const active = value === opt;
+        return (
+          <TouchableOpacity
+            key={opt}
+            onPress={() => {
+              if (Platform.OS !== 'web') Haptics.selectionAsync();
+              onChange(opt);
+            }}
+            style={[
+              styles.pill,
+              {
+                backgroundColor: active ? colors.primary : colors.background,
+                borderColor:     active ? colors.primary : colors.border,
+                borderRadius:    colors.radius / 2,
+              },
+            ]}
+          >
+            <Text style={[styles.pillText, {
+              color: active ? colors.primaryForeground : colors.foreground,
+            }]}>
+              {opt}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 }
 
-// Level pill selector with CEFR codes — value/onChange use the stored key
+// ── Level pill selector ───────────────────────────────────────────────────────
 const LEVEL_OPTIONS = [
-  { key: 'beginner',     label: 'Iniciante',     code: 'A2' },
-  { key: 'intermediate', label: 'Intermediário',  code: 'B1' },
-  { key: 'advanced',     label: 'Avançado',       code: 'C1' },
+  { key: 'beginner',     label: 'Iniciante',    code: 'A2' },
+  { key: 'intermediate', label: 'Intermediário', code: 'B1' },
+  { key: 'advanced',     label: 'Avançado',      code: 'C1' },
 ] as const;
 export type LevelKey = typeof LEVEL_OPTIONS[number]['key'];
 const LEVEL_KEY = '@bibliaeN:level';
@@ -172,18 +206,21 @@ function LevelPillSelector({ value, onChange }: { value: LevelKey; onChange: (v:
               styles.pill,
               styles.levelPill,
               {
-                backgroundColor: active ? colors.primary : colors.secondary,
-                borderRadius: colors.radius / 2,
+                backgroundColor: active ? colors.primary : colors.background,
+                borderColor:     active ? colors.primary : colors.border,
+                borderRadius:    colors.radius / 2,
               },
             ]}
           >
-            <Text style={[styles.pillText, { color: active ? colors.primaryForeground : colors.foreground }]}>
+            <Text style={[styles.pillText, {
+              color: active ? colors.primaryForeground : colors.foreground,
+              fontSize: 12,
+            }]} numberOfLines={1} adjustsFontSizeToFit>
               {label}
             </Text>
-            <Text style={[
-              styles.cefrCode,
-              { color: active ? colors.primaryForeground + 'CC' : colors.mutedForeground },
-            ]}>
+            <Text style={[styles.cefrCode, {
+              color: active ? colors.primaryForeground + 'BB' : colors.mutedForeground,
+            }]}>
               {code}
             </Text>
           </TouchableOpacity>
@@ -194,37 +231,40 @@ function LevelPillSelector({ value, onChange }: { value: LevelKey; onChange: (v:
 }
 
 // ── Main screen ───────────────────────────────────────────────────────────────
-
 export default function SettingsScreen() {
-  const colors = useColors();
-  const insets = useSafeAreaInsets();
+  const colors   = useColors();
+  const insets   = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const { vocabulary, bookmarks, clearVocabulary } = useBible();
 
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const topPad    = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = useTabBarHeight();
 
-  // English level — synced with Chapter screen via AsyncStorage
-  const [level, setLevel] = useState<LevelKey>('intermediate');
+  // 3-column grid card width: screen - h-padding (32) - two gaps (16)
+  const themeCardW = Math.floor((width - 32 - 16) / 3);
+
+  const [level,       setLevel]       = useState<LevelKey>('intermediate');
+  const [displayMode, setDisplayMode] = useState('EN+PT');
+  const [showIPA,     setShowIPA]     = useState(true);
+  const [autoTr,      setAutoTr]      = useState(true);
+  const [vocabRemind, setVocabRemind] = useState(false);
+  const [audioSpeed,  setAudioSpeed]  = useState('Normal');
+  const [waitlisted,  setWaitlisted]  = useState(false);
+  const [linkCopied,  setLinkCopied]  = useState(false);
+  const [avatarUri,   setAvatarUri]   = useState<string | null>(null);
+
+  const { readingTheme, setReadingTheme, accentColor, setAccentColor } = useTheme();
+
   useEffect(() => {
     AsyncStorage.getItem(LEVEL_KEY)
-      .then(v => { if (v === 'beginner' || v === 'advanced') setLevel(v); })
+      .then(v => { if (v === 'beginner' || v === 'advanced') setLevel(v as LevelKey); })
       .catch(() => {});
   }, []);
   const handleLevelChange = (v: LevelKey) => {
     setLevel(v);
     AsyncStorage.setItem(LEVEL_KEY, v).catch(() => {});
   };
-  const [displayMode, setDisplayMode] = useState('EN+PT');
-  const [showIPA,     setShowIPA]     = useState(true);
-  const [autoTr,      setAutoTr]      = useState(true);
-  const [vocabRemind, setVocabRemind] = useState(false);
-  const [audioSpeed,  setAudioSpeed]  = useState('Normal');
-  const { readingTheme, setReadingTheme, accentColor, setAccentColor } = useTheme();
-  const [waitlisted,  setWaitlisted]  = useState(false);
-  const [linkCopied,  setLinkCopied]  = useState(false);
-  const [avatarUri,   setAvatarUri]   = useState<string | null>(null);
 
-  // Load persisted avatar
   useEffect(() => {
     AsyncStorage.getItem(AVATAR_KEY).then(v => { if (v) setAvatarUri(v); }).catch(() => {});
   }, []);
@@ -280,13 +320,16 @@ export default function SettingsScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
 
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: topPad + 12, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      {/* ── Header ── */}
+      <View style={[
+        styles.header,
+        { paddingTop: topPad + 14, borderBottomColor: colors.border, backgroundColor: colors.background },
+      ]}>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Configurações</Text>
       </View>
 
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: bottomPad, gap: 8 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: bottomPad + 8, gap: 6 }}
         showsVerticalScrollIndicator={false}
       >
 
@@ -297,7 +340,7 @@ export default function SettingsScreen() {
               {avatarUri ? (
                 <Image source={{ uri: avatarUri }} style={styles.avatar} />
               ) : (
-                <View style={[styles.avatar, { backgroundColor: colors.primary + '20' }]}>
+                <View style={[styles.avatar, { backgroundColor: colors.primary + '18' }]}>
                   <Text style={[styles.avatarText, { color: colors.primary }]}>W</Text>
                 </View>
               )}
@@ -309,15 +352,18 @@ export default function SettingsScreen() {
               <Text style={[styles.profileName, { color: colors.foreground }]}>Wilson</Text>
               <Text style={[styles.profileEmail, { color: colors.mutedForeground }]}>wilson@email.com</Text>
             </View>
-            <View style={[styles.planBadge, { backgroundColor: colors.accent + '20', borderColor: colors.accent + '40' }]}>
-              <Text style={[styles.planText, { color: colors.accent }]}>Gratuito</Text>
+            <View style={[styles.planBadge, {
+              backgroundColor: colors.primary + '14',
+              borderColor:     colors.primary + '30',
+            }]}>
+              <Text style={[styles.planText, { color: colors.primary }]}>Gratuito</Text>
             </View>
           </View>
           <View style={[styles.statsRow, { borderTopColor: colors.border }]}>
             {[
-              { label: 'Favoritos',  value: bookmarks.length },
-              { label: 'Palavras',   value: vocabulary.length },
-              { label: 'Dominadas',  value: vocabulary.filter(v => v.mastered).length },
+              { label: 'Favoritos', value: bookmarks.length },
+              { label: 'Palavras',  value: vocabulary.length },
+              { label: 'Dominadas', value: vocabulary.filter(v => v.mastered).length },
             ].map((s, i) => (
               <React.Fragment key={s.label}>
                 {i > 0 && <View style={[styles.statDivider, { backgroundColor: colors.border }]} />}
@@ -347,32 +393,38 @@ export default function SettingsScreen() {
                     style={[
                       styles.themeCard,
                       {
+                        width:           themeCardW,
                         backgroundColor: colors.card,
-                        borderColor: active ? colors.accent : colors.border,
-                        borderWidth: active ? 2 : StyleSheet.hairlineWidth,
-                        borderRadius: colors.radius / 1.5,
+                        borderColor:     active ? colors.primary : colors.border,
+                        borderWidth:     active ? 1.5 : StyleSheet.hairlineWidth,
+                        borderRadius:    colors.radius / 1.5,
                       },
                     ]}
                   >
-                    {/* Mini preview */}
-                    <View style={[styles.themePreview, { backgroundColor: t.bg }]}>
-                      {([70, 88, 56] as const).map((w, i) => (
+                    <View style={[styles.themePreview, { backgroundColor: t.bg, borderTopLeftRadius: colors.radius / 1.5, borderTopRightRadius: colors.radius / 1.5 }]}>
+                      {([72, 90, 60] as const).map((w, i) => (
                         <View
                           key={i}
                           style={[
                             styles.themeLine,
-                            { width: `${w}%` as any, backgroundColor: t.dark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.13)' },
+                            { width: `${w}%` as any, backgroundColor: t.dark ? 'rgba(255,255,255,0.20)' : 'rgba(0,0,0,0.11)' },
                           ]}
                         />
                       ))}
                       {active && (
-                        <View style={[styles.themeCheck, { backgroundColor: colors.accent }]}>
-                          <Feather name="check" size={8} color="#fff" />
+                        <View style={[styles.themeCheck, { backgroundColor: colors.primary }]}>
+                          <Feather name="check" size={8} color={colors.primaryForeground} />
                         </View>
                       )}
                     </View>
-                    <Text style={[styles.themeCardName, { color: colors.foreground }]} numberOfLines={1}>{t.name}</Text>
-                    <Text style={[styles.themeCardDesc, { color: colors.mutedForeground }]} numberOfLines={1}>{t.desc}</Text>
+                    <View style={styles.themeCardBody}>
+                      <Text style={[styles.themeCardName, { color: colors.foreground }]} numberOfLines={1}>
+                        {t.name}
+                      </Text>
+                      <Text style={[styles.themeCardDesc, { color: colors.mutedForeground }]} numberOfLines={1}>
+                        {t.desc}
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 );
               })}
@@ -391,12 +443,13 @@ export default function SettingsScreen() {
                     onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); setAccentColor(c.id); }}
                     activeOpacity={0.8}
                     style={[
-                      styles.accentCircle,
-                      { backgroundColor: c.hex },
-                      active && { borderWidth: 3, borderColor: c.hex + '55' },
+                      styles.accentCircleOuter,
+                      active && { borderColor: c.hex, borderWidth: 2.5 },
                     ]}
                   >
-                    {active && <Feather name="check" size={13} color="#fff" />}
+                    <View style={[styles.accentCircle, { backgroundColor: c.hex }]}>
+                      {active && <Feather name="check" size={13} color="#fff" />}
+                    </View>
                   </TouchableOpacity>
                 );
               })}
@@ -413,18 +466,14 @@ export default function SettingsScreen() {
           </View>
           <View style={styles.innerSection}>
             <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>Modo de Exibição</Text>
-            <PillSelector
-              options={['EN', 'EN+PT', 'PT']}
-              value={displayMode}
-              onChange={setDisplayMode}
-            />
+            <PillSelector options={['EN', 'EN+PT', 'PT']} value={displayMode} onChange={setDisplayMode} />
           </View>
         </SettingsCard>
 
         <SettingsCard>
-          <ToggleRow icon="type"       label="Pronúncia (IPA)"        sub="Mostrar fonética ao tocar palavras" value={showIPA}     onChange={setShowIPA} />
-          <ToggleRow icon="globe"      label="Tradução automática"     sub="Traduzir palavras tocadas"          value={autoTr}      onChange={setAutoTr} />
-          <ToggleRow icon="bell"       label="Lembrete de vocabulário" sub="Revisar palavras diariamente"       value={vocabRemind} onChange={setVocabRemind} border={false} />
+          <ToggleRow icon="type"  label="Pronúncia (IPA)"        sub="Mostrar fonética ao tocar palavras" value={showIPA}     onChange={setShowIPA} />
+          <ToggleRow icon="globe" label="Tradução automática"     sub="Traduzir palavras tocadas"          value={autoTr}      onChange={setAutoTr} />
+          <ToggleRow icon="bell"  label="Lembrete de vocabulário" sub="Revisar palavras diariamente"       value={vocabRemind} onChange={setVocabRemind} border={false} />
         </SettingsCard>
 
         {/* ── Áudio ── */}
@@ -432,19 +481,15 @@ export default function SettingsScreen() {
         <SettingsCard>
           <View style={styles.innerSection}>
             <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>Velocidade de Reprodução</Text>
-            <PillSelector
-              options={['0.75×', 'Normal', '1.25×', '1.5×']}
-              value={audioSpeed}
-              onChange={setAudioSpeed}
-            />
+            <PillSelector options={['0.75×', 'Normal', '1.25×', '1.5×']} value={audioSpeed} onChange={setAudioSpeed} />
           </View>
         </SettingsCard>
 
         {/* ── Compartilhar ── */}
         <SectionLabel title="Compartilhar" />
         <SettingsCard>
-          <SettingsRow icon="share-2"   label="Compartilhar versículo"  sub="Enviar como imagem ou texto" onPress={() => {}} />
-          <SettingsRow icon="user-plus" label="Convidar um amigo"       sub="30 dias grátis de Premium"   onPress={() => {}} />
+          <SettingsRow icon="share-2"   label="Compartilhar versículo" sub="Enviar como imagem ou texto" onPress={() => {}} />
+          <SettingsRow icon="user-plus" label="Convidar um amigo"      sub="30 dias grátis de Premium"  onPress={() => {}} />
           <SettingsRow
             icon="link"
             label="Seu link de convite"
@@ -452,9 +497,12 @@ export default function SettingsScreen() {
             border={false}
             onPress={handleCopyLink}
             right={
-              <View style={[styles.copyBtn, { backgroundColor: linkCopied ? colors.accent + '20' : colors.secondary, borderRadius: 8 }]}>
-                <Feather name={linkCopied ? 'check' : 'share-2'} size={14} color={linkCopied ? colors.accent : colors.mutedForeground} />
-                <Text style={[styles.copyText, { color: linkCopied ? colors.accent : colors.mutedForeground }]}>
+              <View style={[styles.copyBtn, {
+                backgroundColor: linkCopied ? colors.primary + '14' : colors.secondary,
+                borderRadius: 8,
+              }]}>
+                <Feather name={linkCopied ? 'check' : 'share-2'} size={14} color={linkCopied ? colors.primary : colors.mutedForeground} />
+                <Text style={[styles.copyText, { color: linkCopied ? colors.primary : colors.mutedForeground }]}>
                   {linkCopied ? 'Compartilhado!' : 'Compartilhar'}
                 </Text>
               </View>
@@ -497,11 +545,14 @@ export default function SettingsScreen() {
               if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
               setWaitlisted(true);
             }}
-            style={[styles.premiumBtn, { backgroundColor: waitlisted ? colors.accent + '30' : colors.accent, borderRadius: colors.radius }]}
+            style={[styles.premiumBtn, {
+              backgroundColor: waitlisted ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.92)',
+              borderRadius: colors.radius,
+            }]}
             activeOpacity={0.85}
           >
-            <Feather name={waitlisted ? 'check' : 'star'} size={16} color={waitlisted ? colors.accent : '#fff'} />
-            <Text style={[styles.premiumBtnText, { color: waitlisted ? colors.accent : '#fff' }]}>
+            <Feather name={waitlisted ? 'check' : 'star'} size={16} color={waitlisted ? '#fff' : colors.primary} />
+            <Text style={[styles.premiumBtnText, { color: waitlisted ? '#fff' : colors.primary }]}>
               {waitlisted ? 'Na lista de espera!' : 'Entrar na lista de espera'}
             </Text>
           </TouchableOpacity>
@@ -511,13 +562,19 @@ export default function SettingsScreen() {
         {/* ── Dados ── */}
         <SectionLabel title="Dados" />
         <SettingsCard>
-          <SettingsRow icon="trash-2" label="Limpar vocabulário" sub={`${vocabulary.length} palavra${vocabulary.length !== 1 ? 's' : ''} salva${vocabulary.length !== 1 ? 's' : ''}`} onPress={handleClearVocab} border={false} />
+          <SettingsRow
+            icon="trash-2"
+            label="Limpar vocabulário"
+            sub={`${vocabulary.length} palavra${vocabulary.length !== 1 ? 's' : ''} salva${vocabulary.length !== 1 ? 's' : ''}`}
+            onPress={handleClearVocab}
+            border={false}
+          />
         </SettingsCard>
 
         {/* ── Sobre ── */}
         <SectionLabel title="Sobre" />
         <SettingsCard>
-          <SettingsRow icon="info"    label="Versão"        sub="1.0.0 (beta)"           border={false} />
+          <SettingsRow icon="info" label="Versão" sub="1.0.0 (beta)" border={false} />
         </SettingsCard>
 
       </ScrollView>
@@ -525,74 +582,123 @@ export default function SettingsScreen() {
   );
 }
 
+// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container:    { flex: 1 },
-  header:       { paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: StyleSheet.hairlineWidth, gap: 2 },
-  headerTitle:  { fontSize: 26, fontFamily: 'Inter_700Bold', fontWeight: '700' as const },
+  container: { flex: 1 },
 
-  sectionLabel: { fontSize: 11, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.1, marginTop: 12, marginBottom: 4, marginHorizontal: 4 },
+  // Header — matches home screen style
+  header: {
+    paddingHorizontal: 20,
+    paddingBottom: 18,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  headerTitle: {
+    fontSize: 34,
+    fontFamily: 'Lora_700Bold',
+    letterSpacing: -0.5,
+    lineHeight: 40,
+  },
 
-  card:         { borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  sectionLabel: {
+    fontSize: 11,
+    fontFamily: 'Inter_600SemiBold',
+    letterSpacing: 1.2,
+    marginTop: 14,
+    marginBottom: 4,
+    marginHorizontal: 2,
+  },
 
-  row:          { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 13, gap: 12 },
-  rowIcon:      { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  rowText:      { flex: 1 },
-  rowLabel:     { fontSize: 15, fontFamily: 'Inter_500Medium' },
-  rowSub:       { fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 1 },
+  card: { borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
 
-  profileRow:   { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
-  avatarWrapper:{ position: 'relative' },
-  avatar:       { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
-  avatarCam:    { position: 'absolute', bottom: 0, right: 0, width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#fff' },
-  avatarText:   { fontSize: 22, fontFamily: 'Inter_700Bold', fontWeight: '700' as const },
-  profileInfo:  { flex: 1 },
-  profileName:  { fontSize: 17, fontFamily: 'Inter_600SemiBold', fontWeight: '600' as const },
-  profileEmail: { fontSize: 13, fontFamily: 'Inter_400Regular', marginTop: 2 },
-  planBadge:    { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, borderWidth: 1 },
-  planText:     { fontSize: 12, fontFamily: 'Inter_600SemiBold', fontWeight: '600' as const },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    gap: 12,
+  },
+  rowIcon:  { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  rowText:  { flex: 1 },
+  rowLabel: { fontSize: 15, fontFamily: 'Inter_500Medium' },
+  rowSub:   { fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 1 },
 
-  statsRow:     { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: 12 },
-  stat:         { flex: 1, alignItems: 'center', gap: 2 },
-  statValue:    { fontSize: 20, fontFamily: 'Inter_700Bold', fontWeight: '700' as const },
-  statLabel:    { fontSize: 11, fontFamily: 'Inter_400Regular' },
-  statDivider:  { width: StyleSheet.hairlineWidth, marginVertical: 4 },
+  // Custom toggle
+  toggleTrack: {
+    width: 50,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+  },
+  toggleThumb: {
+    position: 'absolute',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.18,
+    shadowRadius: 2,
+    elevation: 3,
+  },
 
-  innerSection: { paddingHorizontal: 14, paddingVertical: 12, gap: 10 },
+  // Profile
+  profileRow:  { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12 },
+  avatarWrapper: { position: 'relative' },
+  avatar:      { width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center' },
+  avatarCam:   { position: 'absolute', bottom: 0, right: 0, width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#fff' },
+  avatarText:  { fontSize: 22, fontFamily: 'Inter_700Bold', fontWeight: '700' as const },
+  profileInfo: { flex: 1 },
+  profileName: { fontSize: 17, fontFamily: 'Inter_600SemiBold', fontWeight: '600' as const },
+  profileEmail:{ fontSize: 13, fontFamily: 'Inter_400Regular', marginTop: 2 },
+  planBadge:   { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, borderWidth: 1 },
+  planText:    { fontSize: 12, fontFamily: 'Inter_600SemiBold', fontWeight: '600' as const },
+
+  statsRow:   { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: 12 },
+  stat:       { flex: 1, alignItems: 'center', gap: 2 },
+  statValue:  { fontSize: 20, fontFamily: 'Inter_700Bold', fontWeight: '700' as const },
+  statLabel:  { fontSize: 11, fontFamily: 'Inter_400Regular' },
+  statDivider:{ width: StyleSheet.hairlineWidth, marginVertical: 4 },
+
+  innerSection: { paddingHorizontal: 14, paddingVertical: 13, gap: 10 },
   innerLabel:   { fontSize: 12, fontFamily: 'Inter_500Medium', letterSpacing: 0.3 },
 
-  pillRow:      { flexDirection: 'row', gap: 6 },
-  pill:         { flex: 1, alignItems: 'center', paddingVertical: 8, paddingHorizontal: 4, minWidth: 0 },
-  pillText:     { fontSize: 13, fontFamily: 'Inter_500Medium', textAlign: 'center' },
-  levelPill:    { paddingVertical: 8, gap: 2 },
-  cefrCode:     { fontSize: 10, fontFamily: 'Inter_700Bold', letterSpacing: 0.5 },
+  // Pills — border on all, filled when active
+  pillRow:  { flexDirection: 'row', gap: 7 },
+  pill:     { flex: 1, alignItems: 'center', paddingVertical: 9, paddingHorizontal: 4, borderWidth: 1 },
+  pillText: { fontSize: 13, fontFamily: 'Inter_500Medium', textAlign: 'center' },
+  levelPill:{ paddingVertical: 9, gap: 3 },
+  cefrCode: { fontSize: 10, fontFamily: 'Inter_700Bold', letterSpacing: 0.5 },
 
-  copyBtn:      { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6 },
-  copyText:     { fontSize: 13, fontFamily: 'Inter_500Medium' },
+  copyBtn:  { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6 },
+  copyText: { fontSize: 13, fontFamily: 'Inter_500Medium' },
 
-  premiumCard:  { padding: 18, gap: 16 },
-  premiumTop:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  premiumLabel: { fontSize: 10, fontFamily: 'Inter_700Bold', color: 'rgba(255,255,255,0.55)', letterSpacing: 1.5 },
-  premiumTitle: { fontSize: 22, fontFamily: 'Inter_700Bold', color: '#FFFFFF', marginTop: 2 },
-  premiumPrice: { flexDirection: 'row', alignItems: 'baseline', gap: 1 },
-  premiumAmount:{ fontSize: 30, fontFamily: 'Inter_700Bold', color: '#FFFFFF', fontWeight: '700' as const },
-  premiumPer:   { fontSize: 14, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.6)' },
+  premiumCard:    { padding: 20, gap: 16 },
+  premiumTop:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  premiumLabel:   { fontSize: 10, fontFamily: 'Inter_700Bold', color: 'rgba(255,255,255,0.50)', letterSpacing: 1.6 },
+  premiumTitle:   { fontSize: 24, fontFamily: 'Lora_700Bold', color: '#FFFFFF', marginTop: 3 },
+  premiumPrice:   { flexDirection: 'row', alignItems: 'baseline', gap: 1 },
+  premiumAmount:  { fontSize: 30, fontFamily: 'Inter_700Bold', color: '#FFFFFF', fontWeight: '700' as const },
+  premiumPer:     { fontSize: 14, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.55)' },
   premiumFeatures:{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  featureRow:   { flexDirection: 'row', alignItems: 'center', gap: 6, width: '47%' },
-  featureText:  { fontSize: 12, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.85)', flex: 1 },
-  premiumBtn:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, gap: 8 },
-  premiumBtnText:{ fontSize: 15, fontFamily: 'Inter_600SemiBold', fontWeight: '600' as const },
-  premiumSub:   { fontSize: 11, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.45)', textAlign: 'center' },
+  featureRow:     { flexDirection: 'row', alignItems: 'center', gap: 6, width: '47%' },
+  featureText:    { fontSize: 12, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.85)', flex: 1 },
+  premiumBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, gap: 8 },
+  premiumBtnText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', fontWeight: '600' as const },
+  premiumSub:     { fontSize: 11, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.40)', textAlign: 'center' },
 
-  // Reading theme grid (3 cols, 2 rows)
-  themeGrid:     { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  themeCard:     { width: '31%', overflow: 'hidden' },
-  themePreview:  { height: 52, padding: 8, justifyContent: 'flex-end', gap: 4 },
-  themeLine:     { height: 3, borderRadius: 2 },
-  themeCheck:    { position: 'absolute', top: 5, right: 5, width: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  themeCardName: { fontSize: 11, fontFamily: 'Inter_600SemiBold', paddingHorizontal: 6, paddingTop: 5 },
-  themeCardDesc: { fontSize: 9,  fontFamily: 'Inter_400Regular',  paddingHorizontal: 6, paddingBottom: 7, opacity: 0.7 },
+  // Reading theme grid
+  themeGrid:    { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  themeCard:    { overflow: 'hidden' },
+  themePreview: { height: 52, padding: 8, justifyContent: 'flex-end', gap: 4 },
+  themeLine:    { height: 3, borderRadius: 2 },
+  themeCheck:   { position: 'absolute', top: 5, right: 5, width: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  themeCardBody:{ paddingHorizontal: 7, paddingTop: 5, paddingBottom: 7, gap: 1 },
+  themeCardName:{ fontSize: 11, fontFamily: 'Inter_600SemiBold' },
+  themeCardDesc:{ fontSize: 9,  fontFamily: 'Inter_400Regular', opacity: 0.7 },
 
-  // Accent color circles
-  accentRow:     { flexDirection: 'row', gap: 14, flexWrap: 'wrap' },
-  accentCircle:  { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
+  // Accent circles
+  accentRow:       { flexDirection: 'row', gap: 12, flexWrap: 'wrap', alignItems: 'center' },
+  accentCircleOuter:{ width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', borderColor: 'transparent' },
+  accentCircle:    { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
 });
