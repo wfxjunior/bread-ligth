@@ -386,21 +386,35 @@ export default function ChapterScreen() {
                 </TouchableOpacity>
               </View>
 
-              {/* ── Book subtitle (small caps) ── */}
+              {/* ── Book subtitle (small caps) — respects displayMode ── */}
               <Text style={[styles.bookSubtitle, { color: colors.accent }]}>
-                {book?.englishName?.toUpperCase()}
+                {displayMode === 'portuguese'
+                  ? book?.name?.toUpperCase()
+                  : book?.englishName?.toUpperCase()}
               </Text>
 
               {/* ── Gold rule ── */}
               <View style={[styles.subtitleRule, { backgroundColor: colors.accent + '35' }]} />
 
-              {/* ── Chapter heading — EN Lora serif + PT subtitle ── */}
-              <Text style={[styles.chapterBig, { color: colors.foreground }]}>
-                Chapter {CH_WORDS[chapterNum - 1] ?? String(chapterNum)}
-              </Text>
-              <Text style={[styles.chapterBigPt, { color: colors.mutedForeground }]}>
-                Capítulo {CH_WORDS_PT[chapterNum - 1] ?? String(chapterNum)}
-              </Text>
+              {/* ── Chapter heading — respects displayMode ── */}
+              {displayMode === 'portuguese' ? (
+                <Text style={[styles.chapterBig, { color: colors.foreground }]}>
+                  Capítulo {CH_WORDS_PT[chapterNum - 1] ?? String(chapterNum)}
+                </Text>
+              ) : displayMode === 'english' ? (
+                <Text style={[styles.chapterBig, { color: colors.foreground }]}>
+                  Chapter {CH_WORDS[chapterNum - 1] ?? String(chapterNum)}
+                </Text>
+              ) : (
+                <>
+                  <Text style={[styles.chapterBig, { color: colors.foreground }]}>
+                    Chapter {CH_WORDS[chapterNum - 1] ?? String(chapterNum)}
+                  </Text>
+                  <Text style={[styles.chapterBigPt, { color: colors.mutedForeground }]}>
+                    Capítulo {CH_WORDS_PT[chapterNum - 1] ?? String(chapterNum)}
+                  </Text>
+                </>
+              )}
 
               {/* ── Chapter meta ── */}
               <Text style={[styles.chapterMeta, { color: colors.mutedForeground }]}>
