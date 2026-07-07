@@ -5,6 +5,7 @@ import {
   Image,
   KeyboardAvoidingView,
   LayoutChangeEvent,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -54,48 +55,105 @@ const ACCENT_COLORS: { id: AccentColor; hex: string; label: string }[] = [
 const AVATAR_KEY = '@bibliaeN:avatar';
 
 // ── Donation modal ────────────────────────────────────────────────────────────
-const PRESET_AMOUNTS = [5, 10, 20, 50];
+const PRESET_AMOUNTS = [10, 20, 50, 100];
+
+const _domain  = process.env.EXPO_PUBLIC_DOMAIN;
+const _apiBase = _domain ? `https://${_domain}/api` : null;
 
 function DonationModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const colors  = useColors();
   const insets  = useSafeAreaInsets();
+  const { lang } = useLanguage();
   const [selected, setSelected] = useState<number | null>(null);
   const [custom,   setCustom]   = useState('');
+  const [loading,  setLoading]  = useState(false);
+
+  // ── Heart pop animation ───────────────────────────────────────────────────
+  const heartAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (visible) {
+      heartAnim.setValue(0);
+      Animated.spring(heartAnim, {
+        toValue:          1,
+        tension:          180,
+        friction:         6,
+        useNativeDriver:  true,
+      }).start();
+    }
+  }, [visible]);
+  const heartScale = heartAnim.interpolate({
+    inputRange:  [0, 0.4, 0.7, 1],
+    outputRange: [0, 1.5, 0.85, 1],
+  });
 
   const raw    = custom.replace(',', '.');
   const amount = custom ? parseFloat(raw) : selected;
   const valid  = typeof amount === 'number' && !isNaN(amount) && amount > 0;
 
-  const pick = (a: number) => { setSelected(a); setCustom(''); if (Platform.OS !== 'web') Haptics.selectionAsync(); };
-
-  const handleContinue = () => {
-    if (!valid) return;
-    if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Alert.alert(
-      'Obrigado! 💛',
-      `Seu apoio de R${amount} significa muito!\n\nO processamento de pagamento estará disponível em breve.`,
-      [{ text: 'OK', onPress: onClose }],
-    );
+  const pick = (a: number) => {
+    setSelected(a); setCustom('');
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
   };
+
+  const handleContinue = async () => {
+    if (!valid || loading) return;
+    if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+    if (!_apiBase) {
+      Alert.alert('Erro', 'Serviço de pagamento indisponível.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const cents = Math.round(amount! * 100);
+      const res   = await fetch(`${_apiBase}/donations/checkout-session`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ amount: cents, currency: 'usd' }),
+      });
+      const data  = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Erro desconhecido');
+      await Linking.openURL(data.url);
+      onClose();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Tente novamente.';
+      Alert.alert('Erro', msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const t = (pt: string, en: string) => lang === 'en' ? en : pt;
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.donateBackdrop} onPress={onClose}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <Pressable
-            style={[styles.donateSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 20 }]}
+            style={[styles.donateSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 28 }]}
             onPress={e => e.stopPropagation()}
           >
             <View style={[styles.donateHandle, { backgroundColor: colors.border }]} />
 
-            {/* Header */}
+            {/* Header with animated heart */}
             <View style={styles.donateHeader}>
-              <View style={[styles.donateIconCircle, { backgroundColor: colors.primary + '16' }]}>
-                <Feather name="heart" size={24} color={colors.primary} />
-              </View>
-              <Text style={[styles.donateTitle, { color: colors.foreground }]}>Apoiar o Bread{'&'}Light</Text>
+              <Animated.View
+                style={[styles.donateIconCircle, {
+                  backgroundColor: colors.primary + '16',
+                  transform: [{ scale: heartScale }],
+                }]}
+              >
+                <Feather name="heart" size={28} color={colors.primary} />
+              </Animated.View>
+              <Text style={[styles.donateTitle, { color: colors.foreground }]}>
+                {t('Apoiar o Bread\u0026Light', 'Support Bread\u0026Light')}
+              </Text>
               <Text style={[styles.donateSub, { color: colors.mutedForeground }]}>
-                Cada doação mantém o app gratuito e nos ajuda a crescer. 🙏
+                {t(
+                  'Cada doação mantém o app gratuito e nos ajuda a crescer. 🙏',
+                  'Every donation keeps the app free and helps us grow. 🙏',
+                )}
               </Text>
             </View>
 
@@ -114,8 +172,8 @@ function DonationModal({ visible, onClose }: { visible: boolean; onClose: () => 
                       borderRadius:    colors.radius,
                     }]}
                   >
-                    <Text style={[styles.amountCurrency, { color: active ? colors.primary : colors.mutedForeground }]}>R$</Text>
-                    <Text style={[styles.amountValue,    { color: active ? colors.primary : colors.foreground }]}>{a}</Text>
+                    <Text style={[styles.amountCurrency, { color: active ? colors.primary : colors.mutedForeground }]}>$</Text>
+                    <Text style={[styles.amountValue, { color: active ? colors.primary : colors.foreground }]}>{a}</Text>
                   </TouchableOpacity>
                 );
               })}
@@ -123,15 +181,15 @@ function DonationModal({ visible, onClose }: { visible: boolean; onClose: () => 
 
             {/* Custom amount */}
             <View style={[styles.customRow, {
-              borderColor:  custom ? colors.primary : colors.border,
-              borderRadius: colors.radius,
+              borderColor:     custom ? colors.primary : colors.border,
+              borderRadius:    colors.radius,
               backgroundColor: colors.muted,
             }]}>
-              <Text style={[styles.customPrefix, { color: colors.mutedForeground }]}>R$</Text>
+              <Text style={[styles.customPrefix, { color: colors.mutedForeground }]}>$</Text>
               <TextInput
                 value={custom}
-                onChangeText={t => { setCustom(t.replace(/[^0-9,.]/g, '')); setSelected(null); }}
-                placeholder="Outro valor"
+                onChangeText={v => { setCustom(v.replace(/[^0-9,.]/g, '')); setSelected(null); }}
+                placeholder={t('Outro valor', 'Custom amount')}
                 placeholderTextColor={colors.mutedForeground}
                 keyboardType="decimal-pad"
                 style={[styles.customInput, { color: colors.foreground }]}
@@ -147,15 +205,21 @@ function DonationModal({ visible, onClose }: { visible: boolean; onClose: () => 
                 borderRadius:    colors.radius,
               }]}
             >
-              <Text style={[styles.donateBtnText, {
-                color: valid ? colors.primaryForeground : colors.mutedForeground,
-              }]}>
-                {valid ? `Continuar com R${amount}` : 'Selecione um valor'}
-              </Text>
+              {loading
+                ? <Feather name="loader" size={18} color={valid ? colors.primaryForeground : colors.mutedForeground} />
+                : <Text style={[styles.donateBtnText, { color: valid ? colors.primaryForeground : colors.mutedForeground }]}>
+                    {valid
+                      ? t(`Continuar com ${amount}`, `Continue with ${amount}`)
+                      : t('Selecione um valor', 'Select an amount')}
+                  </Text>
+              }
             </TouchableOpacity>
 
             <Text style={[styles.donateLegal, { color: colors.mutedForeground }]}>
-              Pagamento seguro via Pix ou cartão • Cancele quando quiser
+              {t(
+                '🔒 Pagamento único e seguro via cartão de crédito',
+                '🔒 One-time secure payment via credit card',
+              )}
             </Text>
           </Pressable>
         </KeyboardAvoidingView>
