@@ -3,6 +3,7 @@
  * Pure section navigator; no profile duplication (profile lives in settings screen).
  */
 import React, { useEffect, useRef } from 'react';
+import { router } from 'expo-router';
 import {
   Animated,
   Platform,
@@ -146,6 +147,29 @@ export default function SettingsDrawer({
         {/* Spacer */}
         <View style={{ flex: 1 }} />
 
+        {/* ── Login CTA ── */}
+        <TouchableOpacity
+          onPress={() => {
+            if (Platform.OS !== 'web') Haptics.selectionAsync();
+            onClose();
+            setTimeout(() => router.push('/auth' as any), 260);
+          }}
+          activeOpacity={0.8}
+          style={[styles.loginBtn, {
+            backgroundColor: colors.primary + '12',
+            borderColor:     colors.primary + '28',
+          }]}
+        >
+          <View style={[styles.loginIcon, { backgroundColor: colors.primary + '18' }]}>
+            <Feather name="user" size={15} color={colors.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.loginTitle, { color: colors.foreground }]}>Entrar</Text>
+            <Text style={[styles.loginSub,   { color: colors.mutedForeground }]}>Sincronize seu progresso</Text>
+          </View>
+          <Feather name="chevron-right" size={14} color={colors.mutedForeground} />
+        </TouchableOpacity>
+
         {/* ── Footer ── */}
         <View style={[styles.footer, { borderTopColor: colors.border }]}>
           <Text style={[styles.footerText, { color: colors.mutedForeground }]}>
@@ -221,6 +245,25 @@ const styles = StyleSheet.create({
     fontSize:   14,
     fontFamily: 'Inter_500Medium',
   },
+
+  loginBtn: {
+    flexDirection:     'row',
+    alignItems:        'center',
+    gap:               12,
+    marginHorizontal:  12,
+    marginBottom:      10,
+    paddingHorizontal: 14,
+    paddingVertical:   13,
+    borderRadius:      14,
+    borderWidth:       1,
+  },
+  loginIcon: {
+    width: 30, height: 30,
+    borderRadius: 8,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  loginTitle: { fontSize: 14, fontFamily: 'Inter_600SemiBold' },
+  loginSub:   { fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 1 },
 
   footer: {
     paddingHorizontal: 20,

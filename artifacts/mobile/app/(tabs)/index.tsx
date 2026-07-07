@@ -252,7 +252,7 @@ export default function HomeScreen() {
 
   const [userName, setUserName] = useState('');
   useEffect(() => {
-    AsyncStorage.getItem('@bibliaeN:userName').then(n => setUserName(n ?? 'Wilson')).catch(() => setUserName('Wilson'));
+    AsyncStorage.getItem('@bibliaeN:userName').then(n => setUserName(n ?? '')).catch(() => setUserName(''));
   }, []);
 
   const today    = new Date();

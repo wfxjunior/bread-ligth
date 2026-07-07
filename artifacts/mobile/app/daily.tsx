@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   ActivityIndicator,
   AppState,
   Modal,
@@ -14,11 +15,13 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColors } from '@/hooks/useColors';
+import { useLanguage } from '@/context/LanguageContext';
 import { useBible } from '@/context/BibleContext';
 import WordModal from '@/components/WordModal';
 import { getEntryForDate, resolveVerse, todayKey } from '@/utils/dailyVerse';
@@ -193,7 +196,9 @@ function DevotionalModal({
 
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function DailyScreen() {
-  const insets = useSafeAreaInsets();
+  const insets  = useSafeAreaInsets();
+  const colors  = useColors();
+  const { lang } = useLanguage();
   const { vocabulary } = useBible();
 
   const [today, setToday] = useState(() => new Date());
@@ -226,6 +231,34 @@ export default function DailyScreen() {
     await AsyncStorage.setItem(todayKey(), '1').catch(() => {});
     setDone(true);
   }, [done]);
+
+  // ── Heart / community engagement ───────────────────────────────────────────
+  const heartScale = useRef(new Animated.Value(1)).current;
+  const [hearted, setHearted] = useState(false);
+
+  const handleHeartToggle = useCallback(() => {
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setHearted(h => !h);
+    Animated.sequence([
+      Animated.spring(heartScale, { toValue: 1.35, useNativeDriver: true, tension: 350, friction: 5 }),
+      Animated.spring(heartScale, { toValue: 1,    useNativeDriver: true, tension: 200, friction: 8 }),
+    ]).start();
+  }, [heartScale]);
+
+  const handleShareVerse = useCallback(async () => {
+    if (!verseObj) return;
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    const msg = [
+      `📖 ${entry.bookEn} ${entry.chapter}:${entry.verse}`,
+      '',
+      `"${verseObj.en}"`,
+      '',
+      `"${verseObj.pt}"`,
+      '',
+      '— Bread&Light',
+    ].join('\n');
+    try { await Share.share({ message: msg }); } catch {}
+  }, [verseObj, entry]);
 
   // Word modal
   const [modalWord, setModalWord] = useState('');
@@ -389,6 +422,31 @@ export default function DailyScreen() {
               : 'Toque nas palavras · PT revela a tradução'}
           </Text>
         </View>
+
+        {/* ── Community engagement ── */}
+        <View style={styles.communityRow}>
+          {/* Heart like button */}
+          <TouchableOpacity onPress={handleHeartToggle} activeOpacity={0.75} style={styles.heartBtn}>
+            <Animated.View style={{ transform: [{ scale: heartScale }] }}>
+              <MaterialCommunityIcons
+                name={hearted ? 'heart' : 'heart-outline'}
+                size={22}
+                color={hearted ? colors.primary : D.whiteLow}
+              />
+            </Animated.View>
+            <Text style={[styles.heartCount, { color: hearted ? colors.primary : D.whiteLow }]}>
+              {hearted ? '125.001' : '125k'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Share verse */}
+          <TouchableOpacity onPress={handleShareVerse} activeOpacity={0.75} style={styles.shareVerseBtn}>
+            <Feather name="share" size={16} color={D.whiteLow} />
+            <Text style={[styles.shareVerseBtnText, { color: D.whiteLow }]}>
+              {lang === 'pt' ? 'Compartilhar' : 'Share'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
 
       {/* ── Fixed bottom bar ── */}
@@ -544,6 +602,33 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
     lineHeight: 18,
+  },
+
+  // Community row
+  communityRow: {
+    flexDirection:  'row',
+    alignItems:     'center',
+    justifyContent: 'space-between',
+    marginTop:      28,
+    paddingVertical: 4,
+  },
+  heartBtn: {
+    flexDirection: 'row',
+    alignItems:    'center',
+    gap:           7,
+  },
+  heartCount: {
+    fontSize:   14,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  shareVerseBtn: {
+    flexDirection: 'row',
+    alignItems:    'center',
+    gap:           6,
+  },
+  shareVerseBtnText: {
+    fontSize:   13,
+    fontFamily: 'Inter_500Medium',
   },
 
   // Translation reveal button
