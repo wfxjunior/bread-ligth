@@ -29,6 +29,9 @@ import VerseRow from '@/components/VerseRow';
 import WordModal from '@/components/WordModal';
 import AudioPlayer from '@/components/AudioPlayer';
 import PronunciationPractice from '@/components/PronunciationPractice';
+import { useTheme } from '@/context/ThemeContext';
+import { READING_SPACES } from '@/constants/colors';
+import SpaceBackground from '@/components/SpaceBackground';
 
 // ── Text size selector ────────────────────────────────────────────────────────
 const TEXT_SIZES = [
@@ -482,8 +485,12 @@ export default function ChapterScreen() {
   const topPad = Platform.OS === 'web' ? 0 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
+  const { readingSpace } = useTheme();
+  const activeSpace = READING_SPACES[readingSpace];
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: activeSpace.gradient[0] }]}>
+      <SpaceBackground gradient={activeSpace.gradient} />
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* ── Custom Header (hidden in focus mode) ── */}

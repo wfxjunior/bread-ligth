@@ -19,6 +19,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
+import SpaceBackground from '@/components/SpaceBackground';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useAudio } from '@/context/AudioContext';
 import { useBible } from '@/context/BibleContext';
@@ -302,7 +303,8 @@ const BOOK_CATALOGUE: BookMeta[] = [
 ];
 
 // ── Study / Learning centre constants ─────────────────────────────────────────
-const GOLD = '#B8921A';                       // antique gold accent
+// Accent for these touches now comes from the active Reading Space (colors.space.accent)
+// rather than a fixed gold, so the Study/vocabulary section follows the chosen atmosphere.
 
 const STUDY_STEPS = [
   { id: 'read',    icon: 'book-open',  label: 'Read'    },
@@ -434,8 +436,8 @@ function StudyCard() {
       borderColor:     colors.border,
       borderRadius:    colors.radius + 2,
     }]}>
-      {/* Antique-gold top rule */}
-      <View style={[styles.studyTopRule, { backgroundColor: GOLD }]} />
+      {/* Reading-space top rule */}
+      <View style={[styles.studyTopRule, { backgroundColor: colors.space.accent }]} />
 
       <View style={styles.studyCardInner}>
 
@@ -668,11 +670,13 @@ export default function HomeScreen() {
   };
 
   return (
-    <ScrollView
-      style={[styles.root, { backgroundColor: colors.background }]}
-      contentContainerStyle={{ paddingBottom: bottomPad + 8 }}
-      showsVerticalScrollIndicator={false}
-    >
+    <View style={[styles.root, { backgroundColor: colors.space.gradient[0] }]}>
+      {/* Reading Space atmosphere — subtle gradient behind the whole home screen */}
+      <SpaceBackground gradient={colors.space.gradient} />
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: bottomPad + 8 }}
+        showsVerticalScrollIndicator={false}
+      >
 
       {/* ── Header ── */}
       <View style={[
@@ -803,8 +807,8 @@ export default function HomeScreen() {
             borderRadius:    colors.radius + 2,
           }]}
         >
-          <View style={[styles.progressHeroBadge, { backgroundColor: GOLD + '18' }]}>
-            <Feather name="zap" size={17} color={GOLD} />
+          <View style={[styles.progressHeroBadge, { backgroundColor: colors.space.accent + '18' }]}>
+            <Feather name="zap" size={17} color={colors.space.accent} />
           </View>
 
           <View style={styles.progressSummaryText}>
@@ -847,7 +851,7 @@ export default function HomeScreen() {
                 idx > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
               ]}
             >
-              <View style={[styles.vocabAccentDot, { backgroundColor: GOLD }]} />
+              <View style={[styles.vocabAccentDot, { backgroundColor: colors.space.accent }]} />
               <Text style={[styles.vocabWord, { color: colors.foreground }]}>{item.word}</Text>
               <Text style={[styles.vocabDash, { color: colors.border }]}>—</Text>
               <Text style={[styles.vocabDef, { color: colors.mutedForeground }]}>{item.def}</Text>
@@ -905,7 +909,8 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 

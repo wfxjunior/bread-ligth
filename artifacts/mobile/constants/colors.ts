@@ -244,3 +244,37 @@ export function getAtmospherePreview(id: Atmosphere) {
     isDark:     t.isDark,
   };
 }
+
+// ── Reading Spaces — calm, atmosphere-based reading modes ──────────────────────
+// Each space is a quiet mood: a soft background gradient, a light/dark flag for
+// legibility, and a harmonized accent used for devotional emphasis and subtle
+// highlights. No emoji, no novelty — just atmosphere.
+export type ReadingSpace =
+  | 'clean' | 'warm' | 'cozy' | 'nature' | 'morning' | 'evening' | 'classic' | 'modern' | 'serenity';
+
+export interface ReadingSpaceData {
+  gradient: readonly [string, string, string];
+  isDark:   boolean;
+  /** Harmonized accent — used for devotional highlights, gold rules, quiet emphasis. */
+  accent:   string;
+  /** Very subtle wash applied to cards/surfaces to tie them to the space. */
+  overlay:  string;
+}
+
+export const READING_SPACES: Record<ReadingSpace, ReadingSpaceData> = {
+  clean:    { isDark: false, gradient: ['#FFFFFF', '#F8F8F9', '#F1F1F3'], accent: '#3D4A5C', overlay: 'rgba(61,74,92,0.03)' },
+  warm:     { isDark: false, gradient: ['#FFF9EF', '#FBEFD9', '#F5E2C0'], accent: '#B8842E', overlay: 'rgba(184,132,46,0.05)' },
+  cozy:     { isDark: false, gradient: ['#FBF1EC', '#F5E1D4', '#EACEBB'], accent: '#A85D3F', overlay: 'rgba(168,93,63,0.05)' },
+  nature:   { isDark: false, gradient: ['#F4F7F0', '#E6EEDE', '#D6E3C9'], accent: '#4C7A4E', overlay: 'rgba(76,122,78,0.05)' },
+  morning:  { isDark: false, gradient: ['#FDF8EF', '#F6ECDA', '#EBDFC3'], accent: '#C79A4B', overlay: 'rgba(199,154,75,0.05)' },
+  evening:  { isDark: true,  gradient: ['#211A2E', '#2C2340', '#1B1526'], accent: '#B79ADB', overlay: 'rgba(183,154,219,0.07)' },
+  classic:  { isDark: false, gradient: ['#FAF8F4', '#F1ECE2', '#E7DECD'], accent: '#6B1E2A', overlay: 'rgba(107,30,42,0.04)' },
+  modern:   { isDark: false, gradient: ['#F5F7F9', '#E9EDF1', '#DCE3EA'], accent: '#2F4C68', overlay: 'rgba(47,76,104,0.04)' },
+  serenity: { isDark: true,  gradient: ['#0B111E', '#111B2E', '#0A0E18'], accent: '#7FA6D6', overlay: 'rgba(127,166,214,0.06)' },
+};
+
+/** Legacy background-template ids → sensible Reading Space defaults (migration only). */
+export const LEGACY_TEMPLATE_TO_SPACE: Record<string, ReadingSpace> = {
+  none: 'clean', golf: 'nature', soccer: 'evening', business: 'serenity',
+  sky: 'morning', forest: 'nature', sunset: 'warm', car: 'serenity',
+};

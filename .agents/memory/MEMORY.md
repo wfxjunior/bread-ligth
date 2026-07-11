@@ -9,3 +9,4 @@
 - [Share link domains](share-link-domains.md) — never hardcode an external placeholder domain in Share.share(); link to this repl's own live artifact path instead.
 - [Home Study card](study-card-accordion.md) — the "ESTUDO" card is hardcoded to John 1, separate from the date-rotating `/daily` devotional; steps accordion-expand reusing WordModal/AudioPlayer/dictionary.
 - [Leather book covers](leather-book-covers.md) — one shared photographed leather texture tinted per category (~90% opacity gradient) gives photoreal covers without per-book texture generation.
+- [Reading Spaces atmosphere system](reading-spaces-system.md) — colors.space (gradient/isDark/accent) drives Home/reader/devotional backgrounds; SpaceBackground crossfades; watch for colors baked into static StyleSheet.create.

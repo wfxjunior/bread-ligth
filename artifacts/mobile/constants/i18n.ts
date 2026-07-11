@@ -64,6 +64,7 @@ const strings = {
   reading_atmosphere:     { pt: 'Atmosfera de Leitura',  en: 'Reading Atmosphere' },
   reading_atmosphere_sub: { pt: 'Uma paleta e material para cada momento de estudo', en: 'A palette and material for every study moment' },
   accent_color:           { pt: 'Cor de Destaque',  en: 'Accent Color'        },
+  reading_space:          { pt: 'Espaço de Leitura', en: 'Reading Space'      },
 
   // ── Reading atmosphere names + descriptions
   atmosphere_parchment:       { pt: 'Pergaminho',   en: 'Parchment' },
@@ -86,6 +87,17 @@ const strings = {
   atmosphere_sepia_desc:    { pt: 'Inspirado em livros antigos', en: 'Inspired by old books' },
   atmosphere_focus:           { pt: 'Foco',         en: 'Focus' },
   atmosphere_focus_desc:    { pt: 'Cinza neutro, menos distração', en: 'Neutral gray, less distraction' },
+
+  // ── Reading Space names — calm atmosphere presets
+  space_clean:     { pt: 'Limpo',       en: 'Clean'      },
+  space_warm:      { pt: 'Acolhedor',   en: 'Warm'       },
+  space_cozy:      { pt: 'Aconchego',   en: 'Cozy'       },
+  space_nature:    { pt: 'Natureza',    en: 'Nature'     },
+  space_morning:   { pt: 'Manhã',       en: 'Morning'    },
+  space_evening:   { pt: 'Anoitecer',   en: 'Evening'    },
+  space_classic:   { pt: 'Clássico',    en: 'Classic'    },
+  space_modern:    { pt: 'Moderno',     en: 'Modern'     },
+  space_serenity:  { pt: 'Serenidade',  en: 'Serenity'   },
 
   // ── Learning labels
   english_level:     { pt: 'Nível de Inglês',          en: 'English Level'         },

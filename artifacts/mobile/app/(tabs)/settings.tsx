@@ -31,8 +31,8 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useAudio, AUDIO_VOICES } from '@/context/AudioContext';
 import type { AudioVoice } from '@/context/AudioContext';
 import { APP_SHARE_URL } from '@/utils/shareLink';
-import { ATMOSPHERE_IDS, getAtmospherePreview } from '@/constants/colors';
-import type { Atmosphere, AccentColor } from '@/constants/colors';
+import { ATMOSPHERE_IDS, getAtmospherePreview, READING_SPACES } from '@/constants/colors';
+import type { Atmosphere, AccentColor, ReadingSpace } from '@/constants/colors';
 import { LinearGradient } from 'expo-linear-gradient';
 import SettingsDrawer from '@/components/SettingsDrawer';
 import { router } from 'expo-router';
@@ -791,6 +791,10 @@ function SupportModal({ visible, onClose }: { visible: boolean; onClose: () => v
   );
 }
 
+// ── Ordered Reading Spaces (for the picker) ───────────────────────────────────
+const READING_SPACE_ORDER: ReadingSpace[] = [
+  'clean', 'warm', 'cozy', 'nature', 'morning', 'evening', 'classic', 'modern', 'serenity',
+];
 // ── Settings Screen ───────────────────────────────────────────────────────────
 export default function SettingsScreen() {
   const colors   = useColors();
@@ -818,7 +822,7 @@ export default function SettingsScreen() {
   const [userName,    setUserName]    = useState('');
   const [userEmail,   setUserEmail]   = useState('');
 
-  const { atmosphere, setAtmosphere, accentColor, setAccentColor } = useTheme();
+  const { atmosphere, setAtmosphere, accentColor, setAccentColor, readingSpace, setReadingSpace } = useTheme();
   const { lang, setLang, t: tl } = useLanguage();
   const audio = useAudio();
 
@@ -916,6 +920,13 @@ export default function SettingsScreen() {
   const [donateVisible,     setDonateVisible]     = useState(false);
   const [ambassadorVisible, setAmbassadorVisible] = useState(false);
   const [donateKey,         setDonateKey]         = useState(0); // bumped on open to reset modal state
+
+  // Reading Space is an independent, calm background mood — it does not
+  // touch the app-wide Reading Atmosphere (picked separately above).
+  const handleSetSpace = (id: ReadingSpace) => {
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    setReadingSpace(id);
+  };
 
   const handleDonate = () => {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
@@ -1135,6 +1146,50 @@ export default function SettingsScreen() {
                 );
               })}
             </View>
+          </View>
+
+          {/* Reading Spaces — calm atmosphere presets */}
+          <View style={styles.innerSection}>
+            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>{tl('reading_space')}</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.bgTmplRow}
+            >
+              {READING_SPACE_ORDER.map(id => {
+                const space  = READING_SPACES[id];
+                const active = readingSpace === id;
+                return (
+                  <TouchableOpacity
+                    key={id}
+                    onPress={() => handleSetSpace(id)}
+                    activeOpacity={0.8}
+                    style={[styles.bgTmplCard, {
+                      borderColor:  active ? colors.primary : colors.border,
+                      borderWidth:  active ? 1.5 : StyleSheet.hairlineWidth,
+                      borderRadius: colors.radius / 1.5,
+                    }]}
+                  >
+                    <LinearGradient
+                      colors={[...space.gradient]}
+                      style={[styles.bgTmplGradient, {
+                        borderTopLeftRadius:  colors.radius / 1.5 - 1,
+                        borderTopRightRadius: colors.radius / 1.5 - 1,
+                      }]}
+                    >
+                      {active && (
+                        <View style={[styles.bgTmplCheck, { backgroundColor: colors.primary }]}>
+                          <Feather name="check" size={8} color={colors.primaryForeground} />
+                        </View>
+                      )}
+                    </LinearGradient>
+                    <Text style={[styles.bgTmplName, { color: colors.foreground }]} numberOfLines={1}>
+                      {tl(`space_${id}` as any)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
           </View>
         </SettingsCard>
 
@@ -1385,6 +1440,17 @@ const styles = StyleSheet.create({
 
   innerSection: { paddingHorizontal: 14, paddingVertical: 13, gap: 10 },
   innerLabel:   { fontSize: 12, fontFamily: 'Inter_500Medium', letterSpacing: 0.3 },
+  bgTmplRow:    { flexDirection: 'row', gap: 10, paddingRight: 4 },
+  bgTmplCard:   { width: 76, alignItems: 'center', gap: 6 },
+  bgTmplGradient: {
+    width: '100%', height: 54, borderRadius: 10,
+    alignItems: 'flex-end', justifyContent: 'flex-end', padding: 5,
+  },
+  bgTmplCheck: {
+    width: 16, height: 16, borderRadius: 8,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  bgTmplName: { fontSize: 11, fontFamily: 'Inter_400Regular', textAlign: 'center' },
 
   // Pills — border on all, filled when active
   pillRow:  { flexDirection: 'row', gap: 7 },

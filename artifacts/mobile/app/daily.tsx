@@ -13,7 +13,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -23,6 +22,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColors } from '@/hooks/useColors';
 import { useTheme } from '@/context/ThemeContext';
 import { getColors } from '@/constants/colors';
+import SpaceBackground from '@/components/SpaceBackground';
 import { useAudio } from '@/context/AudioContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useBible } from '@/context/BibleContext';
@@ -47,7 +47,7 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-function buildPalette(colors: ReturnType<typeof useColors>) {
+function buildPalette(colors: ReturnType<typeof getColors>) {
   const fg = colors.foreground;
   return {
     bg1:        colors.background,
@@ -76,9 +76,9 @@ function buildPalette(colors: ReturnType<typeof useColors>) {
 const DAILY_MODE_KEY = '@bibliaeN:dailyReadingMode';
 type DailyMode = 'light' | 'dark';
 
-const DailyColorsContext = createContext<ReturnType<typeof useColors> | null>(null);
+const DailyColorsContext = createContext<ReturnType<typeof getColors> | null>(null);
 
-function useDailyColors(): ReturnType<typeof useColors> {
+function useDailyColors(): ReturnType<typeof getColors> {
   const ctx = useContext(DailyColorsContext);
   // Fallback keeps sub-components safe if ever rendered outside the provider.
   const fallback = useColors();
@@ -498,8 +498,9 @@ export default function DailyScreen() {
     <DailyColorsContext.Provider value={colors}>
     <View style={styles.root}>
       {/* Gradient reflects this screen's own light/dark mode — independent
-          of the app-wide Reading Atmosphere in Settings. */}
-      <LinearGradient colors={[D.bg1, D.bg2, D.bg3]} style={StyleSheet.absoluteFill} />
+          of the app-wide Reading Atmosphere in Settings. Crossfades smoothly
+          when the mode toggle changes. */}
+      <SpaceBackground gradient={[D.bg1, D.bg2, D.bg3]} />
 
       {/* ── Header ── */}
       <View style={[styles.header, { paddingTop: (Platform.OS === 'web' ? 67 : insets.top) + 16 }]}>

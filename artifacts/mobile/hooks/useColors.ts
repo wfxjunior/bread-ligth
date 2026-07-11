@@ -1,11 +1,15 @@
 import { useTheme } from '@/context/ThemeContext';
-import { getColors } from '@/constants/colors';
+import { getColors, READING_SPACES } from '@/constants/colors';
 
 /**
  * Returns the design-token palette for the current reading atmosphere + accent
- * color. Both are user-controlled and persisted in ThemeContext.
+ * color (both user-controlled and persisted in ThemeContext), plus the active
+ * Reading Space (`.space`) — a soft gradient, a harmonized accent, and a
+ * light/dark flag — for screens that render an atmosphere layer (Home, Bible
+ * reader, Devotional, Settings).
  */
 export function useColors() {
-  const { atmosphere, accentColor } = useTheme();
-  return getColors(atmosphere, accentColor);
+  const { atmosphere, accentColor, readingSpace } = useTheme();
+  const colors = getColors(atmosphere, accentColor);
+  return { ...colors, space: READING_SPACES[readingSpace] };
 }
