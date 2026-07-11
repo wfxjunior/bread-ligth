@@ -40,10 +40,11 @@ setInterval(() => {
 
 /**
  * GET /api/explain
- * Query params: book, chapter, verse, en
+ * Query params: book, chapter, verse, en, lang ('pt' | 'en', default 'pt')
  *
- * Returns a short, plain-language explanation in Brazilian Portuguese
- * for the given Bible verse.
+ * Returns a short, plain-language explanation of the given Bible verse, in
+ * either Brazilian Portuguese or English depending on `lang` — so it can
+ * match whichever reading language the listener has chosen for audio.
  */
 router.get("/explain", async (req, res) => {
   const ip = getClientIp(req);
@@ -57,6 +58,7 @@ router.get("/explain", async (req, res) => {
   const chapter = typeof q.chapter === "string" ? q.chapter.slice(0, 4) : "";
   const verse   = typeof q.verse   === "string" ? q.verse.slice(0, 4)   : "";
   const en      = typeof q.en      === "string" ? q.en.slice(0, 500)    : "";
+  const lang    = typeof q.lang    === "string" && q.lang === "en" ? "en" : "pt";
 
   if (!en) {
     res.status(400).json({ error: "Missing required query param: en" });
@@ -65,20 +67,21 @@ router.get("/explain", async (req, res) => {
 
   const ref = [book, chapter && verse ? `${chapter}:${verse}` : chapter].filter(Boolean).join(" ");
 
+  const systemPrompt = lang === "en"
+    ? "You are a warm, clear Bible teacher. Explain Bible verses in simple, accessible American English for any reader. Be concise, practical and encouraging. Maximum 80 words. Output plain prose only — no markdown formatting."
+    : "Você é um professor de Bíblia gentil e claro. Explique versículos bíblicos em português brasileiro simples, acessível para qualquer pessoa. Seja conciso, prático e encorajador. Máximo 80 palavras. Escreva apenas em prosa simples, sem formatação markdown.";
+
+  const userPrompt = lang === "en"
+    ? `Explain the meaning of ${ref} in simple terms:\n\n"${en}"\n\nWhat does this verse mean? What is the main message?`
+    : `Explique de forma simples o significado de ${ref}:\n\n"${en}"\n\nO que este versículo quer dizer? Qual é a mensagem principal?`;
+
   try {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       max_completion_tokens: 300,
       messages: [
-        {
-          role: "system",
-          content:
-            "Você é um professor de Bíblia gentil e claro. Explique versículos bíblicos em português brasileiro simples, acessível para qualquer pessoa. Seja conciso, prático e encorajador. Máximo 80 palavras.",
-        },
-        {
-          role: "user",
-          content: `Explique de forma simples o significado de ${ref}:\n\n"${en}"\n\nO que este versículo quer dizer? Qual é a mensagem principal?`,
-        },
+        { role: "system", content: systemPrompt },
+        { role: "user",   content: userPrompt   },
       ],
     });
 

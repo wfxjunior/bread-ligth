@@ -49,7 +49,7 @@ const API_BASE = _domain ? `https://${_domain}/api` : null;
 const vKey = (bookId: string, chapter: number, v: number) => `${bookId}:${chapter}:${v}`;
 
 type NoteSheetState    = { v: number; text: string };
-type ExplainSheetState = { v: number; loading: boolean; text: string; error?: string };
+type ExplainSheetState = { v: number; loading: boolean; text: string; error?: string; lang: 'en' | 'pt' };
 
 // Chapter number → English word
 const CH_WORDS = [
@@ -382,13 +382,15 @@ export default function ChapterScreen() {
     if (!API_BASE) return;
     const vrs = verses.find(vr => vr.v === v);
     if (!vrs) return;
-    setExplainSheet({ v, loading: true, text: '' });
+    const explainLang = audio.readingLanguage;
+    setExplainSheet({ v, loading: true, text: '', lang: explainLang });
     try {
       const params = new URLSearchParams({
         book:    book?.englishName ?? '',
         chapter: String(chapterNum),
         verse:   String(v),
         en:      vrs.en,
+        lang:    explainLang,
       });
       const res  = await fetch(`${API_BASE}/explain?${params}`);
       const data = await res.json() as { text?: string; error?: string };
@@ -400,7 +402,7 @@ export default function ChapterScreen() {
     } catch {
       setExplainSheet(s => s ? { ...s, loading: false, text: '', error: 'Sem conexão. Tente novamente.' } : s);
     }
-  }, [verses, book, chapterNum]);
+  }, [verses, book, chapterNum, audio.readingLanguage]);
 
   const closeExplain = useCallback(() => setExplainSheet(null), []);
 
@@ -816,9 +818,35 @@ export default function ChapterScreen() {
                     {book?.englishName} {chapterNum}:{explainSheet.v}
                   </Text>
                 </View>
-                <TouchableOpacity onPress={closeExplain} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-                  <Feather name="x" size={20} color={colors.mutedForeground} />
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                  {!explainSheet.loading && !explainSheet.error && !!explainSheet.text && (() => {
+                    const explainKey = `explain:${currentBookId}:${chapterNum}:${explainSheet.v}:${explainSheet.lang}`;
+                    const isActive = audio.queueKey === explainKey;
+                    return (
+                      <TouchableOpacity
+                        onPress={() => {
+                          if (Platform.OS !== 'web') Haptics.selectionAsync();
+                          if (isActive) audio.togglePlayPause();
+                          else audio.playQueue([{ id: 'explain', text: explainSheet.text }], 0, explainKey);
+                        }}
+                        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                      >
+                        {isActive && audio.isLoading ? (
+                          <ActivityIndicator size="small" color={colors.accent} />
+                        ) : (
+                          <Feather
+                            name={isActive && audio.isPlaying ? 'pause-circle' : 'play-circle'}
+                            size={22}
+                            color={colors.accent}
+                          />
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })()}
+                  <TouchableOpacity onPress={closeExplain} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                    <Feather name="x" size={20} color={colors.mutedForeground} />
+                  </TouchableOpacity>
+                </View>
               </View>
 
               {explainSheet.loading ? (
