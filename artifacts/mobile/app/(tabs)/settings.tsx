@@ -30,6 +30,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAudio, AUDIO_VOICES } from '@/context/AudioContext';
 import type { AudioVoice } from '@/context/AudioContext';
+import { APP_SHARE_URL } from '@/utils/shareLink';
 import { ATMOSPHERE_IDS, getAtmospherePreview } from '@/constants/colors';
 import type { Atmosphere, AccentColor } from '@/constants/colors';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -241,8 +242,8 @@ function AmbassadorModal({ visible, onClose }: { visible: boolean; onClose: () =
     try {
       if (Platform.OS !== 'web') Haptics.selectionAsync();
       await Share.share({
-        message: '📖 Estou aprendendo inglês com o Bread&Light — gratuito e incrível! Confira: bibleenglish.app',
-        url: 'https://bibleenglish.app',
+        message: `📖 Estou aprendendo inglês com o Bread&Light — gratuito e incrível! Confira: ${APP_SHARE_URL}`,
+        url: APP_SHARE_URL,
       });
     } catch {}
     onClose();
@@ -1165,8 +1166,9 @@ export default function SettingsScreen() {
               try {
                 await Share.share({
                   message: lang === 'pt'
-                    ? 'Convido você para o Bread&Light: aprenda inglês lendo a Bíblia. Grátis!'
-                    : 'Join me on Bread&Light: learn English by reading the Bible. Free!',
+                    ? `Convido você para o Bread&Light: aprenda inglês lendo a Bíblia. Grátis! ${APP_SHARE_URL}`
+                    : `Join me on Bread&Light: learn English by reading the Bible. Free! ${APP_SHARE_URL}`,
+                  url: APP_SHARE_URL,
                 });
               } catch {}
             }}

@@ -108,6 +108,13 @@ const strings = {
   voice_nova:        { pt: 'Nova',    en: 'Nova'    },
   voice_shimmer:     { pt: 'Shimmer', en: 'Shimmer' },
 
+  // ── Daily devotional completion
+  daily_done_title:     { pt: 'Concluído hoje 🎉',                       en: 'Completed today 🎉'                    },
+  daily_done_sub:        { pt: 'Volte amanhã para o próximo versículo',   en: 'Come back tomorrow for the next verse' },
+  daily_done_share:      { pt: 'Convidar um amigo',                       en: 'Invite a friend'                       },
+  daily_done_share_msg:  { pt: 'Acabei de ler meu devocional de hoje no Bread&Light — aprendendo inglês através da Bíblia. Vem comigo!',
+                            en: 'I just finished today\'s devotional on Bread&Light — learning English through the Bible. Join me!' },
+
   // ── Level names
   level_beginner:    { pt: 'Iniciante',     en: 'Beginner'     },
   level_inter:       { pt: 'Intermediário', en: 'Intermediate' },

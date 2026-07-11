@@ -113,6 +113,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       .catch(() => {});
 
     Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
       playsInSilentModeIOS: true,
       staysActiveInBackground: false,
       interruptionModeIOS: InterruptionModeIOS.DuckOthers,
@@ -190,6 +191,15 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
     if (TTS_BASE) {
       try {
+        // Defensively reset the shared audio session before every playback.
+        // If Pronunciation Practice (or anything else) left the session in
+        // recording mode (allowsRecordingIOS: true), iOS can accept the sound
+        // load and report "playing" while producing no audible output.
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          playsInSilentModeIOS: true,
+        }).catch(() => {});
+
         const cleanText = sanitizeForSpeech(item.text);
         const uri = `${TTS_BASE}?text=${encodeURIComponent(cleanText)}&voice=${voiceRef.current}`;
         const { sound } = await Audio.Sound.createAsync(

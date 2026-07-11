@@ -29,6 +29,7 @@ import AudioPlayer from '@/components/AudioPlayer';
 import PronunciationPractice from '@/components/PronunciationPractice';
 import { getEntryForDate, resolveVerse, todayKey } from '@/utils/dailyVerse';
 import { t } from '@/constants/i18n';
+import { APP_SHARE_URL } from '@/utils/shareLink';
 
 // ── Palette — derived from the active Reading Atmosphere ──────────────────────
 // This screen used to be a hardcoded, always-dark "immersive" design. It now
@@ -290,12 +291,44 @@ export default function DailyScreen() {
       .finally(() => setChecked(true));
   }, [today.toDateString()]);
 
+  const doneScale   = useRef(new Animated.Value(0.6)).current;
+  const doneOpacity = useRef(new Animated.Value(0)).current;
+  const checkScale  = useRef(new Animated.Value(0)).current;
+
   const handleComplete = useCallback(async () => {
     if (done) return;
     if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     await AsyncStorage.setItem(todayKey(), '1').catch(() => {});
     setDone(true);
   }, [done]);
+
+  // Celebratory entrance whenever the completion row appears — a soft
+  // bounce-in for the row plus a slightly delayed pop for the checkmark,
+  // instead of the row just snapping into place.
+  useEffect(() => {
+    if (!done) return;
+    doneScale.setValue(0.6);
+    doneOpacity.setValue(0);
+    checkScale.setValue(0);
+    Animated.parallel([
+      Animated.spring(doneScale,   { toValue: 1, useNativeDriver: true, tension: 220, friction: 14 }),
+      Animated.timing(doneOpacity, { toValue: 1, duration: 260, useNativeDriver: true }),
+      Animated.sequence([
+        Animated.delay(140),
+        Animated.spring(checkScale, { toValue: 1, useNativeDriver: true, tension: 300, friction: 8 }),
+      ]),
+    ]).start();
+  }, [done, doneScale, doneOpacity, checkScale]);
+
+  const handleShareInvite = useCallback(async () => {
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    try {
+      await Share.share({
+        message: `${t(lang, 'daily_done_share_msg')} ${APP_SHARE_URL}`,
+        url: APP_SHARE_URL,
+      });
+    } catch {}
+  }, [lang]);
 
   // ── Heart / community engagement ───────────────────────────────────────────
   const heartScale = useRef(new Animated.Value(1)).current;
@@ -565,15 +598,25 @@ export default function DailyScreen() {
 
           {/* Complete / done row */}
           {done ? (
-            <View style={styles.doneRow}>
-              <View style={styles.doneIcon}>
-                <Feather name="check" size={18} color={D.white} />
+            <Animated.View style={[styles.doneWrap, { opacity: doneOpacity, transform: [{ scale: doneScale }] }]}>
+              <View style={styles.doneRow}>
+                <Animated.View style={[styles.doneIcon, { transform: [{ scale: checkScale }] }]}>
+                  <Feather name="check" size={18} color={D.white} />
+                </Animated.View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.doneTitle, { color: D.white }]}>{t(lang, 'daily_done_title')}</Text>
+                  <Text style={[styles.doneSub, { color: D.whiteMid }]}>{t(lang, 'daily_done_sub')}</Text>
+                </View>
               </View>
-              <View>
-                <Text style={[styles.doneTitle, { color: D.white }]}>Concluído hoje 🎉</Text>
-                <Text style={[styles.doneSub, { color: D.whiteMid }]}>Volte amanhã para o próximo versículo</Text>
-              </View>
-            </View>
+              <TouchableOpacity
+                onPress={handleShareInvite}
+                activeOpacity={0.8}
+                style={[styles.doneShareBtn, { borderColor: D.wineBorder, backgroundColor: D.wineFaint }]}
+              >
+                <Feather name="share-2" size={14} color={D.wine} />
+                <Text style={[styles.doneShareText, { color: D.wine }]}>{t(lang, 'daily_done_share')}</Text>
+              </TouchableOpacity>
+            </Animated.View>
           ) : (
             <TouchableOpacity onPress={handleComplete} activeOpacity={0.85} style={[styles.completeBtn, { backgroundColor: D.wine }]}>
               <Text style={[styles.completeBtnText, { color: D.bg1 }]}>Marcar como concluído</Text>
@@ -800,6 +843,7 @@ const styles = StyleSheet.create({
   completeBtnText: { fontSize: 14, fontFamily: 'Inter_500Medium' },
 
   // Done state
+  doneWrap: { gap: 10 },
   doneRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -814,6 +858,11 @@ const styles = StyleSheet.create({
   },
   doneTitle: { fontSize: 15, fontFamily: 'Inter_600SemiBold' },
   doneSub:   { fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 2 },
+  doneShareBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8, borderWidth: 1, borderRadius: 12, paddingVertical: 11,
+  },
+  doneShareText: { fontSize: 14, fontFamily: 'Inter_500Medium' },
 
   // Devotional modal sheet
   sheetBackdrop: {

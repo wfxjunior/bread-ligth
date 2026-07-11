@@ -5,3 +5,5 @@
 - [Stripe donation integration](stripe-donations.md) — API route POST /api/donations/checkout-session; success/cancel URLs must use server-side env vars only (REPLIT_DEV_DOMAIN or PUBLIC_URL) — never request headers.
 - [Bible data architecture](bible-data-arch.md) — bibleData.ts imports 8 complete book files; large books split into chunk files merged via spread in wrapper.
 - [Unified audio engine](audio-engine-architecture.md) — single global AudioProvider; UI surfaces share playback state via a content-scoped `queueKey` string, not per-screen player instances.
+- [expo-av shared audio session](expo-av-audio-session.md) — allowsRecordingIOS:true from a recording feature leaks into later playback (looks "playing", no sound) unless reset before every play.
+- [Share link domains](share-link-domains.md) — never hardcode an external placeholder domain in Share.share(); link to this repl's own live artifact path instead.

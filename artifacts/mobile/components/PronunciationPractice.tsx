@@ -34,6 +34,16 @@ export default function PronunciationPractice({ visible, verseText, verseRef, on
   const recordingRef = useRef<Audio.Recording | null>(null);
   const startedAtRef  = useRef(0);
 
+  // Restores the shared audio session to playback mode. Recording switches
+  // the session into `allowsRecordingIOS: true`, which — if never reverted —
+  // leaves iOS routing/ducking audio incorrectly for anything played
+  // afterward (e.g. the devotional/verse "Listen" player looks like it's
+  // playing but produces no sound). Always call this once recording ends,
+  // however it ends.
+  const restorePlaybackAudioMode = useCallback(() => {
+    Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true }).catch(() => {});
+  }, []);
+
   useEffect(() => {
     if (visible) {
       setStage('idle');
@@ -42,8 +52,9 @@ export default function PronunciationPractice({ visible, verseText, verseRef, on
     } else {
       recordingRef.current?.stopAndUnloadAsync().catch(() => {});
       recordingRef.current = null;
+      restorePlaybackAudioMode();
     }
-  }, [visible]);
+  }, [visible, restorePlaybackAudioMode]);
 
   const startRecording = useCallback(async () => {
     if (!API_BASE) {
@@ -64,10 +75,11 @@ export default function PronunciationPractice({ visible, verseText, verseRef, on
       if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       setStage('recording');
     } catch {
+      restorePlaybackAudioMode();
       setErrorMsg(t(lang, 'practice_error'));
       setStage('error');
     }
-  }, [lang]);
+  }, [lang, restorePlaybackAudioMode]);
 
   const stopAndEvaluate = useCallback(async () => {
     const recording = recordingRef.current;
@@ -79,6 +91,7 @@ export default function PronunciationPractice({ visible, verseText, verseRef, on
       await recording.stopAndUnloadAsync();
       const uri = recording.getURI();
       recordingRef.current = null;
+      restorePlaybackAudioMode();
       if (!uri || !API_BASE) throw new Error('no-uri');
 
       const fileRes = await fetch(uri);
@@ -102,10 +115,11 @@ export default function PronunciationPractice({ visible, verseText, verseRef, on
       setResult(evaluatePronunciation(verseText, data.text, durationMs));
       setStage('result');
     } catch {
+      restorePlaybackAudioMode();
       setErrorMsg(t(lang, 'practice_error'));
       setStage('error');
     }
-  }, [verseText, lang]);
+  }, [verseText, lang, restorePlaybackAudioMode]);
 
   const tierLabel = (tier: 'great' | 'good' | 'keep_practicing', kind: 'clarity' | 'rhythm') => {
     const key = `practice_${kind}_${tier}` as const;
