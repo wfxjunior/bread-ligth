@@ -27,6 +27,8 @@ interface VerseRowProps {
   isMarked?: boolean;
   onSpeak?: () => void;
   isSpeakingThis?: boolean;
+  /** True while this verse is the one currently being read aloud by continuous playback. */
+  isPlayingHighlight?: boolean;
 }
 
 function VerseRow({
@@ -35,6 +37,7 @@ function VerseRow({
   selected = false, onVersePress,
   hasNote = false, isMarked = false,
   onSpeak, isSpeakingThis = false,
+  isPlayingHighlight = false,
 }: VerseRowProps) {
   const colors  = useColors();
   const rowRef  = useRef<View>(null);
@@ -90,14 +93,15 @@ function VerseRow({
         { borderBottomColor: colors.border },
         selected  && { backgroundColor: colors.accent + '12' },
         isMarked  && { backgroundColor: colors.accent + '08' },
+        isPlayingHighlight && { backgroundColor: colors.primary + '14' },
       ]}
     >
       {/* Tappable background — catches taps on empty space; word/bookmark taps take priority */}
       <Pressable style={StyleSheet.absoluteFillObject} onPress={handleRowPress} />
 
-      {/* Left accent strip — shown when verse is highlighted */}
-      {isMarked && (
-        <View style={[styles.markedStrip, { backgroundColor: colors.accent }]} />
+      {/* Left accent strip — shown when verse is highlighted or being read aloud */}
+      {(isMarked || isPlayingHighlight) && (
+        <View style={[styles.markedStrip, { backgroundColor: isPlayingHighlight ? colors.primary : colors.accent }]} />
       )}
 
       {/* Verse number pill */}
@@ -155,8 +159,8 @@ function VerseRow({
           <Feather
             name={isSpeakingThis ? 'volume-x' : 'volume-2'}
             size={16}
-            color={isSpeakingThis ? colors.primary : colors.mutedForeground}
-            style={{ opacity: isSpeakingThis ? 1 : 0.38 }}
+            color={(isSpeakingThis || isPlayingHighlight) ? colors.primary : colors.mutedForeground}
+            style={{ opacity: (isSpeakingThis || isPlayingHighlight) ? 1 : 0.38 }}
           />
         </TouchableOpacity>
       )}

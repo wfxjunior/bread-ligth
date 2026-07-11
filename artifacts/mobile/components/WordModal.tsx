@@ -13,6 +13,7 @@ import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import { WORD_DICTIONARY } from '@/constants/wordDictionary';
 import { type VocabWord, useBible } from '@/context/BibleContext';
+import { AudioPlayButton } from './AudioPlayButton';
 
 interface WordModalProps {
   visible: boolean;
@@ -50,7 +51,10 @@ export default function WordModal({ visible, word, context, onClose }: WordModal
 
           <View style={styles.header}>
             <View>
-              <Text style={[styles.word, { color: colors.englishText }]}>{word}</Text>
+              <View style={styles.wordRow}>
+                <Text style={[styles.word, { color: colors.englishText }]}>{word}</Text>
+                <AudioPlayButton text={word} id={`vocab:${word}`} size={18} style={styles.wordListenBtn} />
+              </View>
               {entry && (
                 <Text style={[styles.pronunciation, { color: colors.mutedForeground }]}>
                   /{entry.pronunciation}/
@@ -143,6 +147,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+  },
+  wordRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  wordListenBtn: {
+    marginTop: 2,
   },
   word: {
     fontSize: 28,

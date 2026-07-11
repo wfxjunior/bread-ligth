@@ -147,6 +147,32 @@ const strings = {
   completed_today:      { pt: 'Concluído hoje 🎉',   en: 'Completed today 🎉'  },
   come_back_tomorrow:   { pt: 'Volte amanhã para o próximo versículo', en: 'Come back tomorrow for the next verse' },
   daily_tip_study:      { pt: 'Toque nas palavras em inglês para ver o significado', en: 'Tap English words to see their meaning' },
+
+  // ── Unified voice / audio player
+  listen_in_english:    { pt: 'Ouvir em inglês', en: 'Listen in English' },
+  listen_devotional:    { pt: 'Ouvir devocional', en: 'Listen to devotional' },
+  audio_unavailable:    { pt: 'Áudio indisponível no momento.', en: 'Audio unavailable right now.' },
+
+  // ── Pronunciation practice
+  practice_title:            { pt: 'Praticar Pronúncia',  en: 'Practice Pronunciation' },
+  practice_hint:             { pt: 'Toque no microfone e leia o versículo em voz alta.', en: 'Tap the mic and read the verse aloud.' },
+  practice_start:            { pt: 'Começar a gravar',    en: 'Start recording' },
+  practice_recording:        { pt: 'Gravando… toque para parar', en: 'Recording… tap to stop' },
+  practice_stop:             { pt: 'Parar',               en: 'Stop' },
+  practice_transcribing:     { pt: 'Ouvindo sua leitura…', en: 'Listening to your reading…' },
+  practice_unsupported:      { pt: 'Prática de pronúncia indisponível no momento. Tente novamente mais tarde.', en: 'Pronunciation practice is unavailable right now. Please try again later.' },
+  practice_error:            { pt: 'Não foi possível processar o áudio. Tente novamente.', en: "Couldn't process the audio. Please try again." },
+  practice_try_again:        { pt: 'Tentar novamente',    en: 'Try again' },
+  practice_mic_denied:       { pt: 'Precisamos de acesso ao microfone para praticar a pronúncia.', en: 'We need microphone access to practice pronunciation.' },
+  practice_clarity_great:         { pt: 'Excelente clareza! Quase todas as palavras foram reconhecidas. 🙌', en: 'Wonderful clarity! Almost every word came through. 🙌' },
+  practice_clarity_good:          { pt: 'Bom progresso — a maior parte do versículo ficou clara.', en: 'Good progress — most of the verse came through clearly.' },
+  practice_clarity_keep_practicing: { pt: 'Continue praticando — tente falar um pouco mais devagar e com calma.', en: "Keep practicing — try speaking a little slower and calmer." },
+  practice_rhythm_great:          { pt: 'Seu ritmo de leitura está natural e tranquilo.', en: 'Your reading rhythm feels natural and unhurried.' },
+  practice_rhythm_good:           { pt: 'Ritmo tranquilo — com mais prática ficará ainda mais natural.', en: 'A calm pace — with more practice it will feel even more natural.' },
+  practice_rhythm_keep_practicing:{ pt: 'Experimente fazer pequenas pausas entre as frases ao ler.', en: 'Try pausing gently between phrases as you read.' },
+
+  // ── Vocabulary audio
+  listen_word:          { pt: 'Ouvir palavra', en: 'Listen to word' },
 } as const;
 
 export type I18nKey = keyof typeof strings;

@@ -19,13 +19,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
+import { useAudio } from '@/context/AudioContext';
 import { useBible } from '@/context/BibleContext';
 import { BIBLE_DATA } from '@/constants/bibleData';
-import { getEntryForDate, resolveVerse } from '@/utils/dailyVerse';
+import { getEntryForDate, resolveVerse, todayKey } from '@/utils/dailyVerse';
+import AudioPlayer from '@/components/AudioPlayer';
+import { BookshelfLibrary, CATEGORY_INFO, type BookCategory } from '@/components/BookshelfLibrary';
+import ProgressModal, { type ProgressStat } from '@/components/ProgressModal';
 
 const PAD    = 16;
 const GAP    = 10;
-const CARD_H = 196;
 
 const VIEW_MODE_KEY = '@bibliaeN:libraryViewMode';
 
@@ -51,6 +54,7 @@ const SIZE_LABEL: Record<VerseSize, number> = { S: 10, M: 13, L: 16 };
 // ── Daily verse card ──────────────────────────────────────────────────────────
 function DailyPill() {
   const colors = useColors();
+  const audio  = useAudio();
 
   const [today,    setToday]    = useState(() => new Date());
   const [expanded, setExpanded] = useState(false);
@@ -110,6 +114,16 @@ function DailyPill() {
   const fSize   = SIZE_FONT[size];
   const lHeight = SIZE_LINE[size];
 
+  const dailyQueueKey = `daily-verse:${todayKey()}`;
+  const isAudioActive = audio.queueKey === dailyQueueKey;
+  const isAudioPlaying = isAudioActive && audio.isPlaying;
+
+  const handlePlayToggle = () => {
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    if (isAudioActive) audio.togglePlayPause();
+    else audio.playQueue([{ id: 'verse', text: verse.en }], 0, dailyQueueKey);
+  };
+
   return (
     <View style={[styles.pill, {
       backgroundColor: colors.card,
@@ -133,7 +147,10 @@ function DailyPill() {
 
         {/* ── Verse text (tap to expand) ── */}
         <TouchableOpacity activeOpacity={0.85} onPress={toggle}>
-          <Text style={[styles.pillVerse, { color: colors.foreground, fontSize: fSize, lineHeight: lHeight }]}>
+          <Text style={[
+            styles.pillVerse,
+            { color: isAudioPlaying ? colors.accent : colors.foreground, fontSize: fSize, lineHeight: lHeight },
+          ]}>
             "{expanded ? verse.en : preview}"
           </Text>
           {expanded && (
@@ -143,7 +160,14 @@ function DailyPill() {
           )}
         </TouchableOpacity>
 
-        {/* ── Footer: heart | spacer | size buttons | chevron | Abrir ── */}
+        {/* Inline player — appears while this verse's audio is the active source */}
+        {isAudioActive && (
+          <View style={styles.pillPlayerRow}>
+            <AudioPlayer items={[{ id: 'verse', text: verse.en }]} queueKey={dailyQueueKey} compact />
+          </View>
+        )}
+
+        {/* ── Footer: heart | play | spacer | size buttons | chevron | Abrir ── */}
         <View style={styles.pillFooter}>
           {/* Heart — bottom left, one like per verse per day */}
           <TouchableOpacity
@@ -162,6 +186,20 @@ function DailyPill() {
             <Text style={[styles.pillHeartCount, { color: liked ? '#E8294B' : colors.mutedForeground }]}>
               {'125k'}
             </Text>
+          </TouchableOpacity>
+
+          {/* Subtle listen button — launches the shared player experience */}
+          <TouchableOpacity
+            onPress={handlePlayToggle}
+            activeOpacity={0.72}
+            style={styles.pillPlayBtn}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Feather
+              name={isAudioPlaying ? 'pause-circle' : 'play-circle'}
+              size={19}
+              color={isAudioActive ? colors.accent : colors.mutedForeground}
+            />
           </TouchableOpacity>
 
           <View style={{ flex: 1 }} />
@@ -212,22 +250,25 @@ function DailyPill() {
 }
 
 // ── Book catalogue ────────────────────────────────────────────────────────────
+// Category drives leather colour on the bookshelf (see BookshelfLibrary) —
+// every book keeps a canonical Bible-wide roman numeral and a testament tag
+// used only by the compact list view.
 type BookMeta = {
   bookId: string;
-  gradient: readonly [string, string];
+  category: BookCategory;
   roman: string;
   testamentPt: string;
 };
 
 const BOOK_CATALOGUE: BookMeta[] = [
-  { bookId: 'genesis',      gradient: ['#1E3D29', '#0D1F15'] as const, roman: 'I',   testamentPt: 'Antigo Testamento' },
-  { bookId: 'psalms',       gradient: ['#7A5218', '#4A3010'] as const, roman: 'XIX', testamentPt: 'Antigo Testamento' },
-  { bookId: 'proverbs',     gradient: ['#5A3A10', '#301E08'] as const, roman: 'XX',  testamentPt: 'Antigo Testamento' },
-  { bookId: 'matthew',      gradient: ['#3E141D', '#200A0F'] as const, roman: 'I',   testamentPt: 'Novo Testamento'   },
-  { bookId: 'john',         gradient: ['#2A1845', '#160D28'] as const, roman: 'IV',  testamentPt: 'Novo Testamento'   },
-  { bookId: 'romans',       gradient: ['#2C2A28', '#1A1816'] as const, roman: 'VI',  testamentPt: 'Novo Testamento'   },
-  { bookId: 'philippians',  gradient: ['#1B3A5A', '#0D1F35'] as const, roman: 'XI',  testamentPt: 'Novo Testamento'   },
-  { bookId: '1corinthians', gradient: ['#4A1230', '#28091A'] as const, roman: 'VII', testamentPt: 'Novo Testamento'   },
+  { bookId: 'genesis',      category: 'pentateuch',     roman: 'I',   testamentPt: 'Antigo Testamento' },
+  { bookId: 'psalms',       category: 'poetry',         roman: 'XIX', testamentPt: 'Antigo Testamento' },
+  { bookId: 'proverbs',     category: 'poetry',         roman: 'XX',  testamentPt: 'Antigo Testamento' },
+  { bookId: 'matthew',      category: 'gospels',        roman: 'I',   testamentPt: 'Novo Testamento'   },
+  { bookId: 'john',         category: 'gospels',        roman: 'IV',  testamentPt: 'Novo Testamento'   },
+  { bookId: 'romans',       category: 'paulineLetters', roman: 'VI',  testamentPt: 'Novo Testamento'   },
+  { bookId: 'philippians',  category: 'paulineLetters', roman: 'XI',  testamentPt: 'Novo Testamento'   },
+  { bookId: '1corinthians', category: 'paulineLetters', roman: 'VII', testamentPt: 'Novo Testamento'   },
 ];
 
 // ── Study / Learning centre constants ─────────────────────────────────────────
@@ -240,11 +281,11 @@ const STUDY_STEPS = [
   { id: 'reflect', icon: 'compass',    label: 'Reflect' },
 ];
 
-const PROGRESS_STATS = [
-  { icon: 'type',      value: '12',     label: 'Words\nlearned'  },
-  { icon: 'book-open', value: '4',      label: 'Verses\nstudied' },
-  { icon: 'clock',     value: '18',     label: 'Min\nstudy time' },
-  { icon: 'zap',       value: '7',      label: 'Day\nstreak'     },
+const PROGRESS_STATS: ProgressStat[] = [
+  { icon: 'type',      value: '12', label: 'Words\nlearned',  desc: 'Palavras salvas no seu vocabulário pessoal.' },
+  { icon: 'book-open', value: '4',  label: 'Verses\nstudied', desc: 'Versículos que você já leu e refletiu.'      },
+  { icon: 'clock',     value: '18', label: 'Min\nstudy time', desc: 'Minutos investidos na Palavra esta semana.'  },
+  { icon: 'zap',       value: '7',  label: 'Day\nstreak',     desc: 'Dias seguidos de estudo constante.'          },
 ];
 
 const VOCAB_PREVIEW = [
@@ -252,60 +293,6 @@ const VOCAB_PREVIEW = [
   { word: 'Light', def: 'Luz'            },
   { word: 'Grace', def: 'Graça'          },
 ];
-
-// ── Book grid card ────────────────────────────────────────────────────────────
-function BookGridCard({ meta, cardW }: { meta: BookMeta; cardW: number }) {
-  const colors = useColors();
-  const book   = BIBLE_DATA[meta.bookId];
-  if (!book) return null;
-
-  const chapterKey = Object.keys(book.chapters)[0];
-
-  const handlePress = () => {
-    if (Platform.OS !== 'web') Haptics.selectionAsync();
-    router.push({
-      pathname: '/chapter',
-      params: {
-        bookId:          meta.bookId,
-        chapter:         chapterKey,
-        bookName:        book.name,
-        englishBookName: book.englishName,
-      },
-    });
-  };
-
-  return (
-    <TouchableOpacity onPress={handlePress} activeOpacity={0.88} style={[styles.card, { width: cardW }]}>
-      <LinearGradient
-        colors={meta.gradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0.6, y: 1 }}
-        style={[styles.cardGradient, { borderRadius: colors.radius + 2 }]}
-      >
-        {/* Roman numeral watermark */}
-        <Text style={styles.cardRoman}>{meta.roman}</Text>
-
-        {/* Dark vignette overlay */}
-        <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.78)']}
-          style={StyleSheet.absoluteFill}
-          pointerEvents="none"
-        />
-
-        {/* Testament tag */}
-        <View style={styles.cardTag}>
-          <Text style={styles.cardTagText}>{meta.testamentPt.toUpperCase()}</Text>
-        </View>
-
-        {/* Book names */}
-        <View style={styles.cardBottom}>
-          <Text style={styles.cardNameEn}>{book.englishName}</Text>
-          <Text style={styles.cardNamePt}>{book.name}</Text>
-        </View>
-      </LinearGradient>
-    </TouchableOpacity>
-  );
-}
 
 // ── Book list row ─────────────────────────────────────────────────────────────
 function BookListRow({ meta, isLast }: { meta: BookMeta; isLast?: boolean }) {
@@ -329,15 +316,17 @@ function BookListRow({ meta, isLast }: { meta: BookMeta; isLast?: boolean }) {
     });
   };
 
+  const leather = CATEGORY_INFO[meta.category];
+
   return (
     <TouchableOpacity
       onPress={handlePress}
       activeOpacity={0.82}
       style={[styles.listRow, !isLast && { borderBottomColor: colors.border }]}
     >
-      {/* Colour swatch */}
+      {/* Leather colour swatch — matches the book's shelf tone */}
       <LinearGradient
-        colors={meta.gradient}
+        colors={[leather.base, leather.deep]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0.6, y: 1 }}
         style={[styles.listSwatch, { borderRadius: colors.radius - 2 }]}
@@ -384,6 +373,7 @@ export default function HomeScreen() {
 
   const [userName,  setUserName]  = useState('');
   const [viewMode,  setViewMode]  = useState<'grid' | 'list'>('grid');
+  const [progressModalVisible, setProgressModalVisible] = useState(false);
 
   useEffect(() => {
     AsyncStorage.getItem('@bibliaeN:userName').then(n => setUserName(n ?? '')).catch(() => setUserName(''));
@@ -488,7 +478,7 @@ export default function HomeScreen() {
                 accessibilityLabel="Visualização em grade"
                 accessibilityState={{ selected: viewMode === 'grid' }}
               >
-                <Feather name="grid" size={13} color={viewMode === 'grid' ? colors.primary : colors.mutedForeground} />
+                <MaterialCommunityIcons name="bookshelf" size={14} color={viewMode === 'grid' ? colors.primary : colors.mutedForeground} />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => toggleView('list')}
@@ -505,11 +495,11 @@ export default function HomeScreen() {
         </View>
 
         {viewMode === 'grid' ? (
-          <View style={styles.grid}>
-            {BOOK_CATALOGUE.map(meta => (
-              <BookGridCard key={meta.bookId} meta={meta} cardW={cardW} />
-            ))}
-          </View>
+          <BookshelfLibrary
+            books={BOOK_CATALOGUE}
+            currentBookId={readingProgress?.bookId}
+            currentChapter={readingProgress?.chapter}
+          />
         ) : (
           <View style={[styles.listContainer, { borderColor: colors.border, backgroundColor: colors.card, borderRadius: colors.radius }]}>
             {BOOK_CATALOGUE.map((meta, idx) => (
@@ -618,25 +608,40 @@ export default function HomeScreen() {
           <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>PROGRESSO</Text>
         </View>
 
-        <View style={styles.progressGrid}>
-          {PROGRESS_STATS.map(stat => (
-            <View key={stat.label} style={[styles.progressCard, {
-              backgroundColor: colors.card,
-              borderColor:     colors.border,
-              borderRadius:    colors.radius,
-              width:           cardW,
-            }]}>
-              <Feather name={stat.icon as any} size={15} color={GOLD} style={{ marginBottom: 8 }} />
-              <Text style={[styles.progressValue, { color: colors.foreground }]}>
-                {stat.value}
-              </Text>
-              <Text style={[styles.progressLabel, { color: colors.mutedForeground }]}>
-                {stat.label}
-              </Text>
-            </View>
-          ))}
-        </View>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => {
+            if (Platform.OS !== 'web') Haptics.selectionAsync();
+            setProgressModalVisible(true);
+          }}
+          style={[styles.progressSummary, {
+            backgroundColor: colors.card,
+            borderColor:     colors.border,
+            borderRadius:    colors.radius + 2,
+          }]}
+        >
+          <View style={[styles.progressHeroBadge, { backgroundColor: GOLD + '18' }]}>
+            <Feather name="zap" size={17} color={GOLD} />
+          </View>
+
+          <View style={styles.progressSummaryText}>
+            <Text style={[styles.progressHeroValue, { color: colors.foreground }]}>
+              {PROGRESS_STATS[3].value}-day streak
+            </Text>
+            <Text style={[styles.progressHeroSub, { color: colors.mutedForeground }]} numberOfLines={1}>
+              {PROGRESS_STATS[0].value} words · {PROGRESS_STATS[1].value} verses · {PROGRESS_STATS[2].value} min
+            </Text>
+          </View>
+
+          <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+        </TouchableOpacity>
       </View>
+
+      <ProgressModal
+        visible={progressModalVisible}
+        onClose={() => setProgressModalVisible(false)}
+        stats={PROGRESS_STATS}
+      />
 
       {/* ═══════════════════════════════════════════════════════════════════════
           SAVED VOCABULARY
@@ -770,6 +775,8 @@ const styles = StyleSheet.create({
   pillBody:   { flex: 1, paddingHorizontal: 16, paddingVertical: 20, gap: 12 },
   pillHeartBtn:   { flexDirection: 'row', alignItems: 'center', gap: 5 },
   pillHeartCount: { fontSize: 12, fontFamily: 'Inter_500Medium' },
+  pillPlayBtn:    { marginLeft: 4 },
+  pillPlayerRow:  { marginTop: 10, marginBottom: 2 },
   pillTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -829,13 +836,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  // Book grid
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: GAP,
-  },
-
   // Book list
   listContainer: {
     borderWidth: StyleSheet.hairlineWidth,
@@ -891,52 +891,6 @@ const styles = StyleSheet.create({
     fontSize:   11,
     fontFamily: 'Inter_400Regular',
   },
-  card:         {},
-  cardGradient: {
-    height: CARD_H,
-    padding: 12,
-    justifyContent: 'space-between',
-    overflow: 'hidden',
-  },
-  cardRoman: {
-    position: 'absolute',
-    top: '18%',
-    left: 0,
-    right: 0,
-    textAlign: 'center',
-    fontSize: 72,
-    fontFamily: 'Inter_700Bold',
-    fontWeight: '700' as const,
-    color: 'rgba(255,255,255,0.06)',
-    letterSpacing: -2,
-  },
-  cardTag: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 20,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-  },
-  cardTagText: {
-    color: 'rgba(255,255,255,0.65)',
-    fontSize: 7,
-    fontFamily: 'Inter_600SemiBold',
-    letterSpacing: 1.1,
-  },
-  cardBottom: { gap: 2 },
-  cardNameEn: {
-    fontSize: 16,
-    fontFamily: 'Inter_700Bold',
-    fontWeight: '700' as const,
-    color: '#FFFFFF',
-    lineHeight: 20,
-  },
-  cardNamePt: {
-    fontSize: 11,
-    fontFamily: 'Inter_400Regular',
-    color: 'rgba(255,255,255,0.55)',
-  },
-
   // ── Today's Study card ─────────────────────────────────────────────────────
   studyCard: {
     borderWidth:  StyleSheet.hairlineWidth,
@@ -1028,28 +982,30 @@ const styles = StyleSheet.create({
     letterSpacing: 0.15,
   },
 
-  // ── Learning Progress grid ─────────────────────────────────────────────────
-  progressGrid: {
-    flexDirection: 'row',
-    flexWrap:      'wrap',
-    gap:           GAP,
-  },
-  progressCard: {
+  // ── Learning Progress summary (opens ProgressModal for detail) ────────────
+  progressSummary: {
+    flexDirection:     'row',
+    alignItems:        'center',
+    gap:               12,
     borderWidth:       StyleSheet.hairlineWidth,
-    paddingHorizontal: 18,
-    paddingVertical:   20,
+    paddingHorizontal: 16,
+    paddingVertical:   15,
   },
-  progressValue: {
-    fontSize:      28,
-    fontFamily:    'Lora_700Bold',
-    letterSpacing: -0.5,
-    lineHeight:    34,
+  progressHeroBadge: {
+    width:          38,
+    height:         38,
+    borderRadius:   19,
+    alignItems:     'center',
+    justifyContent: 'center',
   },
-  progressLabel: {
-    fontSize:   11,
+  progressSummaryText: { flex: 1, gap: 2 },
+  progressHeroValue: {
+    fontSize:      15,
+    fontFamily:    'Inter_700Bold',
+  },
+  progressHeroSub: {
+    fontSize:   12,
     fontFamily: 'Inter_400Regular',
-    lineHeight: 16,
-    marginTop:  2,
   },
 
   // ── Saved Vocabulary ───────────────────────────────────────────────────────

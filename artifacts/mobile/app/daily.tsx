@@ -21,11 +21,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColors } from '@/hooks/useColors';
-import { useTTS } from '@/hooks/useTTS';
+import { useAudio } from '@/context/AudioContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useBible } from '@/context/BibleContext';
 import WordModal from '@/components/WordModal';
+import AudioPlayer from '@/components/AudioPlayer';
+import PronunciationPractice from '@/components/PronunciationPractice';
 import { getEntryForDate, resolveVerse, todayKey } from '@/utils/dailyVerse';
+import { t } from '@/constants/i18n';
 
 // ── Palette — always dark; this screen is an immersive reading experience ─────
 const D = {
@@ -78,6 +81,12 @@ function TappableVerse({ text, onWordPress }: {
 }
 
 // ── Devotional bottom-sheet modal ─────────────────────────────────────────────
+// Splits devotional prose into sentence-level chunks for continuous playback + highlighting.
+function splitIntoParagraphs(text: string): string[] {
+  const parts = text.match(/[^.!?]+[.!?]+(\s+|$)/g);
+  return (parts && parts.length > 0 ? parts : [text]).map(p => p.trim()).filter(Boolean);
+}
+
 function DevotionalModal({
   visible, text, loading, error, onClose,
   verseRef, verseEn, versePt, dateStr,
@@ -91,11 +100,17 @@ function DevotionalModal({
 }) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const audio = useAudio();
 
   const activeText    = lang === 'pt' ? text    : textEn;
   const activeLoading = lang === 'pt' ? loading : loadingEn;
   const activeError   = lang === 'pt' ? error   : errorEn;
   const hasText = !activeLoading && !activeError && activeText.length > 0;
+
+  const paragraphs = hasText ? splitIntoParagraphs(activeText) : [];
+  const devotionalQueueKey = `daily-devotional:${todayKey()}:${lang}`;
+  const isDevAudioActive = audio.queueKey === devotionalQueueKey;
+  const activeParagraphIdx = isDevAudioActive && audio.currentItem ? Number(audio.currentItem.id) : -1;
 
   const handleLangSwitch = (l: 'pt' | 'en') => {
     onLangChange(l);
@@ -133,8 +148,24 @@ function DevotionalModal({
             {/* Title — no icon */}
             <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Devocional do Dia</Text>
 
-            {/* Right: PT/EN toggle + share icon + close */}
+            {/* Right: PT/EN toggle + listen + share icon + close */}
             <View style={styles.sheetActions}>
+              {hasText && (
+                <TouchableOpacity
+                  onPress={() => {
+                    if (Platform.OS !== 'web') Haptics.selectionAsync();
+                    if (isDevAudioActive) audio.togglePlayPause();
+                    else audio.playQueue(paragraphs.map((p, i) => ({ id: String(i), text: p })), 0, devotionalQueueKey);
+                  }}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                >
+                  <Feather
+                    name={isDevAudioActive && audio.isPlaying ? 'pause-circle' : 'play-circle'}
+                    size={19}
+                    color={isDevAudioActive ? D.wine : colors.mutedForeground}
+                  />
+                </TouchableOpacity>
+              )}
               <View style={[styles.langToggle, { backgroundColor: colors.muted }]}>
                 {(['pt', 'en'] as const).map(l => (
                   <TouchableOpacity
@@ -181,7 +212,20 @@ function DevotionalModal({
               </View>
             ) : (
               <>
-                <Text style={[styles.sheetText, { color: colors.foreground }]}>{activeText}</Text>
+                <View style={{ marginBottom: 20 }}>
+                  {paragraphs.map((p, i) => (
+                    <Text
+                      key={i}
+                      style={[
+                        styles.sheetText,
+                        { color: colors.foreground, marginBottom: 0 },
+                        isDevAudioActive && activeParagraphIdx === i && { color: D.wine },
+                      ]}
+                    >
+                      {p}{i < paragraphs.length - 1 ? ' ' : ''}
+                    </Text>
+                  ))}
+                </View>
                 <View style={[styles.sheetVerseBlock, { borderColor: D.wineBorder, backgroundColor: D.wineFaint }]}>
                   <Text style={styles.sheetVerseRef}>{verseRef}</Text>
                   <Text style={styles.sheetVerseEn} numberOfLines={3}>"{verseEn}"</Text>
@@ -235,8 +279,10 @@ export default function DailyScreen() {
 
   // ── Heart / community engagement ───────────────────────────────────────────
   const heartScale = useRef(new Animated.Value(1)).current;
-  const { speak, isSpeaking: ttsPlaying } = useTTS();
+  const audio = useAudio();
+  const dailyVerseQueueKey = `daily-verse:${todayKey()}`;
   const [hearted, setHearted] = useState(false);
+  const [practiceVisible, setPracticeVisible] = useState(false);
 
   const handleHeartToggle = useCallback(() => {
     if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -394,23 +440,30 @@ export default function DailyScreen() {
 
         <TappableVerse text={verseObj.en} onWordPress={openWord} />
 
-        {/* Listen button — OpenAI TTS / expo-speech fallback */}
+        {/* Unified voice player — same shared engine as the reader */}
+        <View style={styles.playerRow}>
+          <AudioPlayer
+            items={[{ id: 'verse', text: verseObj.en }]}
+            queueKey={dailyVerseQueueKey}
+            title={t(lang, 'listen_in_english')}
+            palette={{
+              card: D.whiteFaint, border: D.border, foreground: D.white,
+              mutedForeground: D.whiteMid, primary: D.wine, primaryForeground: D.bg1, accent: D.wine,
+            }}
+          />
+        </View>
+
+        {/* Practice pronunciation */}
         <TouchableOpacity
           onPress={() => {
             if (Platform.OS !== 'web') Haptics.selectionAsync();
-            speak(verseObj.en);
+            setPracticeVisible(true);
           }}
           activeOpacity={0.7}
           style={styles.listenBtn}
         >
-          <Feather
-            name={ttsPlaying ? 'volume-x' : 'volume-2'}
-            size={13}
-            color={ttsPlaying ? D.wine : D.whiteLow}
-          />
-          <Text style={[styles.listenBtnText, { color: ttsPlaying ? D.wine : D.whiteLow }]}>
-            {ttsPlaying ? 'Parar' : 'Ouvir em inglês'}
-          </Text>
+          <Feather name="mic" size={13} color={D.whiteLow} />
+          <Text style={[styles.listenBtnText, { color: D.whiteLow }]}>{t(lang, 'practice_title')}</Text>
         </TouchableOpacity>
 
         {/* PT translation reveal toggle */}
@@ -529,6 +582,12 @@ export default function DailyScreen() {
         context={modalCtx}
         onClose={() => setModalVis(false)}
       />
+      <PronunciationPractice
+        visible={practiceVisible}
+        verseText={verseObj.en}
+        verseRef={`${entry.bookEn} ${entry.chapter}:${entry.verse}`}
+        onClose={() => setPracticeVisible(false)}
+      />
     </View>
   );
 }
@@ -621,6 +680,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'Inter_500Medium',
   },
+  playerRow: { width: '100%', marginBottom: 14 },
 
   // Tags
   bookTag: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 18 },
@@ -649,6 +709,7 @@ const styles = StyleSheet.create({
     flexDirection:  'row',
     alignItems:     'center',
     justifyContent: 'space-between',
+    alignSelf:      'stretch',
     marginTop:      28,
     paddingVertical: 4,
   },

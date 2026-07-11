@@ -1,0 +1,253 @@
+Redesign the Bible Library section from scratch.
+
+This is NOT a grid of cards anymore.
+
+The user should feel like they are standing in front of a beautiful antique wooden bookshelf inside a historic library.
+
+Think:
+
+- Trinity College Library (Ireland)
+- The Vatican Library
+- Oxford libraries
+- Old European libraries
+- Premium Apple-level interface
+- Luxury craftsmanship
+- Calm
+- Warm
+- Timeless
+
+The experience should feel emotional.
+
+========================================
+BOOKSHELF
+========================================
+
+Replace the flat grid with a realistic wooden bookshelf.
+
+The shelf should use:
+
+- dark walnut wood
+- subtle wood grain
+- soft ambient shadows
+- premium craftsmanship
+- warm lighting
+- no exaggerated realism
+- modern minimal interface
+
+The bookshelf should not feel old or dirty.
+
+It should feel luxurious and handcrafted.
+
+========================================
+BOOK DESIGN
+========================================
+
+Each Bible book should become an actual leather-bound volume.
+
+The proportions must resemble a real premium book.
+
+NOT a card.
+
+Each book should include:
+
+• Genuine leather texture
+• Slight rounded corners
+• Gold foil title
+• Embossed (deboss + emboss) details
+• Soft bevels
+• Premium stitching details
+• Visible book spine thickness
+• Metallic gold decorative lines
+• Small ornamental borders
+• Very subtle age marks
+• Premium craftsmanship
+
+The cover should look expensive.
+
+========================================
+TYPOGRAPHY
+========================================
+
+Book title:
+
+JOHN
+
+MATTHEW
+
+ROMANS
+
+etc.
+
+Use elegant serif typography.
+
+Gold foil effect.
+
+Slight embossing.
+
+Small subtitle:
+
+John
+João
+
+(or according to the current language settings)
+
+========================================
+COLOR SYSTEM
+========================================
+
+Each Bible category has its own leather color.
+
+Example:
+
+Pentateuch
+Deep Brown Leather
+
+History
+Dark Green Leather
+
+Poetry
+Royal Burgundy
+
+Major Prophets
+Dark Navy
+
+Minor Prophets
+Forest Green
+
+Gospels
+Wine Red
+
+Acts
+Warm Brown
+
+Paul's Letters
+Deep Blue
+
+General Letters
+Purple
+
+Revelation
+Black Leather with Gold
+
+Keep the palette elegant.
+
+Never saturated.
+
+========================================
+BOOK PROGRESSION
+========================================
+
+Progress should never look like a typical progress bar.
+
+Instead:
+
+A silk bookmark ribbon comes out of the book.
+
+The more the user studies,
+the farther the ribbon moves.
+
+Completed books receive:
+
+• gold seal
+• refined edge highlight
+• premium appearance
+
+The bookshelf should slowly become more beautiful over time.
+
+========================================
+INTERACTION
+========================================
+
+When tapping a book:
+
+The book slightly lifts.
+
+Soft shadow increases.
+
+Tiny scale animation.
+
+The cover opens naturally.
+
+No flashy animations.
+
+Everything should feel calm.
+
+========================================
+CURRENT BOOK
+========================================
+
+The book currently being studied should have:
+
+• subtle golden glow
+• bookmark visible
+• slightly pulled forward from the shelf
+
+Just enough for users to instantly know:
+
+"I'm reading this one."
+
+========================================
+LIGHTING
+========================================
+
+Warm ambient light.
+
+Soft golden reflections on the leather.
+
+Very subtle highlights.
+
+Nothing glossy.
+
+Premium luxury.
+
+========================================
+MICRO DETAILS
+========================================
+
+Optional details:
+
+• gilded page edges
+• small fabric ribbon bookmark
+• leather spine details
+• embossed Roman numeral
+• tiny engraved ornaments
+
+Everything must remain minimal.
+
+========================================
+DESIGN PHILOSOPHY
+========================================
+
+The interface should not feel like an app.
+
+It should feel like entering a personal premium library.
+
+Users should want to touch the books.
+
+The emotion should be:
+
+"I own this collection."
+
+Not:
+
+"I have a list of Bible books."
+
+========================================
+IMPORTANT
+========================================
+
+Keep all existing functionality.
+
+Only redesign the visual presentation.
+
+Maintain responsiveness.
+
+Maintain accessibility.
+
+Optimize performance.
+
+Avoid heavy textures.
+
+Use CSS effects whenever possible instead of large images.
+
+This must become the signature visual identity of BreadLight.

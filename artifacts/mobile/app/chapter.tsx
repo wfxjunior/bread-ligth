@@ -22,11 +22,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColors } from '@/hooks/useColors';
-import { useTTS } from '@/hooks/useTTS';
+import { useAudio } from '@/context/AudioContext';
 import { useBible, type DisplayMode } from '@/context/BibleContext';
 import { BIBLE_DATA, type BibleVerse } from '@/constants/bibleData';
 import VerseRow from '@/components/VerseRow';
 import WordModal from '@/components/WordModal';
+import AudioPlayer from '@/components/AudioPlayer';
+import PronunciationPractice from '@/components/PronunciationPractice';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/context/ThemeContext';
 import { BACKGROUND_TEMPLATES } from '@/constants/colors';
@@ -76,6 +78,7 @@ const ACTIONS = [
   { icon: 'edit-2'    as const, label: 'Marcar'    },
   { icon: 'bookmark'  as const, label: 'Salvar'    },
   { icon: 'file-text' as const, label: 'Nota'      },
+  { icon: 'mic'       as const, label: 'Praticar'  },
 ];
 
 type Params = { bookId: string; chapter: string; bookName: string; englishBookName: string };
@@ -199,18 +202,36 @@ export default function ChapterScreen() {
   const hasNext = chapterIdx < chapterKeys.length - 1;
 
   const { displayMode, setDisplayMode, isBookmarked, addBookmark, removeBookmark, saveReadingProgress } = useBible();
-  const { speak, stop, isSpeaking } = useTTS();
-  const [speakingV, setSpeakingV] = useState<number | null>(null);
+  const audio = useAudio();
+  const chapterQueueKey = `chapter:${currentBookId}:${chapterNum}`;
+  const isChapterAudioActive = audio.queueKey === chapterQueueKey;
+  const activeVerseNum = isChapterAudioActive && audio.currentItem ? Number(audio.currentItem.id) : null;
+  const [practiceVerse, setPracticeVerse] = useState<BibleVerse | null>(null);
 
-  const handleSpeak = useCallback((text: string, v: number) => {
-    if (speakingV === v && isSpeaking) {
-      stop();
-      setSpeakingV(null);
-    } else {
-      setSpeakingV(v);
-      speak(text);
+  const handleSpeak = useCallback((v: number) => {
+    const idx = verses.findIndex(vr => vr.v === v);
+    if (idx === -1) return;
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    if (isChapterAudioActive && activeVerseNum === v && audio.isPlaying) {
+      audio.pause();
+      return;
     }
-  }, [speak, stop, isSpeaking, speakingV]);
+    if (isChapterAudioActive && activeVerseNum === v && audio.isPaused) {
+      audio.resume();
+      return;
+    }
+    audio.playQueue(verses.map(vr => ({ id: String(vr.v), text: vr.en })), idx, chapterQueueKey);
+  }, [verses, audio, chapterQueueKey, isChapterAudioActive, activeVerseNum]);
+
+  // Auto-scroll to the verse currently being read aloud
+  useEffect(() => {
+    if (activeVerseNum == null) return;
+    const idx = verses.findIndex(vr => vr.v === activeVerseNum);
+    if (idx === -1) return;
+    try {
+      listRef.current?.scrollToIndex({ index: idx, animated: true, viewPosition: 0.3 });
+    } catch { /* handled by onScrollToIndexFailed */ }
+  }, [activeVerseNum]);
 
   // Text size — persisted in AsyncStorage
   const [textSize, setTextSize] = useState<TextSize>('medium');
@@ -544,8 +565,13 @@ export default function ChapterScreen() {
           ref={listRef}
           data={verses}
           keyExtractor={(item) => `${currentBookId}-${chapterNum}-${item.v}`}
-          extraData={[focusMode, displayMode, chapterNum, textSize, currentBookId, selectedVerse?.v, marks, notes, isSpeaking, speakingV]}
+          extraData={[focusMode, displayMode, chapterNum, textSize, currentBookId, selectedVerse?.v, marks, notes, audio.status, activeVerseNum]}
           onScrollBeginDrag={handleVerseDeselect}
+          onScrollToIndexFailed={({ index }) => {
+            setTimeout(() => {
+              try { listRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.3 }); } catch {}
+            }, 250);
+          }}
           renderItem={({ item }) => (
             <VerseRow
               verse={item}
@@ -558,8 +584,9 @@ export default function ChapterScreen() {
               onVersePress={handleVerseSelect}
               hasNote={!!notes[vKey(currentBookId, chapterNum, item.v)]}
               isMarked={marks.has(vKey(currentBookId, chapterNum, item.v))}
-              onSpeak={() => handleSpeak(item.en, item.v)}
-              isSpeakingThis={isSpeaking && speakingV === item.v}
+              onSpeak={() => handleSpeak(item.v)}
+              isSpeakingThis={isChapterAudioActive && activeVerseNum === item.v && audio.isPlaying}
+              isPlayingHighlight={isChapterAudioActive && activeVerseNum === item.v}
             />
           )}
           ListHeaderComponent={
@@ -627,9 +654,20 @@ export default function ChapterScreen() {
 
             </View>
           }
-          ListFooterComponent={<View style={{ height: bottomPad + 32 }} />}
+          ListFooterComponent={<View style={{ height: bottomPad + 110 }} />}
           showsVerticalScrollIndicator={false}
         />
+      )}
+
+      {/* ── Docked continuous-playback player ── */}
+      {verses.length > 0 && (
+        <View style={[styles.dockedPlayerWrap, { bottom: bottomPad + 10 }]}>
+          <AudioPlayer
+            items={verses.map(v => ({ id: String(v.v), text: v.en }))}
+            queueKey={chapterQueueKey}
+            title={`${book?.englishName ?? ''} ${chapterNum}`}
+          />
+        </View>
       )}
 
       {/* ── Verse action popup ── */}
@@ -676,6 +714,12 @@ export default function ChapterScreen() {
                       handleVerseDeselect();
                       openNote(v);
                       break;
+                    case 'Praticar': {
+                      const vrs = verses.find(vr => vr.v === v);
+                      handleVerseDeselect();
+                      if (vrs) setPracticeVerse(vrs);
+                      break;
+                    }
                   }
                 }}
                 activeOpacity={0.7}
@@ -687,6 +731,14 @@ export default function ChapterScreen() {
           })}
         </Animated.View>
       )}
+
+      {/* ── Pronunciation practice ── */}
+      <PronunciationPractice
+        visible={practiceVerse !== null}
+        verseText={practiceVerse?.en ?? ''}
+        verseRef={practiceVerse ? `${book?.englishName} ${chapterNum}:${practiceVerse.v}` : undefined}
+        onClose={() => setPracticeVerse(null)}
+      />
 
       {/* ── Note sheet ── */}
       {noteSheet !== null && (
@@ -970,6 +1022,16 @@ const styles = StyleSheet.create({
   },
 
   // Floating verse action popup
+  dockedPlayerWrap: {
+    position: 'absolute',
+    left: 12, right: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+
   versePopup: {
     position: 'absolute',
     left: 16, right: 16,

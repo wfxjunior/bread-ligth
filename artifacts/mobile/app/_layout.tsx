@@ -22,6 +22,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { BibleProvider } from '@/context/BibleContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { LanguageProvider } from '@/context/LanguageContext';
+import { AudioProvider } from '@/context/AudioContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -90,7 +91,9 @@ export default function RootLayout() {
               <LanguageProvider>
                 <ThemeProvider>
                   <BibleProvider>
-                    <RootLayoutNav />
+                    <AudioProvider>
+                      <RootLayoutNav />
+                    </AudioProvider>
                   </BibleProvider>
                 </ThemeProvider>
               </LanguageProvider>

@@ -10,6 +10,7 @@ import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import { type VocabWord } from '@/context/BibleContext';
+import { AudioPlayButton } from './AudioPlayButton';
 
 interface FlashCardProps {
   item: VocabWord;
@@ -57,7 +58,10 @@ export default function FlashCard({ item, onMastered, onDelete }: FlashCardProps
         {/* Front - English */}
         <Animated.View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }, frontStyle]}>
           <Text style={[styles.hint, { color: colors.mutedForeground }]}>Inglês · Toque para ver</Text>
-          <Text style={[styles.wordEn, { color: colors.englishText }]}>{item.word}</Text>
+          <View style={styles.wordRow}>
+            <Text style={[styles.wordEn, { color: colors.englishText }]}>{item.word}</Text>
+            <AudioPlayButton text={item.word} id={`vocab:${item.word}`} size={17} style={styles.wordListenBtn} />
+          </View>
           {item.pronunciation ? (
             <Text style={[styles.pronunciation, { color: colors.mutedForeground }]}>/{item.pronunciation}/</Text>
           ) : null}
@@ -136,6 +140,14 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     position: 'absolute',
     top: 16,
+  },
+  wordRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  wordListenBtn: {
+    marginTop: 2,
   },
   wordEn: {
     fontSize: 30,
