@@ -29,9 +29,6 @@ import VerseRow from '@/components/VerseRow';
 import WordModal from '@/components/WordModal';
 import AudioPlayer from '@/components/AudioPlayer';
 import PronunciationPractice from '@/components/PronunciationPractice';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '@/context/ThemeContext';
-import { BACKGROUND_TEMPLATES } from '@/constants/colors';
 
 // ── Text size selector ────────────────────────────────────────────────────────
 const TEXT_SIZES = [
@@ -429,17 +426,8 @@ export default function ChapterScreen() {
   const topPad = Platform.OS === 'web' ? 0 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
-  const { backgroundTemplate } = useTheme();
-  const activeTmpl = backgroundTemplate !== 'none' ? BACKGROUND_TEMPLATES[backgroundTemplate] : null;
-
   return (
-    <View style={[styles.container, { backgroundColor: activeTmpl ? activeTmpl.gradient[0] : colors.background }]}>
-      {activeTmpl && (
-        <LinearGradient
-          colors={[...activeTmpl.gradient]}
-          style={StyleSheet.absoluteFill}
-        />
-      )}
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* ── Custom Header (hidden in focus mode) ── */}

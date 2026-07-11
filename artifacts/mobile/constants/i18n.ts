@@ -61,28 +61,31 @@ const strings = {
   app_language_en:       { pt: 'Inglês',    en: 'English'    },
 
   // ── Appearance labels
-  reading_theme:         { pt: 'Tema de Leitura',  en: 'Reading Theme'       },
-  reading_theme_sub:     { pt: 'Pergaminho, Oxford…', en: 'Parchment, Oxford…' },
-  accent_color:          { pt: 'Cor de Destaque',  en: 'Accent Color'        },
-  reading_bg:            { pt: 'Fundo da Leitura', en: 'Reading Background'  },
+  reading_atmosphere:     { pt: 'Atmosfera de Leitura',  en: 'Reading Atmosphere' },
+  reading_atmosphere_sub: { pt: 'Uma paleta e material para cada momento de estudo', en: 'A palette and material for every study moment' },
+  accent_color:           { pt: 'Cor de Destaque',  en: 'Accent Color'        },
 
-  // ── Reading theme names
-  theme_classic:   { pt: 'Pergaminho',  en: 'Parchment'  },
-  theme_oxford:    { pt: 'Oxford',      en: 'Oxford'     },
-  theme_scholar:   { pt: 'Estudioso',   en: 'Scholar'    },
-  theme_night:     { pt: 'Noturno',     en: 'Night'      },
-  theme_notebook:  { pt: 'Caderno',     en: 'Notebook'   },
-  theme_sepia:     { pt: 'Sépia',       en: 'Sepia'      },
-
-  // ── Background template names (already in BACKGROUND_TEMPLATES — kept here for fallback)
-  bg_none:         { pt: 'Padrão',    en: 'Default'  },
-  bg_golf:         { pt: 'Golfe',     en: 'Golf'     },
-  bg_soccer:       { pt: 'Soccer',    en: 'Soccer'   },
-  bg_business:     { pt: 'Business',  en: 'Business' },
-  bg_sky:          { pt: 'Sky',       en: 'Sky'      },
-  bg_forest:       { pt: 'Forest',    en: 'Forest'   },
-  bg_sunset:       { pt: 'Sunset',    en: 'Sunset'   },
-  bg_car:          { pt: 'Drive',     en: 'Drive'    },
+  // ── Reading atmosphere names + descriptions
+  atmosphere_parchment:       { pt: 'Pergaminho',   en: 'Parchment' },
+  atmosphere_parchment_desc: { pt: 'Papel de manuscrito antigo', en: 'Ancient manuscript paper' },
+  atmosphere_cozy:            { pt: 'Aconchego',    en: 'Cozy' },
+  atmosphere_cozy_desc:      { pt: 'Bege quente, tons suaves', en: 'Warm beige, soft tones' },
+  atmosphere_classic:         { pt: 'Clássico',     en: 'Classic' },
+  atmosphere_classic_desc:   { pt: 'Papel de Bíblia tradicional', en: 'Traditional Bible paper' },
+  atmosphere_dark:            { pt: 'Escuro',       en: 'Dark' },
+  atmosphere_dark_desc:      { pt: 'Carvão e ouro antigo', en: 'Charcoal and antique gold' },
+  atmosphere_night:           { pt: 'Noturno',      en: 'Night' },
+  atmosphere_night_desc:     { pt: 'Azul profundo, ideal à noite', en: 'Deep blue, ideal at night' },
+  atmosphere_library:         { pt: 'Biblioteca',   en: 'Library' },
+  atmosphere_library_desc:  { pt: 'Nogueira e sombras suaves', en: 'Walnut and soft shadows' },
+  atmosphere_morning:         { pt: 'Manhã',        en: 'Morning' },
+  atmosphere_morning_desc:  { pt: 'Creme suave, luz natural', en: 'Soft cream, natural light' },
+  atmosphere_minimal:         { pt: 'Minimalista',  en: 'Minimal' },
+  atmosphere_minimal_desc:  { pt: 'Branco puro, máximo espaço', en: 'Pure white, maximum whitespace' },
+  atmosphere_sepia:           { pt: 'Sépia',        en: 'Sepia' },
+  atmosphere_sepia_desc:    { pt: 'Inspirado em livros antigos', en: 'Inspired by old books' },
+  atmosphere_focus:           { pt: 'Foco',         en: 'Focus' },
+  atmosphere_focus_desc:    { pt: 'Cinza neutro, menos distração', en: 'Neutral gray, less distraction' },
 
   // ── Learning labels
   english_level:     { pt: 'Nível de Inglês',          en: 'English Level'         },

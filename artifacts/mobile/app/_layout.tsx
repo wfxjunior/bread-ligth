@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
@@ -20,7 +20,7 @@ import {
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { BibleProvider } from '@/context/BibleContext';
-import { ThemeProvider } from '@/context/ThemeContext';
+import { ThemeProvider, useTheme } from '@/context/ThemeContext';
 import { LanguageProvider } from '@/context/LanguageContext';
 import { AudioProvider } from '@/context/AudioContext';
 
@@ -28,23 +28,41 @@ SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
+// Soft, Apple Books-style veil shown briefly while a Reading Atmosphere swap
+// is in flight, so the instant color change underneath never flashes.
+function AtmosphereTransitionOverlay() {
+  const { transitionOpacity, transitionColor } = useTheme();
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        StyleSheet.absoluteFill,
+        { backgroundColor: transitionColor, opacity: transitionOpacity, zIndex: 999 },
+      ]}
+    />
+  );
+}
+
 function RootLayoutNav() {
   return (
-    <Stack screenOptions={{ headerBackTitle: 'Voltar' }}>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="chapter"
-        options={{ headerShown: true, presentation: 'card', headerBackTitle: 'Voltar' }}
-      />
-      <Stack.Screen
-        name="daily"
-        options={{ headerShown: false, presentation: 'modal' }}
-      />
-      <Stack.Screen
-        name="auth"
-        options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom' }}
-      />
-    </Stack>
+    <View style={{ flex: 1 }}>
+      <Stack screenOptions={{ headerBackTitle: 'Voltar' }}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="chapter"
+          options={{ headerShown: true, presentation: 'card', headerBackTitle: 'Voltar' }}
+        />
+        <Stack.Screen
+          name="daily"
+          options={{ headerShown: false, presentation: 'modal' }}
+        />
+        <Stack.Screen
+          name="auth"
+          options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom' }}
+        />
+      </Stack>
+      <AtmosphereTransitionOverlay />
+    </View>
   );
 }
 

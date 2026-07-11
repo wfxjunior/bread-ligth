@@ -18,7 +18,7 @@ import {
   Share,
   useWindowDimensions,
 } from 'react-native';
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
@@ -28,21 +28,11 @@ import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useBible } from '@/context/BibleContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { BACKGROUND_TEMPLATES } from '@/constants/colors';
-import type { ReadingTheme, AccentColor, BackgroundTemplate } from '@/constants/colors';
+import { ATMOSPHERE_IDS, getAtmospherePreview } from '@/constants/colors';
+import type { Atmosphere, AccentColor } from '@/constants/colors';
 import { LinearGradient } from 'expo-linear-gradient';
 import SettingsDrawer from '@/components/SettingsDrawer';
 import { router } from 'expo-router';
-
-// ── Reading theme data ────────────────────────────────────────────────────────
-const READING_THEMES: { id: ReadingTheme; name: string; desc: string; bg: string; dark: boolean }[] = [
-  { id: 'classic',  name: 'Pergaminho', desc: 'Quente, suave',  bg: '#FAF8F4', dark: false },
-  { id: 'oxford',   name: 'Oxford',     desc: 'Branco nítido',  bg: '#FFFFFF', dark: false },
-  { id: 'scholar',  name: 'Estudioso',  desc: 'Tom neutro',     bg: '#ECEAE6', dark: false },
-  { id: 'night',    name: 'Noturno',    desc: 'Modo escuro',    bg: '#1C1E22', dark: true  },
-  { id: 'notebook', name: 'Caderno',    desc: 'Leve e casual',  bg: '#FEF9F0', dark: false },
-  { id: 'sepia',    name: 'Sépia',      desc: 'Âmbar quente',   bg: '#1A1006', dark: true  },
-];
 
 const ACCENT_COLORS: { id: AccentColor; hex: string; label: string }[] = [
   { id: 'royal-blue', hex: '#1B3A6B', label: 'Azul Real' },
@@ -716,18 +706,6 @@ function SupportModal({ visible, onClose }: { visible: boolean; onClose: () => v
   );
 }
 
-// ── Background template icon map (MaterialCommunityIcons) ────────────────────
-const TEMPLATE_ICONS: Record<BackgroundTemplate, string> = {
-  none:     'book-open-variant',
-  golf:     'golf',
-  soccer:   'soccer',
-  business: 'briefcase-outline',
-  sky:      'weather-sunny',
-  forest:   'pine-tree',
-  sunset:   'weather-sunset-down',
-  car:      'steering',
-};
-
 // ── Settings Screen ───────────────────────────────────────────────────────────
 export default function SettingsScreen() {
   const colors   = useColors();
@@ -755,7 +733,7 @@ export default function SettingsScreen() {
   const [userName,    setUserName]    = useState('');
   const [userEmail,   setUserEmail]   = useState('');
 
-  const { readingTheme, setReadingTheme, accentColor, setAccentColor, backgroundTemplate, setBackgroundTemplate } = useTheme();
+  const { atmosphere, setAtmosphere, accentColor, setAccentColor } = useTheme();
   const { lang, setLang, t: tl } = useLanguage();
 
   // ── Scroll-to-section ───────────────────────────────────────────────────────
@@ -767,22 +745,30 @@ export default function SettingsScreen() {
     setDrawerVisible(false);
   };
 
-  // ── i18n theme names/descs (inside component so tl() is available) ──────────
-  const themeNames: Record<string, string> = {
-    classic:  tl('theme_classic'),
-    oxford:   tl('theme_oxford'),
-    scholar:  tl('theme_scholar'),
-    night:    tl('theme_night'),
-    notebook: tl('theme_notebook'),
-    sepia:    tl('theme_sepia'),
+  // ── i18n atmosphere names/descs (inside component so tl() is available) ─────
+  const atmosphereNames: Record<Atmosphere, string> = {
+    parchment: tl('atmosphere_parchment'),
+    cozy:      tl('atmosphere_cozy'),
+    classic:   tl('atmosphere_classic'),
+    dark:      tl('atmosphere_dark'),
+    night:     tl('atmosphere_night'),
+    library:   tl('atmosphere_library'),
+    morning:   tl('atmosphere_morning'),
+    minimal:   tl('atmosphere_minimal'),
+    sepia:     tl('atmosphere_sepia'),
+    focus:     tl('atmosphere_focus'),
   };
-  const themeDescs: Record<string, string> = {
-    classic:  lang === 'pt' ? 'Quente, suave'  : 'Warm, soft',
-    oxford:   lang === 'pt' ? 'Branco nítido'  : 'Crisp white',
-    scholar:  lang === 'pt' ? 'Tom neutro'     : 'Neutral tone',
-    night:    lang === 'pt' ? 'Modo escuro'    : 'Dark mode',
-    notebook: lang === 'pt' ? 'Leve e casual'  : 'Light & casual',
-    sepia:    lang === 'pt' ? 'Âmbar quente'   : 'Warm amber',
+  const atmosphereDescs: Record<Atmosphere, string> = {
+    parchment: tl('atmosphere_parchment_desc'),
+    cozy:      tl('atmosphere_cozy_desc'),
+    classic:   tl('atmosphere_classic_desc'),
+    dark:      tl('atmosphere_dark_desc'),
+    night:     tl('atmosphere_night_desc'),
+    library:   tl('atmosphere_library_desc'),
+    morning:   tl('atmosphere_morning_desc'),
+    minimal:   tl('atmosphere_minimal_desc'),
+    sepia:     tl('atmosphere_sepia_desc'),
+    focus:     tl('atmosphere_focus_desc'),
   };
 
   useEffect(() => {
@@ -844,17 +830,6 @@ export default function SettingsScreen() {
   const [donateVisible,     setDonateVisible]     = useState(false);
   const [ambassadorVisible, setAmbassadorVisible] = useState(false);
   const [donateKey,         setDonateKey]         = useState(0); // bumped on open to reset modal state
-
-  // Auto-match reading theme contrast when a dark/light template is selected
-  const handleSetTemplate = (id: BackgroundTemplate) => {
-    if (Platform.OS !== 'web') Haptics.selectionAsync();
-    setBackgroundTemplate(id);
-    if (id !== 'none') {
-      const tmpl = BACKGROUND_TEMPLATES[id];
-      if (tmpl.isDark  && readingTheme !== 'night')   setReadingTheme('night');
-      if (!tmpl.isDark && readingTheme === 'night')    setReadingTheme('classic');
-    }
-  };
 
   const handleDonate = () => {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
@@ -983,19 +958,21 @@ export default function SettingsScreen() {
           onLayout={e => { sectionOffsets.current['appearance'] = e.nativeEvent.layout.y; }}
         />
         <SettingsCard>
-          {/* Reading theme grid */}
+          {/* Reading atmosphere grid — premium palette previews, no photos */}
           <View style={[styles.innerSection, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
-            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>{tl('reading_theme')}</Text>
+            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>{tl('reading_atmosphere')}</Text>
+            <Text style={[styles.innerSubLabel, { color: colors.mutedForeground }]}>{tl('reading_atmosphere_sub')}</Text>
             <View
               style={styles.themeGrid}
               onLayout={e => setThemeGridW(e.nativeEvent.layout.width)}
             >
-              {READING_THEMES.map(t => {
-                const active = readingTheme === t.id;
+              {ATMOSPHERE_IDS.map(id => {
+                const active  = atmosphere === id;
+                const preview = getAtmospherePreview(id);
                 return (
                   <TouchableOpacity
-                    key={t.id}
-                    onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); setReadingTheme(t.id); }}
+                    key={id}
+                    onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); setAtmosphere(id); }}
                     activeOpacity={0.8}
                     style={[
                       styles.themeCard,
@@ -1008,16 +985,27 @@ export default function SettingsScreen() {
                       },
                     ]}
                   >
-                    <View style={[styles.themePreview, { backgroundColor: t.bg, borderTopLeftRadius: colors.radius / 1.5, borderTopRightRadius: colors.radius / 1.5 }]}>
-                      {([72, 90, 60] as const).map((w, i) => (
-                        <View
-                          key={i}
-                          style={[
-                            styles.themeLine,
-                            { width: `${w}%` as any, backgroundColor: t.dark ? 'rgba(255,255,255,0.20)' : 'rgba(0,0,0,0.11)' },
-                          ]}
-                        />
-                      ))}
+                    <View style={[styles.themePreview, {
+                      backgroundColor: preview.background,
+                      borderTopLeftRadius:  colors.radius / 1.5,
+                      borderTopRightRadius: colors.radius / 1.5,
+                    }]}>
+                      {/* "Card" swatch — represents the material/paper surface */}
+                      <View style={[styles.atmCardSwatch, { backgroundColor: preview.card, borderColor: preview.surface }]} />
+                      {/* Typography-contrast lines on the card swatch */}
+                      <View style={styles.atmLineGroup}>
+                        {([64, 42] as const).map((w, i) => (
+                          <View
+                            key={i}
+                            style={[
+                              styles.atmLine,
+                              { width: `${w}%` as any, backgroundColor: preview.foreground, opacity: preview.isDark ? 0.55 : 0.30 },
+                            ]}
+                          />
+                        ))}
+                      </View>
+                      {/* Curated secondary-accent dot — the atmosphere's "material style" */}
+                      <View style={[styles.atmAccentDot, { backgroundColor: preview.secondaryAccent }]} />
                       {active && (
                         <View style={[styles.themeCheck, { backgroundColor: colors.primary }]}>
                           <Feather name="check" size={8} color={colors.primaryForeground} />
@@ -1026,10 +1014,10 @@ export default function SettingsScreen() {
                     </View>
                     <View style={styles.themeCardBody}>
                       <Text style={[styles.themeCardName, { color: colors.foreground }]} numberOfLines={1}>
-                        {themeNames[t.id] ?? t.name}
+                        {atmosphereNames[id]}
                       </Text>
                       <Text style={[styles.themeCardDesc, { color: colors.mutedForeground }]} numberOfLines={1}>
-                        {themeDescs[t.id] ?? t.desc}
+                        {atmosphereDescs[id]}
                       </Text>
                     </View>
                   </TouchableOpacity>
@@ -1039,7 +1027,7 @@ export default function SettingsScreen() {
           </View>
 
           {/* Accent color circles */}
-          <View style={[styles.innerSection, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
+          <View style={styles.innerSection}>
             <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>{tl('accent_color')}</Text>
             <View style={styles.accentRow}>
               {ACCENT_COLORS.map(c => {
@@ -1061,62 +1049,6 @@ export default function SettingsScreen() {
                 );
               })}
             </View>
-          </View>
-
-          {/* Background templates */}
-          <View style={styles.innerSection}>
-            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>{tl('reading_bg')}</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.bgTmplRow}
-            >
-              {(Object.keys(BACKGROUND_TEMPLATES) as BackgroundTemplate[]).map(id => {
-                const tmpl  = BACKGROUND_TEMPLATES[id];
-                const active = backgroundTemplate === id;
-                return (
-                  <TouchableOpacity
-                    key={id}
-                    onPress={() => handleSetTemplate(id)}
-                    activeOpacity={0.8}
-                    style={[styles.bgTmplCard, {
-                      borderColor:  active ? colors.primary : colors.border,
-                      borderWidth:  active ? 1.5 : StyleSheet.hairlineWidth,
-                      borderRadius: colors.radius / 1.5,
-                    }]}
-                  >
-                    <LinearGradient
-                      colors={[...tmpl.gradient]}
-                      style={[styles.bgTmplGradient, {
-                        borderTopLeftRadius:  colors.radius / 1.5 - 1,
-                        borderTopRightRadius: colors.radius / 1.5 - 1,
-                      }]}
-                    >
-                      {/* Premium icon — translucent circle + vector icon */}
-                      <View style={[styles.bgTmplIconBg, {
-                        backgroundColor: tmpl.isDark
-                          ? 'rgba(255,255,255,0.13)'
-                          : 'rgba(0,0,0,0.07)',
-                      }]}>
-                        <MaterialCommunityIcons
-                          name={TEMPLATE_ICONS[id] as any}
-                          size={24}
-                          color={tmpl.isDark ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.50)'}
-                        />
-                      </View>
-                      {active && (
-                        <View style={[styles.bgTmplCheck, { backgroundColor: colors.primary }]}>
-                          <Feather name="check" size={8} color={colors.primaryForeground} />
-                        </View>
-                      )}
-                    </LinearGradient>
-                    <Text style={[styles.bgTmplName, { color: colors.foreground }]} numberOfLines={1}>
-                      {tmpl.name}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
           </View>
         </SettingsCard>
 
@@ -1422,15 +1354,21 @@ const styles = StyleSheet.create({
   ambassadorShareBtn:    { marginHorizontal: 20, paddingVertical: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: StyleSheet.hairlineWidth, marginBottom: 6 },
   ambassadorShareText:   { fontSize: 14, fontFamily: 'Inter_400Regular' },
 
-  // Reading theme grid — 2-column, fills width
+  // Reading atmosphere grid — 2-column, fills width
+  innerSubLabel:{ fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: -6, opacity: 0.85 },
   themeGrid:    { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   themeCard:    { overflow: 'hidden' },
-  themePreview: { height: 72, padding: 10, justifyContent: 'flex-end', gap: 5 },
-  themeLine:    { height: 3.5, borderRadius: 2 },
+  themePreview: { height: 72, padding: 10, justifyContent: 'flex-end' },
   themeCheck:   { position: 'absolute', top: 6, right: 6, width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   themeCardBody:{ paddingHorizontal: 9, paddingTop: 6, paddingBottom: 9, gap: 2 },
   themeCardName:{ fontSize: 12, fontFamily: 'Inter_600SemiBold' },
   themeCardDesc:{ fontSize: 10, fontFamily: 'Inter_400Regular', opacity: 0.7 },
+
+  // Atmosphere palette-swatch preview (material style, no photos)
+  atmCardSwatch: { position: 'absolute', left: 10, right: 10, top: 10, bottom: 10, borderRadius: 6, borderWidth: 1 },
+  atmLineGroup:  { gap: 4, paddingLeft: 4, paddingBottom: 2 },
+  atmLine:       { height: 3, borderRadius: 2 },
+  atmAccentDot:  { position: 'absolute', right: 8, bottom: 8, width: 10, height: 10, borderRadius: 5 },
 
   // Accent circles
   accentRow:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -1439,12 +1377,4 @@ const styles = StyleSheet.create({
 
   // Header
   headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-
-  // Background template picker
-  bgTmplRow:     { gap: 10, paddingBottom: 4 },
-  bgTmplCard:    { width: 88, overflow: 'hidden' },
-  bgTmplGradient:{ height: 88, alignItems: 'center', justifyContent: 'center' },
-  bgTmplIconBg:  { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
-  bgTmplCheck:   { position: 'absolute', top: 6, right: 6, width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
-  bgTmplName:    { fontSize: 11, fontFamily: 'Inter_500Medium', textAlign: 'center', paddingHorizontal: 4, paddingVertical: 8, letterSpacing: 0.1 },
 });

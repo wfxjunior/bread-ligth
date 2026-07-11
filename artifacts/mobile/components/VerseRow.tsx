@@ -91,7 +91,7 @@ function VerseRow({
       style={[
         styles.container,
         { borderBottomColor: colors.border },
-        selected  && { backgroundColor: colors.accent + '12' },
+        selected  && { backgroundColor: colors.selection },
         isMarked  && { backgroundColor: colors.accent + '08' },
         isPlayingHighlight && { backgroundColor: colors.primary + '14' },
       ]}

@@ -30,22 +30,38 @@ import PronunciationPractice from '@/components/PronunciationPractice';
 import { getEntryForDate, resolveVerse, todayKey } from '@/utils/dailyVerse';
 import { t } from '@/constants/i18n';
 
-// ── Palette — always dark; this screen is an immersive reading experience ─────
-const D = {
-  bg1:       '#0A1628',
-  bg2:       '#111E35',
-  bg3:       '#162442',
-  wine:      '#EDD9A8',           // parchment cream — biblical manuscript on dark navy
-  wineFaint: 'rgba(237,217,168,0.12)',
-  wineBorder:'rgba(237,217,168,0.28)',
-  white:     '#FFFFFF',
-  whiteHi:   'rgba(255,255,255,0.90)',
-  whiteMid:  'rgba(255,255,255,0.55)',
-  whiteLow:  'rgba(255,255,255,0.35)',
-  whiteFaint:'rgba(255,255,255,0.07)',
-  border:    'rgba(255,255,255,0.10)',
-  overlayBg: 'rgba(10,22,40,0.96)',
-};
+// ── Palette — derived from the active Reading Atmosphere ──────────────────────
+// This screen used to be a hardcoded, always-dark "immersive" design. It now
+// reads the same atmosphere/colors as the rest of the app, so it stays
+// immersive while adapting its ink, borders and gradient to whichever
+// atmosphere (light or dark) the reader has chosen.
+function hexToRgba(hex: string, alpha: number): string {
+  const clean = hex.replace('#', '');
+  const full  = clean.length === 3 ? clean.split('').map(c => c + c).join('') : clean;
+  const r = parseInt(full.substring(0, 2), 16) || 0;
+  const g = parseInt(full.substring(2, 4), 16) || 0;
+  const b = parseInt(full.substring(4, 6), 16) || 0;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function buildPalette(colors: ReturnType<typeof useColors>) {
+  const fg = colors.foreground;
+  return {
+    bg1:        colors.background,
+    bg2:        colors.surface,
+    bg3:        colors.card,
+    wine:       colors.primary,
+    wineFaint:  hexToRgba(colors.primary, 0.12),
+    wineBorder: hexToRgba(colors.primary, 0.28),
+    white:      fg,
+    whiteHi:    hexToRgba(fg, 0.90),
+    whiteMid:   hexToRgba(fg, 0.55),
+    whiteLow:   hexToRgba(fg, 0.35),
+    whiteFaint: hexToRgba(fg, 0.07),
+    border:     hexToRgba(fg, 0.10),
+    overlayBg:  hexToRgba(colors.background, 0.96),
+  };
+}
 
 // PT weekday / month labels
 const WEEKDAYS_PT = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
@@ -59,9 +75,11 @@ function TappableVerse({ text, onWordPress }: {
   text: string;
   onWordPress: (word: string, ctx: string) => void;
 }) {
+  const colors = useColors();
+  const D = buildPalette(colors);
   const words = text.split(/(\s+)/);
   return (
-    <Text style={styles.verseEnWrap}>
+    <Text style={[styles.verseEnWrap, { color: D.white }]}>
       {words.map((token, i) => {
         if (/^\s+$/.test(token)) return <Text key={i} style={{ color: D.white }}>{token}</Text>;
         const clean = token.replace(/[^a-zA-Z'-]/g, '');
@@ -69,7 +87,7 @@ function TappableVerse({ text, onWordPress }: {
           <Text
             key={i}
             onPress={() => clean.length > 1 && onWordPress(clean.toLowerCase(), text)}
-            style={styles.verseWord}
+            style={[styles.verseWord, { color: D.white, textDecorationColor: D.border }]}
             suppressHighlighting
           >
             {token}
@@ -99,6 +117,7 @@ function DevotionalModal({
   lang: 'pt' | 'en'; onLangChange: (l: 'pt' | 'en') => void;
 }) {
   const colors = useColors();
+  const D = buildPalette(colors);
   const insets = useSafeAreaInsets();
   const audio = useAudio();
 
@@ -227,8 +246,8 @@ function DevotionalModal({
                   ))}
                 </View>
                 <View style={[styles.sheetVerseBlock, { borderColor: D.wineBorder, backgroundColor: D.wineFaint }]}>
-                  <Text style={styles.sheetVerseRef}>{verseRef}</Text>
-                  <Text style={styles.sheetVerseEn} numberOfLines={3}>"{verseEn}"</Text>
+                  <Text style={[styles.sheetVerseRef, { color: D.wine }]}>{verseRef}</Text>
+                  <Text style={[styles.sheetVerseEn, { color: D.wine }]} numberOfLines={3}>"{verseEn}"</Text>
                 </View>
               </>
             )}
@@ -243,6 +262,7 @@ function DevotionalModal({
 export default function DailyScreen() {
   const insets  = useSafeAreaInsets();
   const colors  = useColors();
+  const D = buildPalette(colors);
   const { lang } = useLanguage();
   const { vocabulary } = useBible();
 
@@ -414,16 +434,16 @@ export default function DailyScreen() {
         </TouchableOpacity>
 
         <View style={styles.headerCenter}>
-          <View style={styles.modoBadge}>
+          <View style={[styles.modoBadge, { backgroundColor: D.wineFaint, borderColor: D.wineBorder }]}>
             <Feather name="sun" size={11} color={D.wine} />
-            <Text style={styles.modoBadgeText}>MODO DIÁRIO</Text>
+            <Text style={[styles.modoBadgeText, { color: D.wine }]}>MODO DIÁRIO</Text>
           </View>
-          <Text style={styles.dateText}>{dateStr}</Text>
+          <Text style={[styles.dateText, { color: D.whiteMid }]}>{dateStr}</Text>
         </View>
 
         <View style={styles.vocabBadge}>
-          <Text style={styles.vocabCount}>{vocabulary.length}</Text>
-          <Text style={styles.vocabLabel}>palavras</Text>
+          <Text style={[styles.vocabCount, { color: D.white }]}>{vocabulary.length}</Text>
+          <Text style={[styles.vocabLabel, { color: D.whiteLow }]}>palavras</Text>
         </View>
       </View>
 
@@ -432,9 +452,9 @@ export default function DailyScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 180 }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.goldBar} />
+        <View style={[styles.goldBar, { backgroundColor: D.wine }]} />
 
-        <Text style={styles.reference}>
+        <Text style={[styles.reference, { color: D.wine }]}>
           {entry.bookEn} {entry.chapter}:{entry.verse}
         </Text>
 
@@ -460,7 +480,7 @@ export default function DailyScreen() {
             setPracticeVisible(true);
           }}
           activeOpacity={0.7}
-          style={styles.listenBtn}
+          style={[styles.listenBtn, { borderColor: D.border, backgroundColor: D.whiteFaint }]}
         >
           <Feather name="mic" size={13} color={D.whiteLow} />
           <Text style={[styles.listenBtnText, { color: D.whiteLow }]}>{t(lang, 'practice_title')}</Text>
@@ -472,7 +492,11 @@ export default function DailyScreen() {
             if (Platform.OS !== 'web') Haptics.selectionAsync();
             setShowPt(v => !v);
           }}
-          style={[styles.ptToggleBtn, showPt && { backgroundColor: D.wineFaint, borderColor: D.wineBorder }]}
+          style={[
+            styles.ptToggleBtn,
+            { borderColor: D.border, backgroundColor: D.whiteFaint },
+            showPt && { backgroundColor: D.wineFaint, borderColor: D.wineBorder },
+          ]}
           activeOpacity={0.7}
         >
           <Feather name={showPt ? 'eye-off' : 'eye'} size={13} color={showPt ? D.wine : D.whiteLow} />
@@ -481,16 +505,16 @@ export default function DailyScreen() {
           </Text>
         </TouchableOpacity>
 
-        {showPt && <Text style={styles.versePt}>{verseObj.pt}</Text>}
+        {showPt && <Text style={[styles.versePt, { color: D.whiteMid }]}>{verseObj.pt}</Text>}
 
         <View style={styles.bookTag}>
           <Feather name="book-open" size={12} color={D.wineBorder} />
-          <Text style={styles.bookTagText}>{entry.bookPt} · Capítulo {entry.chapter}</Text>
+          <Text style={[styles.bookTagText, { color: D.wineBorder }]}>{entry.bookPt} · Capítulo {entry.chapter}</Text>
         </View>
 
-        <View style={styles.tipRow}>
+        <View style={[styles.tipRow, { backgroundColor: D.whiteFaint, borderColor: D.border }]}>
           <Feather name="zap" size={12} color={D.whiteLow} />
-          <Text style={styles.tipText} numberOfLines={1}>
+          <Text style={[styles.tipText, { color: D.whiteLow }]} numberOfLines={1}>
             {showPt
               ? 'Toque nas palavras para ver definições'
               : 'Toque nas palavras · PT revela a tradução'}
@@ -525,16 +549,16 @@ export default function DailyScreen() {
 
       {/* ── Fixed bottom bar ── */}
       {checked && (
-        <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 10 }]}>
+        <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 10, backgroundColor: D.overlayBg, borderTopColor: D.border }]}>
 
           {/* Devotional row: button + PT/EN lang toggle */}
           <View style={styles.devRow}>
             <TouchableOpacity
               onPress={handleOpenDevotional}
               activeOpacity={0.8}
-              style={styles.devBtn}
+              style={[styles.devBtn, { borderColor: D.wineBorder, backgroundColor: D.wineFaint }]}
             >
-              <Text style={styles.devBtnText}>Ler Devocional</Text>
+              <Text style={[styles.devBtnText, { color: D.wine }]}>Ler Devocional</Text>
             </TouchableOpacity>
 
           </View>
@@ -546,13 +570,13 @@ export default function DailyScreen() {
                 <Feather name="check" size={18} color={D.white} />
               </View>
               <View>
-                <Text style={styles.doneTitle}>Concluído hoje 🎉</Text>
-                <Text style={styles.doneSub}>Volte amanhã para o próximo versículo</Text>
+                <Text style={[styles.doneTitle, { color: D.white }]}>Concluído hoje 🎉</Text>
+                <Text style={[styles.doneSub, { color: D.whiteMid }]}>Volte amanhã para o próximo versículo</Text>
               </View>
             </View>
           ) : (
-            <TouchableOpacity onPress={handleComplete} activeOpacity={0.85} style={styles.completeBtn}>
-              <Text style={styles.completeBtnText}>Marcar como concluído</Text>
+            <TouchableOpacity onPress={handleComplete} activeOpacity={0.85} style={[styles.completeBtn, { backgroundColor: D.wine }]}>
+              <Text style={[styles.completeBtnText, { color: D.bg1 }]}>Marcar como concluído</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -610,27 +634,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: D.wineFaint,
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderWidth: 1,
-    borderColor: D.wineBorder,
   },
-  modoBadgeText: { color: D.wine, fontSize: 10, fontFamily: 'Inter_700Bold', letterSpacing: 1.2 },
-  dateText:      { color: D.whiteMid, fontSize: 12, fontFamily: 'Inter_400Regular' },
+  modoBadgeText: { fontSize: 10, fontFamily: 'Inter_700Bold', letterSpacing: 1.2 },
+  dateText:      { fontSize: 12, fontFamily: 'Inter_400Regular' },
   vocabBadge:    { width: 48, alignItems: 'flex-end', flexShrink: 0 },
-  vocabCount:    { color: D.white, fontSize: 17, fontFamily: 'Inter_700Bold', lineHeight: 20 },
-  vocabLabel:    { color: D.whiteLow, fontSize: 10, fontFamily: 'Inter_400Regular' },
+  vocabCount:    { fontSize: 17, fontFamily: 'Inter_700Bold', lineHeight: 20 },
+  vocabLabel:    { fontSize: 10, fontFamily: 'Inter_400Regular' },
 
   // Content
   content:  { paddingHorizontal: 24, paddingTop: 10, alignItems: 'flex-start' },
-  goldBar:  { width: 40, height: 3, backgroundColor: D.wine, borderRadius: 2, marginBottom: 20 },
+  goldBar:  { width: 40, height: 3, borderRadius: 2, marginBottom: 20 },
   reference: {
     fontSize: 11,
     fontFamily: 'Inter_700Bold',
     letterSpacing: 1.8,
-    color: D.wine,
     marginBottom: 16,
     textTransform: 'uppercase',
   },
@@ -640,17 +661,14 @@ const styles = StyleSheet.create({
     fontSize: 26,
     lineHeight: 42,
     fontFamily: 'Lora_400Regular',
-    color: D.white,
     marginBottom: 22,
   },
   verseWord: {
     fontSize: 26,
     lineHeight: 42,
     fontFamily: 'Lora_400Regular',
-    color: D.white,
     textDecorationLine: 'underline',
     textDecorationStyle: 'solid',
-    textDecorationColor: 'rgba(255,255,255,0.20)',
   },
 
   // PT verse — italic serif
@@ -658,7 +676,6 @@ const styles = StyleSheet.create({
     fontSize: 17,
     lineHeight: 28,
     fontFamily: 'Lora_400Regular_Italic',
-    color: D.whiteMid,
     marginBottom: 28,
   },
 
@@ -672,8 +689,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: D.border,
-    backgroundColor: D.whiteFaint,
     marginBottom: 18,
   },
   listenBtnText: {
@@ -684,21 +699,18 @@ const styles = StyleSheet.create({
 
   // Tags
   bookTag: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 18 },
-  bookTagText: { color: D.wineBorder, fontSize: 12, fontFamily: 'Inter_500Medium' },
+  bookTagText: { fontSize: 12, fontFamily: 'Inter_500Medium' },
   tipRow: {
     flexDirection: 'row',
     gap: 7,
     alignItems: 'flex-start',
     paddingVertical: 11,
     paddingHorizontal: 13,
-    backgroundColor: D.whiteFaint,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: D.border,
   },
   tipText: {
     flex: 1,
-    color: D.whiteLow,
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
     lineHeight: 18,
@@ -742,8 +754,6 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: D.border,
-    backgroundColor: D.whiteFaint,
     marginBottom: 18,
   },
   ptToggleText: {
@@ -759,9 +769,7 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 16,
     paddingTop: 10,
-    backgroundColor: D.overlayBg,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: D.border,
     gap: 8,
   },
 
@@ -774,10 +782,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: D.wineBorder,
-    backgroundColor: D.wineFaint,
   },
-  devBtnText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: D.wine },
+  devBtnText: { fontSize: 14, fontFamily: 'Inter_600SemiBold' },
 
   // PT/EN lang toggle pill in bottom bar
   devLangPill: { flexDirection: 'row', borderRadius: 10, borderWidth: 1, padding: 2, gap: 1 },
@@ -790,9 +796,8 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: D.wine,
   },
-  completeBtnText: { fontSize: 14, fontFamily: 'Inter_500Medium', color: D.bg1 },
+  completeBtnText: { fontSize: 14, fontFamily: 'Inter_500Medium' },
 
   // Done state
   doneRow: {
@@ -807,8 +812,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(58,107,61,0.85)',
     alignItems: 'center', justifyContent: 'center',
   },
-  doneTitle: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: D.white },
-  doneSub:   { fontSize: 12, fontFamily: 'Inter_400Regular', color: D.whiteMid, marginTop: 2 },
+  doneTitle: { fontSize: 15, fontFamily: 'Inter_600SemiBold' },
+  doneSub:   { fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 2 },
 
   // Devotional modal sheet
   sheetBackdrop: {
@@ -858,10 +863,10 @@ const styles = StyleSheet.create({
   },
   sheetVerseRef: {
     fontSize: 10, fontFamily: 'Inter_700Bold',
-    letterSpacing: 1.4, color: D.wine, textTransform: 'uppercase',
+    letterSpacing: 1.4, textTransform: 'uppercase',
   },
   sheetVerseEn: {
     fontSize: 13, fontFamily: 'Lora_400Regular_Italic',
-    color: D.wine, lineHeight: 20, opacity: 0.85,
+    lineHeight: 20, opacity: 0.85,
   },
 });

@@ -1,89 +1,151 @@
-// ── Reading themes ────────────────────────────────────────────────────────────
-export type ReadingTheme = 'classic' | 'oxford' | 'scholar' | 'night' | 'notebook' | 'sepia';
-export type AccentColor  = 'royal-blue' | 'burgundy' | 'forest' | 'slate' | 'violet';
+// ── Reading atmospheres ─────────────────────────────────────────────────────────
+// A curated, non-photographic palette system. Each atmosphere fully defines the
+// app's surfaces (background/surface/card), typography contrast, dividers, a
+// curated secondary accent, and a selection tint. The user's chosen brand
+// AccentColor (below) always overrides the interactive "primary" color, so an
+// atmosphere never fights the user's accent — it only sets the mood around it.
+export type Atmosphere =
+  | 'parchment' | 'cozy' | 'classic' | 'dark' | 'night'
+  | 'library' | 'morning' | 'minimal' | 'sepia' | 'focus';
+export type AccentColor = 'royal-blue' | 'burgundy' | 'forest' | 'slate' | 'violet';
 
-interface ThemeBase {
-  background: string; card: string; foreground: string;
-  secondary: string; muted: string; mutedForeground: string;
-  border: string; accentForeground: string;
+interface AtmosphereBase {
+  background: string; surface: string; card: string; foreground: string;
+  mutedForeground: string; divider: string;
+  secondaryAccent: string; selection: string;
   portugueseText: string; isDark: boolean;
 }
 
-const THEMES: Record<ReadingTheme, ThemeBase> = {
-  // Exact match of web app "Parchment and Burgundy" light mode palette
+const ATMOSPHERES: Record<Atmosphere, AtmosphereBase> = {
+  // Warm ivory paper inspired by ancient manuscripts
+  parchment: {
+    background:      '#F6F1E4',
+    surface:         '#EFE7D2',
+    card:            '#FBF7EC',
+    foreground:      '#4A3D2C',
+    mutedForeground: '#8A7A5F',
+    divider:         '#E4D9BE',
+    secondaryAccent: '#B08D4F',
+    selection:       'rgba(139,94,52,0.16)',
+    portugueseText:  '#6B5636',
+    isDark: false,
+  },
+  // Warm beige, soft ambient tones — comfortable for long sessions
+  cozy: {
+    background:      '#F2E9DC',
+    surface:         '#E9DCC5',
+    card:            '#F8F1E4',
+    foreground:      '#4F4030',
+    mutedForeground: '#8F7D68',
+    divider:         '#DFD0B8',
+    secondaryAccent: '#C9A06A',
+    selection:       'rgba(166,105,59,0.15)',
+    portugueseText:  '#75603F',
+    isDark: false,
+  },
+  // Traditional Bible paper with subtle texture — the app's default
   classic: {
     background:      '#FAF8F4',
+    surface:         '#EEEBE6',
     card:            '#FEFDFB',
     foreground:      '#392E28',
-    secondary:       '#EEEBE6',
-    muted:           '#EEEBE6',
     mutedForeground: '#7E6F67',
-    border:          '#E7E2DA',
-    accentForeground:'#392E28',
+    divider:         '#E7E2DA',
+    secondaryAccent: '#9C7A4A',
+    selection:       'rgba(107,30,42,0.12)',
     portugueseText:  '#5C4A40',
     isDark: false,
   },
-  oxford: {
-    background:      '#FFFFFF',
-    card:            '#F7F7F7',
-    foreground:      '#111111',
-    secondary:       '#F0F0F0',
-    muted:           '#F3F3F3',
-    mutedForeground: '#777777',
-    border:          '#E5E5E5',
-    accentForeground:'#111111',
-    portugueseText:  '#4A3520',
-    isDark: false,
+  // Elegant dark mode — charcoal, deep burgundy and antique gold
+  dark: {
+    background:      '#171413',
+    surface:         '#211C1A',
+    card:            '#271F1D',
+    foreground:      '#EDE3D6',
+    mutedForeground: '#A79C8E',
+    divider:         '#372E2A',
+    secondaryAccent: '#C9A15A',
+    selection:       'rgba(201,161,90,0.18)',
+    portugueseText:  '#D8B98A',
+    isDark: true,
   },
-  scholar: {
-    background:      '#ECEAE6',
-    card:            '#F4F2EF',
-    foreground:      '#2A2A35',
-    secondary:       '#E4E2DE',
-    muted:           '#E4E2DE',
-    mutedForeground: '#7A7870',
-    border:          '#D8D6D0',
-    accentForeground:'#2A2A35',
-    portugueseText:  '#4A3520',
-    isDark: false,
-  },
-  // Exact match of web app dark mode palette
+  // Deep blue-black, optimized for reading at night
   night: {
-    background:      '#1C1E22',
-    card:            '#202327',
-    foreground:      '#E0D6D1',
-    secondary:       '#292C32',
-    muted:           '#292C32',
-    mutedForeground: '#A3968F',
-    border:          '#2E3138',
-    accentForeground:'#E0D6D1',
-    portugueseText:  '#C4B8B0',
+    background:      '#0C0F16',
+    surface:         '#141926',
+    card:            '#181E2B',
+    foreground:      '#DCE2EC',
+    mutedForeground: '#8791A3',
+    divider:         '#242B3B',
+    secondaryAccent: '#6E8FC4',
+    selection:       'rgba(110,143,196,0.16)',
+    portugueseText:  '#A9B6CC',
     isDark: true,
   },
-  notebook: {
-    background:      '#FEF9F0',
-    card:            '#FFFDF7',
-    foreground:      '#1A1A2E',
-    secondary:       '#F5EEE0',
-    muted:           '#F5EEE0',
-    mutedForeground: '#8A8070',
-    border:          '#E8E0D0',
-    accentForeground:'#1A1A2E',
-    portugueseText:  '#4A3520',
+  // Old wooden libraries — warm walnut tones and soft shadows
+  library: {
+    background:      '#241A12',
+    surface:         '#312417',
+    card:            '#3A2B1C',
+    foreground:      '#E8D9C2',
+    mutedForeground: '#A88F72',
+    divider:         '#4C3827',
+    secondaryAccent: '#B4813F',
+    selection:       'rgba(180,129,63,0.20)',
+    portugueseText:  '#CBA876',
+    isDark: true,
+  },
+  // Soft cream with warm natural light
+  morning: {
+    background:      '#FFF8EC',
+    surface:         '#FBEDD3',
+    card:            '#FFFCF5',
+    foreground:      '#4A3B28',
+    mutedForeground: '#9C8B6E',
+    divider:         '#F0DFBE',
+    secondaryAccent: '#E3B873',
+    selection:       'rgba(217,138,61,0.14)',
+    portugueseText:  '#7A6440',
     isDark: false,
   },
-  // Warm candlelight dark — a warmer alternative to night
+  // Pure off-white background with maximum whitespace
+  minimal: {
+    background:      '#FFFFFF',
+    surface:         '#FAFAFA',
+    card:            '#FFFFFF',
+    foreground:      '#1A1A1A',
+    mutedForeground: '#888888',
+    divider:         '#EDEDED',
+    secondaryAccent: '#8A8A8A',
+    selection:       'rgba(0,0,0,0.06)',
+    portugueseText:  '#4A4A4A',
+    isDark: false,
+  },
+  // Classic reading experience inspired by old books — golden aged-paper tone
   sepia: {
-    background:      '#1A1006',
-    card:            '#231608',
-    foreground:      '#EDD9A3',
-    secondary:       '#2B1C09',
-    muted:           '#2B1C09',
-    mutedForeground: '#9A7D4A',
-    border:          '#3A2810',
-    accentForeground:'#EDD9A3',
-    portugueseText:  '#C8A05A',
-    isDark: true,
+    background:      '#E8D9BC',
+    surface:         '#DECAA5',
+    card:            '#F0E2C4',
+    foreground:      '#3E2E1A',
+    mutedForeground: '#7A6142',
+    divider:         '#CBB48A',
+    secondaryAccent: '#A67B3D',
+    selection:       'rgba(122,74,34,0.18)',
+    portugueseText:  '#5C4322',
+    isDark: false,
+  },
+  // Low-contrast neutral gray — designed to reduce distractions
+  focus: {
+    background:      '#E9E9E9',
+    surface:         '#DFDFDF',
+    card:            '#EFEFEF',
+    foreground:      '#3A3A3A',
+    mutedForeground: '#7C7C7C',
+    divider:         '#D2D2D2',
+    secondaryAccent: '#8A8A8A',
+    selection:       'rgba(0,0,0,0.08)',
+    portugueseText:  '#5A5A5A',
+    isDark: false,
   },
 };
 
@@ -104,39 +166,46 @@ const ACCENTS: Record<AccentColor, AccentBase> = {
 };
 
 // ── Palette builder ───────────────────────────────────────────────────────────
-export function getColors(readingTheme: ReadingTheme, accentColor: AccentColor) {
-  const t = THEMES[readingTheme];
+export function getColors(atmosphere: Atmosphere, accentColor: AccentColor) {
+  const t = ATMOSPHERES[atmosphere];
   const a = ACCENTS[accentColor];
   const isDark = t.isDark;
   // The accent (verse numbers, active labels, icon tints) uses the primary brand
-  // color — dark version on dark themes so it stays legible.
+  // color — dark version on dark atmospheres so it stays legible. The brand
+  // accent always wins over the atmosphere's own tone (user preference).
   const accentTint = isDark ? a.englishTextDark : a.englishTextLight;
   return {
     isDark,
     // surfaces
     background:           t.background,
+    surface:               t.surface,
     card:                 t.card,
     foreground:           t.foreground,
     cardForeground:       t.foreground,
     text:                 t.foreground,
     tint:                 a.primary,
-    // brand (user-controlled)
+    // brand (user-controlled — overrides the atmosphere's own accent)
     primary:              a.primary,
     primaryForeground:    a.primaryForeground,
     // neutral
-    secondary:            t.secondary,
+    secondary:            t.surface,
     secondaryForeground:  t.foreground,
-    muted:                t.muted,
+    muted:                t.surface,
     mutedForeground:      t.mutedForeground,
     // accent — follows the selected primary brand color (no hardcoded gold)
     accent:               accentTint,
     accentForeground:     a.primaryForeground,
+    // atmosphere-curated secondary tone (badges, progress, decorative accents)
+    secondaryAccent:      t.secondaryAccent,
+    // selection / active-state tint, curated per atmosphere
+    selection:            t.selection,
     // state
     destructive:          isDark ? '#E53E3E' : '#D93025',
     destructiveForeground:'#FFFFFF' as const,
     // edges
-    border:               t.border,
-    input:                t.border,
+    border:               t.divider,
+    divider:              t.divider,
+    input:                t.divider,
     // reading
     englishText:          accentTint,
     portugueseText:       t.portugueseText,
@@ -156,24 +225,22 @@ const colors = {
 };
 export default colors;
 
-// ── Background templates ───────────────────────────────────────────────────────
-export type BackgroundTemplate =
-  | 'none' | 'golf' | 'soccer' | 'business' | 'sky' | 'forest' | 'sunset' | 'car';
+// ── Atmosphere metadata for previews (settings screen cards) ──────────────────
+// Small helper so the settings UI can render a palette-swatch preview card for
+// each atmosphere without duplicating the color data above.
+export const ATMOSPHERE_IDS: Atmosphere[] = [
+  'parchment', 'cozy', 'classic', 'dark', 'night',
+  'library', 'morning', 'minimal', 'sepia', 'focus',
+];
 
-export interface BackgroundTemplateData {
-  name:     string;
-  emoji:    string;
-  gradient: readonly [string, string, string];
-  isDark:   boolean;
+export function getAtmospherePreview(id: Atmosphere) {
+  const t = ATMOSPHERES[id];
+  return {
+    background: t.background,
+    surface:    t.surface,
+    card:       t.card,
+    foreground: t.foreground,
+    secondaryAccent: t.secondaryAccent,
+    isDark:     t.isDark,
+  };
 }
-
-export const BACKGROUND_TEMPLATES: Record<BackgroundTemplate, BackgroundTemplateData> = {
-  none:     { name: 'Padrão',   emoji: '📖', isDark: false, gradient: ['#FAF8F4', '#F5F2EC', '#EDE9E0'] },
-  golf:     { name: 'Golfe',    emoji: '⛳', isDark: false, gradient: ['#EEF6EC', '#DFF0D8', '#D0E9C6'] },
-  soccer:   { name: 'Soccer',   emoji: '⚽', isDark: true,  gradient: ['#1A3D14', '#255C1C', '#1A3D14'] },
-  business: { name: 'Business', emoji: '💼', isDark: true,  gradient: ['#0D1B2A', '#1B2D44', '#0A1825'] },
-  sky:      { name: 'Sky',      emoji: '☁️', isDark: false, gradient: ['#EBF6FE', '#D4EEFA', '#BFE4F6'] },
-  forest:   { name: 'Forest',   emoji: '🌲', isDark: true,  gradient: ['#1B2D1E', '#243D27', '#1A2B1C'] },
-  sunset:   { name: 'Sunset',   emoji: '🌅', isDark: false, gradient: ['#FFF5E8', '#FFE0B2', '#FFBB6B'] },
-  car:      { name: 'Drive',    emoji: '🚗', isDark: true,  gradient: ['#12121E', '#1A1A2E', '#101020'] },
-};

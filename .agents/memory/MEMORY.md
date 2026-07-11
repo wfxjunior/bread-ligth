@@ -1,4 +1,5 @@
-- [Theme system](theme-system.md) — ThemeContext (context/ThemeContext.tsx) owns dark/light/system override; useColors reads isDark from it, not raw useColorScheme.
+- [Theme system](theme-system.md) — ThemeContext owns `atmosphere` (10 palettes) + `accentColor` (independent overlay, always wins); isDark derived per-atmosphere.
+- [RN StyleSheet + dynamic colors](rn-stylesheet-dynamic-colors.md) — StyleSheet.create runs once at module load; theme colors baked into it freeze — split layout from color when a screen's palette becomes dynamic.
 - [i18n Language System](i18n-language-system.md) — PT/EN toggle via LanguageContext; use `t: tl` alias in settings.tsx to avoid conflict; app name is Bread&Light (JSX: `Bread{'&'}Light`); AsyncStorage keys stay `@bibliaeN:`.
 - [Daily verse utility](daily-verse.md) — Shared util (utils/dailyVerse.ts) for DST-safe rotation + todayKey(); both home and daily screens use AppState listener to refresh at midnight. Pool is 64 entries interleaved across 8 books (round-robin).
 - [Stripe donation integration](stripe-donations.md) — API route POST /api/donations/checkout-session; success/cancel URLs must use server-side env vars only (REPLIT_DEV_DOMAIN or PUBLIC_URL) — never request headers.
