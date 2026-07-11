@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   ActivityIndicator,
@@ -21,6 +21,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColors } from '@/hooks/useColors';
+import { useTheme } from '@/context/ThemeContext';
+import { getColors } from '@/constants/colors';
 import { useAudio } from '@/context/AudioContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useBible } from '@/context/BibleContext';
@@ -64,6 +66,25 @@ function buildPalette(colors: ReturnType<typeof useColors>) {
   };
 }
 
+// ── Local light/dark override for this screen ─────────────────────────────────
+// A minimalist toggle scoped to the Daily Devotional screen only — it does
+// NOT change the app-wide Reading Atmosphere (Settings). It reuses the same
+// palette system, just pinned to two fixed atmospheres ('classic' for light,
+// 'dark' for dark), while still respecting the user's chosen brand accent
+// color. Persisted separately so it doesn't drift if the global Atmosphere
+// changes later.
+const DAILY_MODE_KEY = '@bibliaeN:dailyReadingMode';
+type DailyMode = 'light' | 'dark';
+
+const DailyColorsContext = createContext<ReturnType<typeof useColors> | null>(null);
+
+function useDailyColors(): ReturnType<typeof useColors> {
+  const ctx = useContext(DailyColorsContext);
+  // Fallback keeps sub-components safe if ever rendered outside the provider.
+  const fallback = useColors();
+  return ctx ?? fallback;
+}
+
 // PT weekday / month labels
 const WEEKDAYS_PT = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 const MONTHS_PT   = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
@@ -76,7 +97,7 @@ function TappableVerse({ text, onWordPress }: {
   text: string;
   onWordPress: (word: string, ctx: string) => void;
 }) {
-  const colors = useColors();
+  const colors = useDailyColors();
   const D = buildPalette(colors);
   const words = text.split(/(\s+)/);
   return (
@@ -117,7 +138,7 @@ function DevotionalModal({
   textEn: string; loadingEn: boolean; errorEn: string; onRequestEnglish: () => void;
   lang: 'pt' | 'en'; onLangChange: (l: 'pt' | 'en') => void;
 }) {
-  const colors = useColors();
+  const colors = useDailyColors();
   const D = buildPalette(colors);
   const insets = useSafeAreaInsets();
   const audio = useAudio();
@@ -262,10 +283,31 @@ function DevotionalModal({
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function DailyScreen() {
   const insets  = useSafeAreaInsets();
-  const colors  = useColors();
-  const D = buildPalette(colors);
+  const { accentColor } = useTheme();
   const { lang } = useLanguage();
   const { vocabulary } = useBible();
+
+  // Local light/dark override — scoped to this screen only, fully
+  // independent of the app-wide Reading Atmosphere (Settings). Defaults to
+  // dark (this screen's original immersive look) until the user picks a
+  // mode here, then remembers that choice on its own.
+  const [dailyMode, setDailyMode] = useState<DailyMode>('dark');
+  useEffect(() => {
+    AsyncStorage.getItem(DAILY_MODE_KEY)
+      .then(v => { if (v === 'light' || v === 'dark') setDailyMode(v); })
+      .catch(() => {});
+  }, []);
+  const toggleDailyMode = useCallback(() => {
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    setDailyMode(prev => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      AsyncStorage.setItem(DAILY_MODE_KEY, next).catch(() => {});
+      return next;
+    });
+  }, []);
+
+  const colors = getColors(dailyMode === 'dark' ? 'dark' : 'classic', accentColor);
+  const D = buildPalette(colors);
 
   const [today, setToday] = useState(() => new Date());
   useEffect(() => {
@@ -453,8 +495,10 @@ export default function DailyScreen() {
   if (!verseObj) return null;
 
   return (
+    <DailyColorsContext.Provider value={colors}>
     <View style={styles.root}>
-      {/* Always-dark gradient — this is an immersive reading experience */}
+      {/* Gradient reflects this screen's own light/dark mode — independent
+          of the app-wide Reading Atmosphere in Settings. */}
       <LinearGradient colors={[D.bg1, D.bg2, D.bg3]} style={StyleSheet.absoluteFill} />
 
       {/* ── Header ── */}
@@ -475,9 +519,18 @@ export default function DailyScreen() {
           <Text style={[styles.dateText, { color: D.whiteMid }]}>{dateStr}</Text>
         </View>
 
-        <View style={styles.vocabBadge}>
-          <Text style={[styles.vocabCount, { color: D.white }]}>{vocabulary.length}</Text>
-          <Text style={[styles.vocabLabel, { color: D.whiteLow }]}>palavras</Text>
+        <View style={styles.headerRight}>
+          <TouchableOpacity
+            onPress={toggleDailyMode}
+            style={[styles.modeToggleBtn, { backgroundColor: D.whiteFaint, borderColor: D.border }]}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Feather name={dailyMode === 'dark' ? 'moon' : 'sun'} size={14} color={D.whiteMid} />
+          </TouchableOpacity>
+          <View style={styles.vocabBadge}>
+            <Text style={[styles.vocabCount, { color: D.white }]}>{vocabulary.length}</Text>
+            <Text style={[styles.vocabLabel, { color: D.whiteLow }]}>palavras</Text>
+          </View>
         </View>
       </View>
 
@@ -681,6 +734,7 @@ export default function DailyScreen() {
         onClose={() => setPracticeVisible(false)}
       />
     </View>
+    </DailyColorsContext.Provider>
   );
 }
 
@@ -709,6 +763,11 @@ const styles = StyleSheet.create({
   },
   modoBadgeText: { fontSize: 10, fontFamily: 'Inter_700Bold', letterSpacing: 1.2 },
   dateText:      { fontSize: 12, fontFamily: 'Inter_400Regular' },
+  headerRight:   { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 0 },
+  modeToggleBtn: {
+    width: 30, height: 30, borderRadius: 15, borderWidth: 1,
+    alignItems: 'center', justifyContent: 'center',
+  },
   vocabBadge:    { width: 48, alignItems: 'flex-end', flexShrink: 0 },
   vocabCount:    { fontSize: 17, fontFamily: 'Inter_700Bold', lineHeight: 20 },
   vocabLabel:    { fontSize: 10, fontFamily: 'Inter_400Regular' },
