@@ -97,13 +97,24 @@ router.get("/tts", async (req, res) => {
   }
 
   try {
-    const mp3 = await openai.audio.speech.create({
-      model: "tts-1",
-      voice: safeVoice,
-      input: text,
-    });
+    // The Replit AI Integrations OpenAI proxy does not support the raw
+    // POST /audio/speech endpoint (openai.audio.speech.create) — it 400s
+    // with "Endpoint not supported". TTS must instead go through chat
+    // completions with audio output modality (gpt-audio).
+    const response = (await openai.chat.completions.create({
+      model: "gpt-audio",
+      modalities: ["text", "audio"],
+      audio: { voice: safeVoice, format: "mp3" },
+      messages: [
+        { role: "system", content: "You are an assistant that performs text-to-speech. Read the given text aloud in a warm, clear, natural voice, verbatim, with no extra commentary." },
+        { role: "user", content: text },
+      ],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)) as unknown as { choices: Array<{ message?: { audio?: { data?: string } } }> };
 
-    const buffer = Buffer.from(await mp3.arrayBuffer());
+    const audioData = response.choices[0]?.message?.audio?.data ?? "";
+    const buffer = Buffer.from(audioData, "base64");
+    if (!buffer.length) throw new Error("No audio data returned from OpenAI");
     cacheSet(key, buffer);
     res.setHeader("Content-Type", "audio/mpeg");
     res.setHeader("Cache-Control", "public, max-age=86400");
