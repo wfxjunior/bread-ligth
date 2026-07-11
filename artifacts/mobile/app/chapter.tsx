@@ -706,6 +706,32 @@ export default function ChapterScreen() {
       {/* ── Docked continuous-playback player ── */}
       {verses.length > 0 && (
         <View style={[styles.dockedPlayerWrap, { bottom: bottomPad + 10 }]}>
+          {/* Audio language pills — right on the reading screen, so switching
+              from English to Portuguese (or back) never requires a trip to
+              Settings; the active language is always visible here too. */}
+          <View style={[styles.dockedLangRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            {(['en', 'pt'] as const).map(l => {
+              const active = audio.readingLanguage === l;
+              return (
+                <TouchableOpacity
+                  key={l}
+                  onPress={() => {
+                    if (Platform.OS !== 'web') Haptics.selectionAsync();
+                    audio.setReadingLanguage(l);
+                  }}
+                  activeOpacity={0.75}
+                  style={[
+                    styles.dockedLangPill,
+                    { borderColor: active ? colors.primary : 'transparent', backgroundColor: active ? colors.primary + '18' : 'transparent' },
+                  ]}
+                >
+                  <Text style={[styles.dockedLangPillText, { color: active ? colors.primary : colors.mutedForeground }]}>
+                    {l === 'en' ? 'EN' : 'PT'}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
           <AudioPlayer
             items={verses.map(v => ({ id: String(v.v), text: audio.readingLanguage === 'pt' ? v.pt : v.en }))}
             queueKey={chapterQueueKey}
@@ -1100,6 +1126,26 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.14,
     shadowRadius: 8,
     elevation: 5,
+  },
+  dockedLangRow: {
+    flexDirection:   'row',
+    alignSelf:       'flex-end',
+    borderWidth:     StyleSheet.hairlineWidth,
+    borderRadius:    999,
+    padding:         2,
+    gap:             2,
+    marginBottom:    6,
+  },
+  dockedLangPill: {
+    borderWidth:       1,
+    borderRadius:      999,
+    paddingVertical:   4,
+    paddingHorizontal: 10,
+  },
+  dockedLangPillText: {
+    fontSize:   11,
+    fontFamily: 'Inter_700Bold',
+    letterSpacing: 0.3,
   },
 
   versePopup: {

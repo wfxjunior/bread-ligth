@@ -116,14 +116,19 @@ function DailyPill() {
   const fSize   = SIZE_FONT[size];
   const lHeight = SIZE_LINE[size];
 
-  const dailyQueueKey = `daily-verse:${todayKey()}`;
-  const isAudioActive = audio.queueKey === dailyQueueKey;
+  // Audio must follow the user's chosen reading language (Settings › Áudio),
+  // same as every other player in the app — this pill used to always play
+  // English regardless of that setting, which read as "the audio is stuck
+  // in English" even when the user had picked Portuguese.
+  const verseAudioText = audio.readingLanguage === 'pt' ? verse.pt : verse.en;
+  const dailyQueueKey  = `daily-verse:${todayKey()}:${audio.readingLanguage}`;
+  const isAudioActive  = audio.queueKey === dailyQueueKey;
   const isAudioPlaying = isAudioActive && audio.isPlaying;
 
   const handlePlayToggle = () => {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
     if (isAudioActive) audio.togglePlayPause();
-    else audio.playQueue([{ id: 'verse', text: verse.en }], 0, dailyQueueKey);
+    else audio.playQueue([{ id: 'verse', text: verseAudioText }], 0, dailyQueueKey);
   };
 
   return (
@@ -165,7 +170,30 @@ function DailyPill() {
         {/* Inline player — appears while this verse's audio is the active source */}
         {isAudioActive && (
           <View style={styles.pillPlayerRow}>
-            <AudioPlayer items={[{ id: 'verse', text: verse.en }]} queueKey={dailyQueueKey} compact />
+            <View style={styles.pillLangRow}>
+              {(['en', 'pt'] as const).map(l => {
+                const active = audio.readingLanguage === l;
+                return (
+                  <TouchableOpacity
+                    key={l}
+                    onPress={() => {
+                      if (Platform.OS !== 'web') Haptics.selectionAsync();
+                      audio.setReadingLanguage(l);
+                    }}
+                    activeOpacity={0.75}
+                    style={[
+                      styles.pillLangPill,
+                      { borderColor: active ? colors.accent : colors.border, backgroundColor: active ? colors.accent + '18' : 'transparent' },
+                    ]}
+                  >
+                    <Text style={[styles.pillLangPillText, { color: active ? colors.accent : colors.mutedForeground }]}>
+                      {l === 'en' ? 'EN' : 'PT'}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            <AudioPlayer items={[{ id: 'verse', text: verseAudioText }]} queueKey={dailyQueueKey} compact />
           </View>
         )}
 
@@ -931,7 +959,10 @@ const styles = StyleSheet.create({
   pillHeartBtn:   { flexDirection: 'row', alignItems: 'center', gap: 5 },
   pillHeartCount: { fontSize: 12, fontFamily: 'Inter_500Medium' },
   pillPlayBtn:    { marginLeft: 4 },
-  pillPlayerRow:  { marginTop: 10, marginBottom: 2 },
+  pillPlayerRow:  { marginTop: 10, marginBottom: 2, gap: 6 },
+  pillLangRow:    { flexDirection: 'row', gap: 6, alignSelf: 'flex-start' },
+  pillLangPill:   { borderWidth: 1, borderRadius: 999, paddingVertical: 3, paddingHorizontal: 9 },
+  pillLangPillText: { fontSize: 10.5, fontFamily: 'Inter_700Bold', letterSpacing: 0.3 },
   pillTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
