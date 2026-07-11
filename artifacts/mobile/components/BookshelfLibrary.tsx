@@ -197,17 +197,34 @@ function LeatherBook({
             <Text style={styles.eraYear} numberOfLines={1}>— {ERA[meta.bookId] ?? ''} —</Text>
           </View>
 
-          {/* embossed roman numeral watermark + thematic glyph */}
+          {/* embossed roman numeral watermark + thematic glyph, lit like a
+              museum spotlight from directly above */}
           <View style={styles.numeralZone} pointerEvents="none">
+            <View style={[styles.spotlightOuter, { width: width * 0.85, height: width * 0.85, borderRadius: width * 0.425 }]} />
+            <View style={[styles.spotlightInner, { width: width * 0.55, height: width * 0.55, borderRadius: width * 0.275 }]} />
             <Text style={[styles.roman, { fontSize: height * 0.3 }]}>{meta.roman}</Text>
             {icon && (
               <MaterialCommunityIcons
                 name={icon}
-                size={height * 0.14}
-                color={GOLD_FAINT}
+                size={height * 0.22}
+                color="rgba(217,181,98,0.24)"
                 style={styles.themeIcon}
               />
             )}
+          </View>
+
+          {/* decorative bookmark glyph — every volume on the shelf gets one */}
+          <MaterialCommunityIcons
+            name="bookmark-outline"
+            size={14}
+            color={GOLD_SOFT}
+            style={styles.bookmarkGlyph}
+          />
+
+          {/* decorative ribbon-marker tab, colour-matched to the volume */}
+          <View style={styles.sideTabRow} pointerEvents="none">
+            <View style={[styles.sideTab, { backgroundColor: leather.base }]} />
+            <View style={[styles.sideTabPoint, { borderLeftColor: leather.base }]} />
           </View>
 
           {/* right spine edge */}
@@ -466,13 +483,50 @@ const styles = StyleSheet.create({
   roman: {
     fontFamily: 'Inter_700Bold',
     fontWeight: '700' as const,
-    color: 'rgba(255,255,255,0.10)',
+    color: 'rgba(255,244,222,0.16)',
     letterSpacing: -2,
+    textShadowColor: 'rgba(0,0,0,0.45)',
+    textShadowOffset: { width: 0, height: 1.5 },
+    textShadowRadius: 2,
   },
   themeIcon: {
     position: 'absolute',
-    right: '18%',
-    top: '38%',
+    right: '12%',
+    top: '42%',
+  },
+  spotlightOuter: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  spotlightInner: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  bookmarkGlyph: {
+    position: 'absolute',
+    top: 10, right: 9,
+    opacity: 0.65,
+  },
+  sideTabRow: {
+    position: 'absolute',
+    left: 0,
+    top: '32%',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sideTab: {
+    width: 12,
+    height: 24,
+    borderTopRightRadius: 2,
+    borderBottomRightRadius: 2,
+  },
+  sideTabPoint: {
+    width: 0, height: 0,
+    borderTopWidth: 8,
+    borderBottomWidth: 8,
+    borderLeftWidth: 6,
+    borderTopColor: 'transparent',
+    borderBottomColor: 'transparent',
   },
   spineEdge: {
     position: 'absolute',

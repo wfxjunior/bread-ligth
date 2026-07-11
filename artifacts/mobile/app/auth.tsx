@@ -1,8 +1,14 @@
 /**
  * Auth screen — optional, modal, minimalist.
  * Unlocks: cross-device sync (free) + premium features (separate).
+ *
+ * Visual concept: an old explorer's treasure map — cream parchment, sepia
+ * ink, a faint compass rose watermark, a dotted "trail" divider, a
+ * map-cartouche border with corner ticks, and a wax-seal mark on the
+ * primary action. Clean and light, not gloomy — the opposite mood of the
+ * dark leather bookshelf, on purpose.
  */
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -21,8 +27,15 @@ import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useLanguage } from '@/context/LanguageContext';
 
-// ── Background gradient colors ────────────────────────────────────────────────
-const BG: [string, string, string] = ['#0E0B07', '#1C1309', '#26180C'];
+// ── Parchment palette ───────────────────────────────────────────────────────
+const PARCHMENT: [string, string] = ['#F7EFDA', '#EEDDB2'];
+const INK        = '#4A3620';
+const INK_SOFT   = 'rgba(74,54,32,0.62)';
+const INK_FAINT  = 'rgba(74,54,32,0.36)';
+const LINE       = 'rgba(74,54,32,0.22)';
+const LINE_SOFT  = 'rgba(74,54,32,0.14)';
+const SEAL       = '#7A2E1D';
+const PAPER      = 'rgba(255,251,240,0.58)';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type FormMode = 'login' | 'register';
@@ -79,11 +92,35 @@ export default function AuthScreen() {
 
   return (
     <View style={styles.root}>
-      {/* ── Background ── */}
-      <LinearGradient colors={BG} style={StyleSheet.absoluteFill} />
+      {/* ── Parchment background ── */}
+      <LinearGradient colors={PARCHMENT} style={StyleSheet.absoluteFill} />
 
-      {/* ── Decorative warm glow ── */}
-      <View style={styles.glow} />
+      {/* aged vignette at the edges */}
+      <LinearGradient
+        colors={['rgba(74,54,32,0.16)', 'rgba(74,54,32,0)']}
+        style={[styles.vignette, { top: 0, height: 140 }]}
+        pointerEvents="none"
+      />
+      <LinearGradient
+        colors={['rgba(74,54,32,0)', 'rgba(74,54,32,0.14)']}
+        style={[styles.vignette, { bottom: 0, height: 160 }]}
+        pointerEvents="none"
+      />
+
+      {/* compass rose watermark */}
+      <MaterialCommunityIcons
+        name="compass-rose"
+        size={260}
+        color="rgba(74,54,32,0.05)"
+        style={styles.compassWatermark}
+        pointerEvents="none"
+      />
+
+      {/* map-cartouche border */}
+      <View style={styles.mapBorder} pointerEvents="none">
+        <CornerTick pos="tl" /><CornerTick pos="tr" />
+        <CornerTick pos="bl" /><CornerTick pos="br" />
+      </View>
 
       {/* ── Close ── */}
       <TouchableOpacity
@@ -93,7 +130,7 @@ export default function AuthScreen() {
         accessibilityLabel={lang === 'pt' ? 'Fechar' : 'Close'}
         accessibilityRole="button"
       >
-        <Feather name="x" size={20} color="rgba(255,255,255,0.40)" />
+        <Feather name="x" size={18} color={INK_SOFT} />
       </TouchableOpacity>
 
       <KeyboardAvoidingView
@@ -108,19 +145,23 @@ export default function AuthScreen() {
           bounces={false}
         >
           {/* ── Brand ── */}
-          <View style={[styles.brandArea, { paddingTop: insets.top + 64 }]}>
+          <View style={[styles.brandArea, { paddingTop: insets.top + 56 }]}>
+            <View style={styles.brandRow}>
+              <MaterialCommunityIcons name="compass-outline" size={22} color={INK_SOFT} />
+              <Text style={styles.eyebrow}>{lang === 'pt' ? 'SUA JORNADA PELAS ESCRITURAS' : 'YOUR JOURNEY THROUGH SCRIPTURE'}</Text>
+            </View>
             <Text style={styles.brandName}>Bread{'&'}Light</Text>
             <Text style={styles.tagline}>{t('auth_tagline')}</Text>
 
             {/* sync badge */}
             <View style={styles.syncBadge}>
-              <Feather name="zap" size={10} color="rgba(237,217,163,0.70)" />
+              <Feather name="feather" size={10} color={INK_SOFT} />
               <Text style={styles.syncText}>{t('auth_sync_badge')}</Text>
             </View>
           </View>
 
           {/* spacer between brand and card */}
-          <View style={{ flex: 1, minHeight: 40 }} />
+          <View style={{ flex: 1, minHeight: 32 }} />
 
         {/* ── Auth card ── */}
         <View style={[styles.card, { paddingBottom: insets.bottom + 32 }]}>
@@ -128,22 +169,22 @@ export default function AuthScreen() {
           {/* Social buttons */}
           <View style={styles.socialSection}>
             <SocialButton
-              icon={<MaterialCommunityIcons name="google" size={18} color="#fff" />}
+              icon={<MaterialCommunityIcons name="google" size={17} color={INK} />}
               label={t('auth_google')}
               onPress={handleGoogle}
             />
             <SocialButton
-              icon={<MaterialCommunityIcons name="apple" size={19} color="#fff" />}
+              icon={<MaterialCommunityIcons name="apple" size={19} color={INK} />}
               label={t('auth_apple')}
               onPress={handleApple}
             />
           </View>
 
-          {/* Divider */}
+          {/* Divider — dotted trail */}
           <View style={styles.dividerRow}>
-            <View style={styles.dividerLine} />
+            <DottedTrail />
             <Text style={styles.dividerText}>{t('auth_or')}</Text>
-            <View style={styles.dividerLine} />
+            <DottedTrail />
           </View>
 
           {/* Mode toggle */}
@@ -190,7 +231,7 @@ export default function AuthScreen() {
                   accessibilityLabel={showPw ? (lang === 'pt' ? 'Ocultar senha' : 'Hide password') : (lang === 'pt' ? 'Mostrar senha' : 'Show password')}
                   accessibilityRole="button"
                 >
-                  <Feather name={showPw ? 'eye-off' : 'eye'} size={15} color="rgba(255,255,255,0.32)" />
+                  <Feather name={showPw ? 'eye-off' : 'eye'} size={15} color={INK_FAINT} />
                 </TouchableOpacity>
               }
             />
@@ -208,18 +249,21 @@ export default function AuthScreen() {
             )}
           </View>
 
-          {/* Submit */}
+          {/* Submit — wax-seal style */}
           <TouchableOpacity
             onPress={handleSubmit}
             activeOpacity={0.85}
             style={styles.submitBtn}
           >
             {loading
-              ? <Feather name="loader" size={18} color="#fff" />
+              ? <Feather name="loader" size={18} color="#F6ECD6" />
               : <Text style={styles.submitText}>
                   {isLogin ? t('auth_login') : t('auth_register')}
                 </Text>
             }
+            <View style={styles.wax}>
+              <MaterialCommunityIcons name="fire" size={13} color="#F6ECD6" />
+            </View>
           </TouchableOpacity>
 
           {/* Forgot / toggle */}
@@ -234,7 +278,7 @@ export default function AuthScreen() {
           {/* Skip */}
           <TouchableOpacity onPress={handleSkip} style={styles.skipBtn} activeOpacity={0.7}>
             <Text style={styles.skipText}>{t('auth_skip')}</Text>
-            <Feather name="arrow-right" size={12} color="rgba(255,255,255,0.28)" />
+            <Feather name="arrow-right" size={12} color={INK_FAINT} />
           </TouchableOpacity>
         </View>
         </ScrollView>
@@ -263,51 +307,90 @@ function InputField({
 }) {
   return (
     <View style={styles.inputRow}>
-      <Feather name={icon as any} size={15} color="rgba(255,255,255,0.30)" style={styles.inputIcon} />
+      <Feather name={icon as any} size={15} color={INK_FAINT} style={styles.inputIcon} />
       <TextInput
         style={styles.input}
         placeholder={placeholder}
-        placeholderTextColor="rgba(255,255,255,0.30)"
+        placeholderTextColor={INK_FAINT}
         value={value}
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}
         autoCapitalize={autoCapitalize ?? 'none'}
         autoCorrect={false}
-        selectionColor="rgba(237,217,163,0.70)"
+        selectionColor={SEAL}
       />
       {rightEl}
     </View>
   );
 }
 
+function DottedTrail() {
+  const dots = Array.from({ length: 9 });
+  return (
+    <View style={styles.dottedTrail}>
+      {dots.map((_, i) => <View key={i} style={styles.trailDot} />)}
+    </View>
+  );
+}
+
+function CornerTick({ pos }: { pos: 'tl' | 'tr' | 'bl' | 'br' }) {
+  const top    = pos === 'tl' || pos === 'tr';
+  const left   = pos === 'tl' || pos === 'bl';
+  return (
+    <View style={[
+      styles.cornerTick,
+      top ? { top: 0 } : { bottom: 0 },
+      left ? { left: 0 } : { right: 0 },
+    ]}>
+      <View style={[styles.tickLine, styles.tickLineH, left ? { left: 0 } : { right: 0 }]} />
+      <View style={[styles.tickLine, styles.tickLineV, top ? { top: 0 } : { bottom: 0 }]} />
+    </View>
+  );
+}
+
 // ── Styles ────────────────────────────────────────────────────────────────────
-const CARD_RADIUS = 28;
+const CARD_RADIUS = 26;
 
 const styles = StyleSheet.create({
   root:   { flex: 1 },
   kav:    { flex: 1 },
   scroll: { flexGrow: 1, justifyContent: 'space-between' },
 
-  // Warm ambient glow behind brand text
-  glow: {
-    position:        'absolute',
-    top:             -80,
-    alignSelf:       'center',
-    width:           320,
-    height:          320,
-    borderRadius:    160,
-    backgroundColor: 'rgba(180,110,30,0.10)',
+  vignette: {
+    position: 'absolute',
+    left: 0, right: 0,
   },
+  compassWatermark: {
+    position: 'absolute',
+    top: -30,
+    right: -60,
+  },
+  mapBorder: {
+    position: 'absolute',
+    top: 14, left: 14, right: 14, bottom: 14,
+  },
+  cornerTick: {
+    position: 'absolute',
+    width: 22, height: 22,
+  },
+  tickLine: {
+    position: 'absolute',
+    backgroundColor: LINE,
+  },
+  tickLineH: { top: 0, width: 14, height: StyleSheet.hairlineWidth },
+  tickLineV: { left: 0, width: StyleSheet.hairlineWidth, height: 14 },
 
   closeBtn: {
     position: 'absolute',
     right:    20,
     zIndex:   10,
-    width:    36,
-    height:   36,
-    borderRadius:    18,
-    backgroundColor: 'rgba(255,255,255,0.07)',
+    width:    34,
+    height:   34,
+    borderRadius:    17,
+    backgroundColor: 'rgba(74,54,32,0.06)',
+    borderWidth:     StyleSheet.hairlineWidth,
+    borderColor:     LINE_SOFT,
     alignItems:      'center',
     justifyContent:  'center',
   },
@@ -317,16 +400,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     gap: 8,
   },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 2,
+  },
+  eyebrow: {
+    fontSize: 10,
+    fontFamily: 'Inter_600SemiBold',
+    color: INK_SOFT,
+    letterSpacing: 1.4,
+  },
   brandName: {
-    fontSize:    40,
+    fontSize:    42,
     fontFamily:  'Lora_700Bold',
-    color:       '#EDD9A3',
+    color:       INK,
     letterSpacing: -0.5,
   },
   tagline: {
     fontSize:    15,
     fontFamily:  'Inter_400Regular',
-    color:       'rgba(237,217,163,0.55)',
+    color:       INK_SOFT,
     lineHeight:  22,
   },
   syncBadge: {
@@ -338,19 +433,19 @@ const styles = StyleSheet.create({
   syncText: {
     fontSize:    11,
     fontFamily:  'Inter_500Medium',
-    color:       'rgba(237,217,163,0.45)',
+    color:       INK_FAINT,
     letterSpacing: 0.2,
   },
 
-  // ── Card (bottom sheet style) ─────────────────────────────────────────────
+  // ── Card (parchment panel) ────────────────────────────────────────────────
   card: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: PAPER,
     borderTopLeftRadius:  CARD_RADIUS,
     borderTopRightRadius: CARD_RADIUS,
     borderTopWidth:       StyleSheet.hairlineWidth,
     borderLeftWidth:      StyleSheet.hairlineWidth,
     borderRightWidth:     StyleSheet.hairlineWidth,
-    borderColor:          'rgba(255,255,255,0.09)',
+    borderColor:          LINE,
     paddingTop:           28,
     paddingHorizontal:    24,
     gap:                  16,
@@ -366,13 +461,13 @@ const styles = StyleSheet.create({
     height:          50,
     borderRadius:    12,
     borderWidth:     StyleSheet.hairlineWidth,
-    borderColor:     'rgba(255,255,255,0.15)',
-    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderColor:     LINE,
+    backgroundColor: 'rgba(255,255,255,0.45)',
   },
   socialText: {
     fontSize:    15,
     fontFamily:  'Inter_500Medium',
-    color:       'rgba(255,255,255,0.80)',
+    color:       INK,
     letterSpacing: 0.1,
   },
 
@@ -382,22 +477,27 @@ const styles = StyleSheet.create({
     alignItems:     'center',
     gap:            10,
   },
-  dividerLine: {
-    flex:            1,
-    height:          StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+  dottedTrail: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  trailDot: {
+    width: 3, height: 3, borderRadius: 1.5,
+    backgroundColor: LINE,
   },
   dividerText: {
-    fontSize:    12,
-    fontFamily:  'Inter_400Regular',
-    color:       'rgba(255,255,255,0.28)',
-    letterSpacing: 0.2,
+    fontSize:    11,
+    fontFamily:  'Inter_500Medium',
+    color:       INK_FAINT,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
   },
 
   // ── Mode toggle ───────────────────────────────────────────────────────────
   modeToggle: {
     flexDirection:   'row',
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(74,54,32,0.06)',
     borderRadius:    10,
     padding:         3,
   },
@@ -408,15 +508,15 @@ const styles = StyleSheet.create({
     borderRadius:    8,
   },
   modeTabActive: {
-    backgroundColor: 'rgba(255,255,255,0.11)',
+    backgroundColor: 'rgba(255,255,255,0.65)',
   },
   modeTabText: {
     fontSize:    13,
     fontFamily:  'Inter_500Medium',
-    color:       'rgba(255,255,255,0.35)',
+    color:       INK_FAINT,
   },
   modeTabTextActive: {
-    color:       'rgba(255,255,255,0.88)',
+    color:       INK,
     fontFamily:  'Inter_600SemiBold',
   },
 
@@ -424,8 +524,8 @@ const styles = StyleSheet.create({
   fields: {
     borderRadius:    12,
     borderWidth:     StyleSheet.hairlineWidth,
-    borderColor:     'rgba(255,255,255,0.12)',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderColor:     LINE,
+    backgroundColor: 'rgba(255,255,255,0.4)',
     overflow:        'hidden',
   },
   inputRow: {
@@ -440,28 +540,44 @@ const styles = StyleSheet.create({
     flex:        1,
     fontSize:    15,
     fontFamily:  'Inter_400Regular',
-    color:       'rgba(255,255,255,0.85)',
+    color:       INK,
     height:      50,
   },
   fieldDivider: {
     height:          StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255,255,255,0.09)',
+    backgroundColor: LINE_SOFT,
     marginHorizontal: 14,
   },
 
-  // ── Submit ────────────────────────────────────────────────────────────────
+  // ── Submit (wax seal) ─────────────────────────────────────────────────────
   submitBtn: {
-    height:          50,
+    height:          52,
     borderRadius:    12,
-    backgroundColor: '#7C4A1E',
+    backgroundColor: SEAL,
     alignItems:      'center',
     justifyContent:  'center',
+    flexDirection:   'row',
   },
   submitText: {
     fontSize:    16,
     fontFamily:  'Inter_600SemiBold',
-    color:       '#EDD9A3',
+    color:       '#F6ECD6',
     letterSpacing: 0.2,
+  },
+  wax: {
+    position: 'absolute',
+    right: -6, top: -6,
+    width: 26, height: 26,
+    borderRadius: 13,
+    backgroundColor: '#5C2115',
+    borderWidth: 1.5,
+    borderColor: '#F6ECD6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
   },
 
   // ── Secondary ─────────────────────────────────────────────────────────────
@@ -473,7 +589,7 @@ const styles = StyleSheet.create({
   secondaryLink: {
     fontSize:    13,
     fontFamily:  'Inter_400Regular',
-    color:       'rgba(255,255,255,0.30)',
+    color:       INK_FAINT,
   },
 
   // ── Skip ──────────────────────────────────────────────────────────────────
@@ -487,6 +603,6 @@ const styles = StyleSheet.create({
   skipText: {
     fontSize:    13,
     fontFamily:  'Inter_400Regular',
-    color:       'rgba(255,255,255,0.28)',
+    color:       INK_FAINT,
   },
 });

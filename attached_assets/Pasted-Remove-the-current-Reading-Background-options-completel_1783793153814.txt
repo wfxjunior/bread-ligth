@@ -1,0 +1,91 @@
+Remove the current Reading Background options completely.
+
+Delete all hobby-based themes such as:
+
+- Golf
+- Soccer
+- Cars
+- Sports
+- Any image-based lifestyle themes
+
+These do not match the BreadLight identity.
+
+Replace them with a new premium system called:
+
+Reading Atmospheres
+
+The purpose is to create different reading moods while maintaining a calm, elegant, distraction-free study experience.
+
+Create the following atmospheres:
+
+• Parchment
+Warm ivory paper inspired by ancient manuscripts.
+
+• Cozy
+Warm beige with soft ambient tones, comfortable for long reading sessions.
+
+• Classic
+Traditional Bible paper with subtle texture.
+
+• Dark
+Elegant dark mode using charcoal, deep burgundy and antique gold.
+
+• Night
+Deep blue-black background optimized for reading at night.
+
+• Library
+Inspired by old wooden libraries with warm walnut tones and soft shadows.
+
+• Morning
+Soft cream with warm natural light.
+
+• Minimal
+Pure off-white background with maximum whitespace.
+
+• Sepia
+Classic reading experience inspired by old books.
+
+• Focus
+Low contrast neutral gray designed to reduce distractions.
+
+Each atmosphere must update:
+
+- Bible Reader
+- Study Workspace
+- Daily Devotional
+- Notes
+- Vocabulary
+- Search
+
+using a consistent design system.
+
+Do NOT use photographs.
+
+Do NOT use hobby images.
+
+Do NOT use illustrations.
+
+Use only elegant color palettes, subtle gradients, paper textures, and premium materials.
+
+Each atmosphere should include:
+
+- Background color
+- Surface color
+- Card color
+- Primary accent
+- Secondary accent
+- Divider color
+- Typography contrast
+- Selection color
+
+Switching between atmospheres should animate smoothly with a soft fade.
+
+The transition should feel similar to Apple Books.
+
+Keep everything minimal, premium, warm and timeless.
+
+The settings screen should now display beautiful preview cards for each atmosphere instead of image thumbnails.
+
+Each preview should simply show its color palette and material style.
+
+The entire experience should communicate calm, focus and premium craftsmanship.
