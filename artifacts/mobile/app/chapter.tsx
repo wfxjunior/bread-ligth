@@ -224,6 +224,56 @@ export default function ChapterScreen() {
     );
   }, [verses, audio, chapterQueueKey, isChapterAudioActive, activeVerseNum]);
 
+  // ── Continuous listening: once the reader has pressed play, keep reading
+  // into the next chapter (and next book, at a book's end) automatically.
+  // Never starts playback on its own — only continues audio already begun
+  // by the user on this screen.
+  const pendingChapterAutoplayRef = useRef(false);
+
+  const advanceToNextChapterAndKeepPlaying = useCallback(() => {
+    const nextIdx = chapterIdx + 1;
+    if (nextIdx < chapterKeys.length) {
+      pendingChapterAutoplayRef.current = true;
+      setCurrentChapter(chapterKeys[nextIdx]);
+      listRef.current?.scrollToOffset({ offset: 0, animated: false });
+      return;
+    }
+    // End of book — continue into the first chapter of the next book, if any.
+    const bookIdx = ALL_BOOKS.findIndex(b => b.id === currentBookId);
+    const nextBook = bookIdx >= 0 ? ALL_BOOKS[bookIdx + 1] : undefined;
+    if (!nextBook) return; // reached the end of the Bible — just stop
+    const nextFirstChapter = Object.keys(nextBook.chapters).map(Number).sort((a, b) => a - b)[0] ?? 1;
+    pendingChapterAutoplayRef.current = true;
+    setCurrentBookId(nextBook.id);
+    setCurrentChapter(nextFirstChapter);
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+  }, [chapterIdx, chapterKeys, currentBookId]);
+
+  // Detect the chapter's queue finishing naturally (not a manual pause/stop)
+  // and trigger the advance above.
+  useEffect(() => {
+    if (
+      audio.queueKey === chapterQueueKey &&
+      audio.status === 'idle' &&
+      audio.queue.length > 0 &&
+      audio.currentIndex === audio.queue.length - 1
+    ) {
+      advanceToNextChapterAndKeepPlaying();
+    }
+  }, [audio.status, audio.queueKey, audio.currentIndex, audio.queue.length, chapterQueueKey, advanceToNextChapterAndKeepPlaying]);
+
+  // Once the new chapter's verses are ready, start playing them from the top.
+  useEffect(() => {
+    if (pendingChapterAutoplayRef.current && verses.length > 0) {
+      pendingChapterAutoplayRef.current = false;
+      audio.playQueue(
+        verses.map(vr => ({ id: String(vr.v), text: audio.readingLanguage === 'pt' ? vr.pt : vr.en })),
+        0,
+        chapterQueueKey,
+      );
+    }
+  }, [verses, chapterQueueKey, audio]);
+
   // Auto-scroll to the verse currently being read aloud
   useEffect(() => {
     if (activeVerseNum == null) return;

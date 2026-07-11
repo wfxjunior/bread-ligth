@@ -16,3 +16,10 @@ A single global `AudioProvider` (context/AudioContext.tsx) is the only thing tha
 **Why:** `.runOnJS(true)` keeps the callback on the JS thread for simplicity, but the resulting style updates are still applied via Reanimated's `useAnimatedStyle`, which only reacts to shared values — not plain refs/state captured by closure.
 
 **How to apply:** Any new gesture-driven slider/draggable UI in this app should track its container size in a shared value, not a ref, before wiring pan gesture math to it.
+
+## Pausing while a track is still loading needs a durable "desired state" flag, not a per-call reset
+`Audio.Sound.createAsync` is called with `shouldPlay: true`, so it starts playing the moment it resolves — a `pause()` tapped while that fetch/load is still in flight has nothing to act on yet and gets silently overridden when load finishes. A `pausePendingRef` flag (checked right after `createAsync` resolves, and consulted inside `setOnPlaybackStatusUpdate`) fixes the single-track case.
+
+**Why:** The harder case is auto-advance: internal `advance()`→`loadAndPlay(nextIndex)` calls (queue moving to the next item on natural completion) must NOT reset this flag, or a pause tapped a moment earlier — one that raced a very short/fast-finishing track's natural end — gets silently dropped and playback continues into the next item anyway. Only *explicit* user "play" entry points (`playQueue`, `resume`, `next`, `previous`, `togglePlayPause`'s idle branch) should reset the flag; internal continuation must inherit it.
+
+**How to apply:** Any queue-advancing playback engine needs this distinction — reset "should be playing" intent only on user-initiated play actions, never on internal continuation between queue items — or pause becomes flaky specifically on short/fast content.

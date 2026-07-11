@@ -104,6 +104,10 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const voiceRef          = useRef<AudioVoice>(DEFAULT_VOICE);
   const generationRef     = useRef(0);
   const rateSaveTimer      = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Tracks a pause requested while the current item's audio is still being
+  // fetched/loaded (status 'loading') — createAsync's shouldPlay:true would
+  // otherwise start playback regardless of the pause tap that raced it.
+  const pausePendingRef    = useRef(false);
 
   useEffect(() => { queueRef.current = queue; }, [queue]);
   useEffect(() => { indexRef.current = currentIndex; }, [currentIndex]);
@@ -155,6 +159,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
   const stop = useCallback(async () => {
     generationRef.current++;
+    pausePendingRef.current = false;
     Speech.stop();
     await cleanupSound();
     setStatus('idle');
@@ -185,6 +190,12 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
     generationRef.current++;
     const gen = generationRef.current;
+    // Note: pausePendingRef is intentionally NOT reset here. Internal calls
+    // from `advance()` (moving to the next queue item after one finishes)
+    // must preserve a pause the user requested moments earlier — otherwise
+    // a pause tap that races a fast/short track's natural completion would
+    // get silently dropped. Explicit "play" entry points (playQueue, resume,
+    // next, previous, and togglePlayPause's idle branch) reset it instead.
     await cleanupSound();
     Speech.stop();
     setCurrentIndex(index);
@@ -226,6 +237,12 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         }
         setUsingFallback(false);
         soundRef.current = sound;
+        if (pausePendingRef.current) {
+          // A pause was requested while this track was still loading —
+          // createAsync's shouldPlay:true already started it, so stop it now.
+          await sound.pauseAsync().catch(() => {});
+          setStatus('paused');
+        }
         sound.setOnPlaybackStatusUpdate(st => {
           if (!st.isLoaded || generationRef.current !== gen) return;
           setPosition(st.positionMillis ?? 0);
@@ -233,7 +250,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
           if (st.didJustFinish) {
             setStatus('idle');
             advance();
-          } else {
+          } else if (!pausePendingRef.current) {
             setStatus(st.isPlaying ? 'playing' : 'paused');
           }
         });
@@ -249,6 +266,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const playQueue = useCallback((items: AudioQueueItem[], startIndex = 0, key?: string) => {
     if (!items.length) return;
     if (Platform.OS !== 'web') Haptics.selectionAsync();
+    pausePendingRef.current = false;
     queueRef.current = items;
     setQueue(items);
     setQueueKey(key ?? null);
@@ -260,6 +278,9 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   }, [playQueue]);
 
   const pause = useCallback(async () => {
+    // Covers the still-loading case too: the in-flight createAsync call
+    // will check this flag and pause itself the moment it resolves.
+    pausePendingRef.current = true;
     if (usingFallback) {
       // expo-speech pause support varies by platform; degrade gracefully.
       if (typeof Speech.pause === 'function') Speech.pause();
@@ -271,6 +292,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   }, [usingFallback]);
 
   const resume = useCallback(async () => {
+    pausePendingRef.current = false;
     if (usingFallback) {
       if (typeof Speech.resume === 'function') Speech.resume();
       setStatus('playing');
@@ -281,18 +303,25 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   }, [usingFallback]);
 
   const togglePlayPause = useCallback(() => {
-    if (status === 'playing') pause();
+    if (status === 'playing' || status === 'loading') pause();
     else if (status === 'paused') resume();
-    else if (currentIndex >= 0) loadAndPlay(currentIndex);
+    else if (currentIndex >= 0) {
+      pausePendingRef.current = false;
+      loadAndPlay(currentIndex);
+    }
   }, [status, pause, resume, currentIndex, loadAndPlay]);
 
   const next = useCallback(() => {
     const nextIdx = indexRef.current + 1;
-    if (nextIdx < queueRef.current.length) loadAndPlay(nextIdx);
+    if (nextIdx < queueRef.current.length) {
+      pausePendingRef.current = false;
+      loadAndPlay(nextIdx);
+    }
   }, [loadAndPlay]);
 
   const previous = useCallback(() => {
     const prevIdx = indexRef.current - 1;
+    pausePendingRef.current = false;
     loadAndPlay(prevIdx >= 0 ? prevIdx : indexRef.current);
   }, [loadAndPlay]);
 
