@@ -32,6 +32,7 @@ const NAV_SECTIONS: NavSection[] = [
   { key: 'language',   icon: 'globe',     labelKey: 'drawer_nav_language'   },
   { key: 'appearance', icon: 'sun',       labelKey: 'drawer_nav_appearance' },
   { key: 'learning',   icon: 'book-open', labelKey: 'drawer_nav_learning'   },
+  { key: 'audio',      icon: 'volume-2',  labelKey: 'drawer_nav_audio'      },
   { key: 'share',      icon: 'share-2',   labelKey: 'drawer_nav_share'      },
   { key: 'support',    icon: 'heart',     labelKey: 'drawer_nav_support'    },
   { key: 'data',       icon: 'database',  labelKey: 'drawer_nav_data'       },

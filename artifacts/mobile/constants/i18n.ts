@@ -98,6 +98,16 @@ const strings = {
   vocab_reminder:    { pt: 'Lembrete de vocabulário',    en: 'Vocabulary Reminder'   },
   vocab_rem_sub:     { pt: 'Revisar palavras diariamente', en: 'Review words daily'  },
 
+  // ── Audio / voice
+  audio_voice:       { pt: 'Voz de Leitura',             en: 'Reading Voice'         },
+  audio_voice_sub:   { pt: 'Escolha a voz usada para ler versículos e devocionais', en: 'Choose the voice used to read verses and devotionals' },
+  voice_alloy:       { pt: 'Alloy',   en: 'Alloy'   },
+  voice_echo:        { pt: 'Echo',    en: 'Echo'    },
+  voice_fable:       { pt: 'Fable',   en: 'Fable'   },
+  voice_onyx:        { pt: 'Onyx',    en: 'Onyx'    },
+  voice_nova:        { pt: 'Nova',    en: 'Nova'    },
+  voice_shimmer:     { pt: 'Shimmer', en: 'Shimmer' },
+
   // ── Level names
   level_beginner:    { pt: 'Iniciante',     en: 'Beginner'     },
   level_inter:       { pt: 'Intermediário', en: 'Intermediate' },

@@ -28,6 +28,8 @@ import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useBible } from '@/context/BibleContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useAudio, AUDIO_VOICES } from '@/context/AudioContext';
+import type { AudioVoice } from '@/context/AudioContext';
 import { ATMOSPHERE_IDS, getAtmospherePreview } from '@/constants/colors';
 import type { Atmosphere, AccentColor } from '@/constants/colors';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -541,6 +543,50 @@ function LevelPillSelector({ value, onChange }: { value: LevelKey; onChange: (v:
   );
 }
 
+// ── Voice pill selector (TTS voice for verses/devotionals) ─────────────────────
+function VoicePillSelector({ value, onChange }: { value: AudioVoice; onChange: (v: AudioVoice) => void }) {
+  const colors = useColors();
+  const { t }  = useLanguage();
+
+  const voiceKeys: Record<AudioVoice, string> = {
+    alloy: 'voice_alloy', echo: 'voice_echo', fable: 'voice_fable',
+    onyx: 'voice_onyx', nova: 'voice_nova', shimmer: 'voice_shimmer',
+  };
+
+  return (
+    <View style={[styles.pillRow, { flexWrap: 'wrap', rowGap: 8 }]}>
+      {AUDIO_VOICES.map(v => {
+        const active = value === v;
+        return (
+          <TouchableOpacity
+            key={v}
+            onPress={() => {
+              if (Platform.OS !== 'web') Haptics.selectionAsync();
+              onChange(v);
+            }}
+            style={[
+              styles.pill,
+              {
+                backgroundColor: active ? colors.primary : colors.background,
+                borderColor:     active ? colors.primary : colors.border,
+                borderRadius:    colors.radius / 2,
+                minWidth: '30%',
+              },
+            ]}
+          >
+            <Text style={[styles.pillText, {
+              color:      active ? colors.primaryForeground : colors.foreground,
+              fontFamily: active ? 'Inter_600SemiBold' : 'Inter_400Regular',
+            }]} numberOfLines={1} adjustsFontSizeToFit>
+              {t(voiceKeys[v] as any)}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
+
 // ── Main screen ───────────────────────────────────────────────────────────────
 // ── Issue types ───────────────────────────────────────────────────────────────
 const ISSUE_TYPES: { icon: string; label: string }[] = [
@@ -735,6 +781,7 @@ export default function SettingsScreen() {
 
   const { atmosphere, setAtmosphere, accentColor, setAccentColor } = useTheme();
   const { lang, setLang, t: tl } = useLanguage();
+  const audio = useAudio();
 
   // ── Scroll-to-section ───────────────────────────────────────────────────────
   const scrollRef      = useRef<ScrollView>(null);
@@ -1072,6 +1119,20 @@ export default function SettingsScreen() {
           <ToggleRow icon="type"  label={tl('ipa')}            sub={tl('ipa_sub')}          value={showIPA}     onChange={setShowIPA} />
           <ToggleRow icon="globe" label={tl('auto_translate')} sub={tl('auto_tr_sub')}      value={autoTr}      onChange={setAutoTr} />
           <ToggleRow icon="bell"  label={tl('vocab_reminder')} sub={tl('vocab_rem_sub')}    value={vocabRemind} onChange={setVocabRemind} border={false} />
+        </SettingsCard>
+
+        {/* ── Áudio ── */}
+        <SectionLabel
+          title={tl('section_audio')}
+          onLayout={e => { sectionOffsets.current['audio'] = e.nativeEvent.layout.y; }}
+        />
+        <SettingsCard>
+          <View style={styles.innerSection}>
+            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>{tl('audio_voice')}</Text>
+            <Text style={[styles.innerSubLabel, { color: colors.mutedForeground }]}>{tl('audio_voice_sub')}</Text>
+            <View style={{ height: 10 }} />
+            <VoicePillSelector value={audio.voice} onChange={audio.setVoice} />
+          </View>
         </SettingsCard>
 
         {/* ── Compartilhar ── */}

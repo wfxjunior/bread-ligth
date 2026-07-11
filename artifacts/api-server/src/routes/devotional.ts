@@ -70,8 +70,8 @@ router.get("/devotional", async (req, res) => {
   const reference = [book, chapter, verse].filter(Boolean).join(" ");
 
   const systemPrompt = lang === "en"
-    ? "You are a warm, encouraging evangelical pastor. Write short, practical morning devotionals in clear, accessible American English. Be direct, avoid religious jargon, and keep it under 120 words."
-    : "Você é um pastor evangélico gentil e encorajador. Escreva reflexões devocionais curtas, calorosas e práticas em português brasileiro. Seja direto, use linguagem acessível, evite jargão religioso excessivo. Nunca ultrapasse 120 palavras.";
+    ? "You are a warm, encouraging evangelical pastor. Write short, practical morning devotionals in clear, accessible American English. Be direct, avoid religious jargon, and keep it under 120 words. Output plain prose only — no markdown formatting (no asterisks, underscores, headings, or bullet lists) and no restating the Bible verse itself, since it is already shown separately."
+    : "Você é um pastor evangélico gentil e encorajador. Escreva reflexões devocionais curtas, calorosas e práticas em português brasileiro. Seja direto, use linguagem acessível, evite jargão religioso excessivo. Nunca ultrapasse 120 palavras. Escreva apenas em prosa simples — sem formatação markdown (sem asteriscos, sublinhados, títulos ou listas) e sem repetir o versículo bíblico, pois ele já é exibido separadamente.";
 
   const userPrompt = lang === "en"
     ? `Write a morning devotional reflection for ${reference}:\n\n"${en}"\n\nThe reflection should: (1) highlight the central truth of the verse, (2) offer a practical application for today, (3) close with a brief prayer or encouragement. Max 120 words.`

@@ -8,14 +8,29 @@ import * as Haptics from 'expo-haptics';
 const _domain  = process.env.EXPO_PUBLIC_DOMAIN;
 const TTS_BASE = _domain ? `https://${_domain}/api/tts` : null;
 
-const RATE_KEY = '@bibliaeN:audioRate';
+const RATE_KEY  = '@bibliaeN:audioRate';
+const VOICE_KEY = '@bibliaeN:audioVoice';
 export const MIN_RATE = 0.5;
 export const MAX_RATE = 2.0;
 export const DEFAULT_RATE = 1.0;
 
+export type AudioVoice = 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';
+export const AUDIO_VOICES: AudioVoice[] = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
+export const DEFAULT_VOICE: AudioVoice = 'nova';
+
 export interface AudioQueueItem {
   id: string;
   text: string;
+}
+
+// Strips markdown/formatting artifacts a devotional or verse string might
+// carry (bold/italic markers, headings, stray asterisks) so text-to-speech
+// only ever reads spoken words — never punctuation meant for visual styling.
+function sanitizeForSpeech(text: string): string {
+  return text
+    .replace(/[*_`#]+/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 }
 
 export type PlaybackStatus = 'idle' | 'loading' | 'playing' | 'paused';
@@ -35,6 +50,7 @@ interface AudioContextValue {
   hasNext: boolean;
   hasPrevious: boolean;
   usingFallback: boolean;
+  voice: AudioVoice;
   playQueue: (items: AudioQueueItem[], startIndex?: number, queueKey?: string) => void;
   playSingle: (text: string, id?: string) => void;
   togglePlayPause: () => void;
@@ -45,6 +61,7 @@ interface AudioContextValue {
   previous: () => void;
   seekToRatio: (ratio: number) => void;
   setRate: (rate: number) => void;
+  setVoice: (voice: AudioVoice) => void;
 }
 
 const AudioCtx = createContext<AudioContextValue | null>(null);
@@ -67,18 +84,21 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [position, setPosition]       = useState(0);
   const [duration, setDuration]       = useState(0);
   const [rate, setRateState]          = useState(DEFAULT_RATE);
+  const [voice, setVoiceState]        = useState<AudioVoice>(DEFAULT_VOICE);
   const [usingFallback, setUsingFallback] = useState(false);
 
   const soundRef      = useRef<Audio.Sound | null>(null);
   const queueRef       = useRef<AudioQueueItem[]>([]);
   const indexRef        = useRef(-1);
   const rateRef          = useRef(DEFAULT_RATE);
+  const voiceRef          = useRef<AudioVoice>(DEFAULT_VOICE);
   const generationRef     = useRef(0);
   const rateSaveTimer      = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { queueRef.current = queue; }, [queue]);
   useEffect(() => { indexRef.current = currentIndex; }, [currentIndex]);
   useEffect(() => { rateRef.current = rate; }, [rate]);
+  useEffect(() => { voiceRef.current = voice; }, [voice]);
 
   useEffect(() => {
     AsyncStorage.getItem(RATE_KEY)
@@ -86,6 +106,10 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         const n = v ? parseFloat(v) : NaN;
         if (!isNaN(n) && n >= MIN_RATE && n <= MAX_RATE) setRateState(n);
       })
+      .catch(() => {});
+
+    AsyncStorage.getItem(VOICE_KEY)
+      .then(v => { if (v && (AUDIO_VOICES as string[]).includes(v)) setVoiceState(v as AudioVoice); })
       .catch(() => {});
 
     Audio.setAudioModeAsync({
@@ -130,7 +154,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     setUsingFallback(true);
     setStatus('playing');
     const spokenRate = Math.max(0.1, Math.min(2.0, 0.85 * rateRef.current));
-    Speech.speak(item.text, {
+    Speech.speak(sanitizeForSpeech(item.text), {
       language: 'en-US',
       rate: spokenRate,
       pitch: 1.0,
@@ -166,7 +190,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
     if (TTS_BASE) {
       try {
-        const uri = `${TTS_BASE}?text=${encodeURIComponent(item.text)}&voice=nova`;
+        const cleanText = sanitizeForSpeech(item.text);
+        const uri = `${TTS_BASE}?text=${encodeURIComponent(cleanText)}&voice=${voiceRef.current}`;
         const { sound } = await Audio.Sound.createAsync(
           { uri },
           { shouldPlay: true, rate: rateRef.current, shouldCorrectPitch: true, progressUpdateIntervalMillis: 150 },
@@ -266,6 +291,12 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }, 400);
   }, [usingFallback]);
 
+  const setVoice = useCallback((v: AudioVoice) => {
+    setVoiceState(v);
+    voiceRef.current = v;
+    AsyncStorage.setItem(VOICE_KEY, v).catch(() => {});
+  }, []);
+
   const currentItem = currentIndex >= 0 ? queue[currentIndex] ?? null : null;
 
   const value: AudioContextValue = {
@@ -274,11 +305,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     isPlaying: status === 'playing',
     isPaused:  status === 'paused',
     isLoading: status === 'loading',
-    position, duration, rate,
+    position, duration, rate, voice,
     hasNext:     currentIndex >= 0 && currentIndex < queue.length - 1,
     hasPrevious: currentIndex > 0,
     usingFallback,
-    playQueue, playSingle, togglePlayPause, pause, resume, stop, next, previous, seekToRatio, setRate,
+    playQueue, playSingle, togglePlayPause, pause, resume, stop, next, previous, seekToRatio, setRate, setVoice,
   };
 
   return <AudioCtx.Provider value={value}>{children}</AudioCtx.Provider>;
