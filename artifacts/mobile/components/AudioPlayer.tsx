@@ -77,7 +77,7 @@ export default function AudioPlayer({ items, queueKey, startIndex = 0, title, co
             style={[styles.sideBtn, !hasPrev && styles.disabled]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Feather name="skip-back" size={17} color={p.foreground} />
+            <Feather name="skip-back" size={15} color={p.foreground} />
           </TouchableOpacity>
         )}
 
@@ -91,7 +91,7 @@ export default function AudioPlayer({ items, queueKey, startIndex = 0, title, co
           ) : (
             <Feather
               name={isActive && status === 'playing' ? 'pause' : 'play'}
-              size={compact ? 15 : 19}
+              size={compact ? 13 : 16}
               color={p.primaryForeground}
               style={!(isActive && status === 'playing') ? { marginLeft: 2 } : undefined}
             />
@@ -105,7 +105,7 @@ export default function AudioPlayer({ items, queueKey, startIndex = 0, title, co
             style={[styles.sideBtn, !hasNext && styles.disabled]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Feather name="skip-forward" size={17} color={p.foreground} />
+            <Feather name="skip-forward" size={15} color={p.foreground} />
           </TouchableOpacity>
         )}
 
@@ -120,7 +120,7 @@ export default function AudioPlayer({ items, queueKey, startIndex = 0, title, co
             fillColor={p.accent}
             thumbColor={p.accent}
             height={3}
-            thumbSize={compact ? 10 : 12}
+            thumbSize={compact ? 9 : 10}
             disabled={!isActive || audio.usingFallback}
           />
         </View>
@@ -128,7 +128,7 @@ export default function AudioPlayer({ items, queueKey, startIndex = 0, title, co
 
       {!compact && (
         <View style={styles.speedRow}>
-          <Feather name="fast-forward" size={11} color={p.mutedForeground} />
+          <Feather name="fast-forward" size={10} color={p.mutedForeground} />
           <View style={styles.speedSlider}>
             <GestureSlider
               value={(audio.rate - MIN_RATE) / (MAX_RATE - MIN_RATE)}
@@ -138,7 +138,7 @@ export default function AudioPlayer({ items, queueKey, startIndex = 0, title, co
               fillColor={p.primary}
               thumbColor={p.primary}
               height={3}
-              thumbSize={14}
+              thumbSize={12}
               hapticStep={0.04}
             />
           </View>
@@ -151,37 +151,37 @@ export default function AudioPlayer({ items, queueKey, startIndex = 0, title, co
 
 const styles = StyleSheet.create({
   wrap: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 8,
+    borderWidth: 1,
+    borderRadius: 18,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 6,
+    overflow: 'hidden',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
   sideBtn: {
-    width: 30, height: 30,
+    width: 24, height: 24,
     alignItems: 'center', justifyContent: 'center',
   },
   disabled: { opacity: 0.28 },
   playBtn: {
-    width: 40, height: 40, borderRadius: 20,
+    width: 34, height: 34, borderRadius: 17,
     alignItems: 'center', justifyContent: 'center',
   },
   playBtnCompact: {
-    width: 32, height: 32, borderRadius: 16,
+    width: 28, height: 28, borderRadius: 14,
   },
-  progressCol: { flex: 1, gap: 6 },
-  title: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
+  progressCol: { flex: 1, gap: 4 },
+  title: { fontSize: 11, fontFamily: 'Inter_600SemiBold' },
   speedRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 2,
+    gap: 6,
   },
   speedSlider: { flex: 1 },
-  speedLabel: { fontSize: 11, fontFamily: 'Inter_600SemiBold', width: 40, textAlign: 'right' },
+  speedLabel: { fontSize: 10, fontFamily: 'Inter_600SemiBold', width: 34, textAlign: 'right' },
 });

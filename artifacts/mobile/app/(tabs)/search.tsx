@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   FlatList,
   Platform,
@@ -11,19 +11,55 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColors } from '@/hooks/useColors';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
-import { BIBLE_DATA, searchBible } from '@/constants/bibleData';
+import { BIBLE_DATA, FEATURED_PASSAGES, searchBible } from '@/constants/bibleData';
+
+const RECENT_KEY = '@bibliaeN:recentSearches';
+const MAX_RECENT = 8;
+
+// Curated topical shortcuts — common things a reader might want to look up.
+const POPULAR_TOPICS = ['amor', 'fé', 'esperança', 'perdão', 'paz', 'sabedoria', 'medo', 'gratidão'];
 
 export default function SearchScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
+  const [recent, setRecent] = useState<string[]>([]);
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = useTabBarHeight();
 
+  useEffect(() => {
+    AsyncStorage.getItem(RECENT_KEY).then((raw) => {
+      if (raw) {
+        try { setRecent(JSON.parse(raw)); } catch { /* ignore corrupt value */ }
+      }
+    });
+  }, []);
+
   const results = query.trim().length >= 3 ? searchBible(query) : [];
+
+  const commitSearch = useCallback((term: string) => {
+    const trimmed = term.trim();
+    if (trimmed.length < 3) return;
+    setRecent((prev) => {
+      const next = [trimmed, ...prev.filter((t) => t.toLowerCase() !== trimmed.toLowerCase())].slice(0, MAX_RECENT);
+      AsyncStorage.setItem(RECENT_KEY, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  }, []);
+
+  const runSearch = useCallback((term: string) => {
+    setQuery(term);
+    commitSearch(term);
+  }, [commitSearch]);
+
+  const clearRecent = useCallback(() => {
+    setRecent([]);
+    AsyncStorage.removeItem(RECENT_KEY).catch(() => {});
+  }, []);
 
   const handleVersePress = (bookId: string, chapter: number) => {
     const book = BIBLE_DATA[bookId];
@@ -36,13 +72,6 @@ export default function SearchScreen() {
         englishBookName: book?.englishName ?? '',
       },
     });
-  };
-
-  const highlightText = (text: string) => {
-    const q = query.toLowerCase();
-    const idx = text.toLowerCase().indexOf(q);
-    if (idx === -1 || query.length < 3) return text;
-    return text;
   };
 
   return (
@@ -58,6 +87,7 @@ export default function SearchScreen() {
             placeholderTextColor={colors.mutedForeground}
             value={query}
             onChangeText={setQuery}
+            onSubmitEditing={() => commitSearch(query)}
             returnKeyType="search"
             autoCapitalize="none"
             autoCorrect={false}
@@ -71,13 +101,87 @@ export default function SearchScreen() {
       </View>
 
       {query.trim().length === 0 ? (
-        <View style={styles.empty}>
-          <Feather name="search" size={44} color={colors.border} />
-          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Buscar na Bíblia</Text>
-          <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
-            Digite uma palavra ou frase em inglês ou português para encontrar versículos
-          </Text>
-        </View>
+        <FlatList
+          data={[]}
+          keyExtractor={() => 'x'}
+          renderItem={null}
+          ListHeaderComponent={
+            <View style={styles.suggestWrap}>
+              <View style={styles.emptyIntro}>
+                <Feather name="search" size={36} color={colors.border} />
+                <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Buscar na Bíblia</Text>
+                <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
+                  Digite uma palavra ou frase em inglês ou português para encontrar versículos
+                </Text>
+              </View>
+
+              {recent.length > 0 && (
+                <View style={styles.section}>
+                  <View style={styles.sectionHeader}>
+                    <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Buscas recentes</Text>
+                    <TouchableOpacity onPress={clearRecent} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                      <Text style={[styles.clearLink, { color: colors.mutedForeground }]}>Limpar</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.chipRow}>
+                    {recent.map((term) => (
+                      <TouchableOpacity
+                        key={term}
+                        style={[styles.chip, { backgroundColor: colors.muted, borderColor: colors.border }]}
+                        onPress={() => runSearch(term)}
+                      >
+                        <Feather name="clock" size={12} color={colors.mutedForeground} />
+                        <Text style={[styles.chipText, { color: colors.foreground }]}>{term}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Buscas populares</Text>
+                <View style={styles.chipRow}>
+                  {POPULAR_TOPICS.map((term) => (
+                    <TouchableOpacity
+                      key={term}
+                      style={[styles.chip, { backgroundColor: colors.primary + '14', borderColor: colors.primary + '30' }]}
+                      onPress={() => runSearch(term)}
+                    >
+                      <Text style={[styles.chipText, { color: colors.primary }]}>{term}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Passagens em destaque</Text>
+                {FEATURED_PASSAGES.slice(0, 6).map((fp) => {
+                  const book = BIBLE_DATA[fp.bookId];
+                  return (
+                    <TouchableOpacity
+                      key={`${fp.bookId}-${fp.chapter}`}
+                      style={[styles.featuredRow, { borderColor: colors.border }]}
+                      onPress={() => handleVersePress(fp.bookId, fp.chapter)}
+                      activeOpacity={0.75}
+                    >
+                      <View style={[styles.featuredDot, { backgroundColor: fp.gradient[1] }]} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.featuredTitle, { color: colors.foreground }]}>{fp.titlePt}</Text>
+                        <Text style={[styles.featuredSub, { color: colors.mutedForeground }]}>
+                          {book?.englishName} {fp.chapter}
+                        </Text>
+                      </View>
+                      <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          }
+          contentContainerStyle={{ paddingBottom: bottomPad + 20 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        />
       ) : query.trim().length < 3 ? (
         <View style={styles.empty}>
           <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
@@ -106,7 +210,7 @@ export default function SearchScreen() {
             return (
               <TouchableOpacity
                 style={[styles.resultCard, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}
-                onPress={() => handleVersePress(item.bookId, item.chapter)}
+                onPress={() => { commitSearch(query); handleVersePress(item.bookId, item.chapter); }}
                 activeOpacity={0.85}
               >
                 <View style={styles.resultRef}>
@@ -237,4 +341,53 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: 'Inter_600SemiBold',
   },
+
+  // Empty-state suggestions
+  suggestWrap: { paddingHorizontal: 20, paddingTop: 8 },
+  emptyIntro: { alignItems: 'center', gap: 8, paddingVertical: 28 },
+  section: { marginBottom: 26 },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    fontSize: 13,
+    fontFamily: 'Inter_600SemiBold',
+    letterSpacing: 0.3,
+    marginBottom: 10,
+  },
+  clearLink: {
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  chipText: {
+    fontSize: 13,
+    fontFamily: 'Inter_500Medium',
+  },
+  featuredRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  featuredDot: { width: 8, height: 8, borderRadius: 4 },
+  featuredTitle: { fontSize: 14, fontFamily: 'Inter_600SemiBold' },
+  featuredSub: { fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 2 },
 });

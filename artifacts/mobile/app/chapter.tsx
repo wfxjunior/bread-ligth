@@ -1024,12 +1024,12 @@ const styles = StyleSheet.create({
   // Floating verse action popup
   dockedPlayerWrap: {
     position: 'absolute',
-    left: 12, right: 12,
+    left: 24, right: 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.14,
+    shadowRadius: 8,
+    elevation: 5,
   },
 
   versePopup: {
