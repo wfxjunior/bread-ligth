@@ -9,6 +9,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { BIBLE_DATA } from '@/constants/bibleData';
@@ -36,7 +37,44 @@ export const CATEGORY_INFO: Record<BookCategory, { base: string; deep: string; l
 
 const GOLD        = '#D9B562';
 const GOLD_SOFT   = 'rgba(217,181,98,0.4)';
+const GOLD_FAINT  = 'rgba(217,181,98,0.16)';
 const RIBBON_RED  = '#7A1626';
+
+// ── Per-book flavour text: a short tagline (PT) evoking the book's theme,
+// a thematic line-art glyph, and its traditional era — the details that make
+// a shelf feel like a real, well-loved library rather than a plain list. ────
+const TAGLINE: Record<string, string> = {
+  genesis:        'No Princípio, Deus',
+  psalms:         'Cânticos da Alma',
+  proverbs:       'Sabedoria para a Vida',
+  matthew:        'O Rei e Seu Reino',
+  john:           'O Verbo se Fez Carne',
+  romans:         'O Evangelho da Graça',
+  philippians:    'Alegria em Toda Circunstância',
+  '1corinthians': 'O Amor Edifica',
+};
+
+const ERA: Record<string, string> = {
+  genesis:        'EST. A.C.',
+  psalms:         'EST. A.C.',
+  proverbs:       'EST. A.C.',
+  matthew:        'EST. D.C. 60',
+  john:           'EST. D.C. 90',
+  romans:         'EST. D.C. 57',
+  philippians:    'EST. D.C. 62',
+  '1corinthians': 'EST. D.C. 55',
+};
+
+const THEME_ICON: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> = {
+  genesis:        'weather-sunny',
+  psalms:         'music-note',
+  proverbs:       'leaf',
+  matthew:        'cross',
+  john:           'feather',
+  romans:         'bank',
+  philippians:    'anchor',
+  '1corinthians': 'heart',
+};
 
 export type ShelfBookMeta = {
   bookId: string;
@@ -46,45 +84,73 @@ export type ShelfBookMeta = {
 
 // ── Single leather-bound volume ─────────────────────────────────────────────
 function LeatherBook({
-  meta, width, height, isCurrent, progressRatio,
+  meta, width, height, isCurrent, progressRatio, resumeChapter,
 }: {
   meta: ShelfBookMeta;
   width: number;
   height: number;
   isCurrent: boolean;
   progressRatio: number;
+  resumeChapter?: number;
 }) {
   const book = BIBLE_DATA[meta.bookId];
-  const scale = useRef(new Animated.Value(1)).current;
-  const lift  = useRef(new Animated.Value(isCurrent ? -6 : 0)).current;
+  const scale   = useRef(new Animated.Value(1)).current;
+  const lift    = useRef(new Animated.Value(isCurrent ? -6 : 0)).current;
+  const rotate  = useRef(new Animated.Value(0)).current;
+  const opacity = useRef(new Animated.Value(1)).current;
+  const pulling = useRef(false);
 
   if (!book) return null;
   const leather = CATEGORY_INFO[meta.category];
+  const totalChapters = Object.keys(book.chapters).length;
 
-  const handlePressIn = () => {
-    Animated.spring(scale, { toValue: 0.95, useNativeDriver: true, speed: 30, bounciness: 4 }).start();
-  };
-  const handlePressOut = () => {
-    Animated.spring(scale, {
-      toValue: 1, useNativeDriver: true, speed: 18, bounciness: 6,
-    }).start();
-  };
-  const handlePress = () => {
-    if (Platform.OS !== 'web') Haptics.selectionAsync();
-    const chapterKey = Object.keys(book.chapters)[0];
+  const navigateToChapter = () => {
+    const startChapter = isCurrent && resumeChapter ? resumeChapter : Number(Object.keys(book.chapters)[0]);
     router.push({
       pathname: '/chapter',
       params: {
         bookId:          meta.bookId,
-        chapter:         chapterKey,
+        chapter:         String(startChapter),
         bookName:        book.name,
         englishBookName: book.englishName,
       },
     });
+    // Reset the pulled-book pose so it's back on the shelf when we return.
+    setTimeout(() => {
+      pulling.current = false;
+      scale.setValue(1);
+      lift.setValue(isCurrent ? -6 : 0);
+      rotate.setValue(0);
+      opacity.setValue(1);
+    }, 400);
   };
 
-  const titleSize = width < 96 ? 10.5 : 12;
-  const ribbonLen = 14 + Math.max(0, Math.min(1, progressRatio)) * (height * 0.5);
+  const handlePressIn = () => {
+    if (pulling.current) return;
+    Animated.spring(scale, { toValue: 0.95, useNativeDriver: true, speed: 30, bounciness: 4 }).start();
+  };
+  const handlePressOut = () => {
+    if (pulling.current) return;
+    Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 18, bounciness: 6 }).start();
+  };
+  const handlePress = () => {
+    if (pulling.current) return;
+    pulling.current = true;
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Pull the volume off the shelf — lift, tilt toward the reader, and fade
+    // into the page turn, so opening a book feels like a physical gesture.
+    Animated.parallel([
+      Animated.timing(scale,   { toValue: 1.16, duration: 260, useNativeDriver: true }),
+      Animated.timing(lift,    { toValue: (isCurrent ? -6 : 0) - 54, duration: 260, useNativeDriver: true }),
+      Animated.timing(rotate,  { toValue: -1, duration: 260, useNativeDriver: true }),
+      Animated.timing(opacity, { toValue: 0, duration: 200, delay: 100, useNativeDriver: true }),
+    ]).start(navigateToChapter);
+  };
+
+  const titleSize = width < 140 ? 12.5 : 14;
+  const ribbonLen = 14 + Math.max(0, Math.min(1, progressRatio)) * (height * 0.42);
+  const rotateDeg = rotate.interpolate({ inputRange: [-1, 0], outputRange: ['-6deg', '0deg'] });
+  const icon = THEME_ICON[meta.bookId];
 
   return (
     <Pressable
@@ -95,15 +161,16 @@ function LeatherBook({
       <Animated.View
         style={{
           width, height,
-          transform: [{ scale }, { translateY: lift }],
+          opacity,
+          transform: [{ scale }, { translateY: lift }, { rotate: rotateDeg }],
           shadowColor: isCurrent ? GOLD : '#000',
           shadowOpacity: isCurrent ? 0.55 : 0.35,
-          shadowRadius: isCurrent ? 12 : 6,
-          shadowOffset: { width: 0, height: isCurrent ? 6 : 4 },
+          shadowRadius: isCurrent ? 14 : 7,
+          shadowOffset: { width: 0, height: isCurrent ? 8 : 5 },
           elevation: isCurrent ? 10 : 5,
         }}
       >
-        <View style={[styles.bookOuter, { borderRadius: 7 }]}>
+        <View style={[styles.bookOuter, { borderRadius: 9 }]}>
           <LinearGradient
             colors={[leather.base, leather.deep]}
             start={{ x: 0.15, y: 0 }}
@@ -118,15 +185,30 @@ function LeatherBook({
             style={StyleSheet.absoluteFill}
             pointerEvents="none"
           />
-          {/* embossed roman numeral watermark */}
-          <Text style={[styles.roman, { fontSize: height * 0.42 }]}>{meta.roman}</Text>
 
           {/* gold ornamental border */}
           <View style={styles.ornamentBorder} pointerEvents="none" />
 
-          {/* gold decorative bands */}
-          <View style={[styles.goldBand, { top: 12 }]} />
-          <View style={[styles.goldBand, { top: 15, opacity: 0.35 }]} />
+          {/* era header */}
+          <View style={styles.eraBlock} pointerEvents="none">
+            <Text style={styles.eraLabel} numberOfLines={1}>
+              {book.testament === 'old' ? 'ANTIGO TESTAMENTO' : 'NOVO TESTAMENTO'}
+            </Text>
+            <Text style={styles.eraYear} numberOfLines={1}>— {ERA[meta.bookId] ?? ''} —</Text>
+          </View>
+
+          {/* embossed roman numeral watermark + thematic glyph */}
+          <View style={styles.numeralZone} pointerEvents="none">
+            <Text style={[styles.roman, { fontSize: height * 0.3 }]}>{meta.roman}</Text>
+            {icon && (
+              <MaterialCommunityIcons
+                name={icon}
+                size={height * 0.14}
+                color={GOLD_FAINT}
+                style={styles.themeIcon}
+              />
+            )}
+          </View>
 
           {/* right spine edge */}
           <View style={[styles.spineEdge, { backgroundColor: leather.deep }]} />
@@ -147,12 +229,26 @@ function LeatherBook({
               {book.englishName.toUpperCase()}
             </Text>
             <View style={styles.titleDash} />
-            <Text style={styles.titlePt} numberOfLines={1}>{book.name}</Text>
+            <Text style={styles.titlePt} numberOfLines={2}>{TAGLINE[meta.bookId] ?? book.name}</Text>
           </View>
 
-          {/* bottom gold bands mirroring the top */}
-          <View style={[styles.goldBand, { bottom: 15, opacity: 0.35 }]} />
-          <View style={[styles.goldBand, { bottom: 12 }]} />
+          {/* progress footer */}
+          <View style={styles.footer}>
+            {isCurrent ? (
+              <>
+                <View style={styles.progressTrack}>
+                  <View style={[styles.progressFill, { width: `${Math.round(Math.min(1, progressRatio) * 100)}%` }]} />
+                  <View style={[styles.progressDot, { left: `${Math.round(Math.min(1, progressRatio) * 100)}%` }]} />
+                </View>
+                <View style={styles.footerRow}>
+                  <Text style={styles.footerText}>Cap. {resumeChapter ?? 1} de {totalChapters}</Text>
+                  <Text style={styles.footerText}>{Math.round(Math.min(1, progressRatio) * 100)}%</Text>
+                </View>
+              </>
+            ) : (
+              <Text style={styles.footerTextCenter}>{totalChapters} capítulos</Text>
+            )}
+          </View>
 
           {/* bookmark ribbon — only for the book currently being studied */}
           {isCurrent && (
@@ -171,6 +267,11 @@ function LeatherBook({
 function ShelfPlank() {
   return (
     <View style={styles.plankWrap}>
+      <LinearGradient
+        colors={['rgba(255,196,120,0.10)', 'rgba(255,196,120,0)']}
+        style={styles.plankGlow}
+        pointerEvents="none"
+      />
       <LinearGradient
         colors={['rgba(0,0,0,0.32)', 'rgba(0,0,0,0)']}
         style={styles.plankShadow}
@@ -198,11 +299,11 @@ export function BookshelfLibrary({
   currentChapter?: number;
 }) {
   const { width } = useWindowDimensions();
-  const COLUMNS   = 3;
+  const COLUMNS   = 2;
   const OUTER_PAD = 16;
-  const GAP       = 12;
-  const bookW     = Math.floor((width - OUTER_PAD * 2 - GAP * (COLUMNS - 1) - 32) / COLUMNS);
-  const bookH     = Math.round(bookW * 1.56);
+  const GAP       = 16;
+  const bookW     = Math.floor((width - OUTER_PAD * 2 - GAP * (COLUMNS - 1) - 36) / COLUMNS);
+  const bookH     = Math.round(bookW * 1.5);
 
   const rows: ShelfBookMeta[][] = [];
   for (let i = 0; i < books.length; i += COLUMNS) rows.push(books.slice(i, i + COLUMNS));
@@ -217,42 +318,53 @@ export function BookshelfLibrary({
       />
       {/* warm light from above */}
       <LinearGradient
-        colors={['rgba(255,214,150,0.09)', 'rgba(255,214,150,0)']}
+        colors={['rgba(255,205,140,0.14)', 'rgba(255,205,140,0)']}
         style={styles.cabinetLight}
         pointerEvents="none"
       />
-      {/* cabinet panel seams */}
-      <View style={[styles.seam, { left: '33%' }]} />
-      <View style={[styles.seam, { left: '66%' }]} />
+      {/* soft edge vignette for depth */}
+      <LinearGradient
+        colors={['rgba(0,0,0,0.4)', 'rgba(0,0,0,0)']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={[styles.vignette, { left: 0 }]}
+        pointerEvents="none"
+      />
+      <LinearGradient
+        colors={['rgba(0,0,0,0.4)', 'rgba(0,0,0,0)']}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0, y: 0 }}
+        style={[styles.vignette, { right: 0 }]}
+        pointerEvents="none"
+      />
+      {/* cabinet panel seam */}
+      <View style={[styles.seam, { left: '50%' }]} />
 
       <View style={styles.cabinetInner}>
-        {rows.map((row, ri) => {
-          const book = BIBLE_DATA[row[0]?.bookId];
-          const totalChapters = book ? Object.keys(book.chapters).length : 1;
-          return (
-            <View key={ri} style={{ marginTop: ri === 0 ? 0 : 22 }}>
-              <View style={[styles.row, { gap: GAP }]}>
-                {row.map(meta => {
-                  const isCurrent = !!currentBookId && currentBookId === meta.bookId;
-                  const bookData  = BIBLE_DATA[meta.bookId];
-                  const tc        = bookData ? Object.keys(bookData.chapters).length : totalChapters;
-                  const ratio     = isCurrent && currentChapter ? currentChapter / tc : 0;
-                  return (
-                    <LeatherBook
-                      key={meta.bookId}
-                      meta={meta}
-                      width={bookW}
-                      height={bookH}
-                      isCurrent={isCurrent}
-                      progressRatio={ratio}
-                    />
-                  );
-                })}
-              </View>
-              <ShelfPlank />
+        {rows.map((row, ri) => (
+          <View key={ri} style={{ marginTop: ri === 0 ? 0 : 26 }}>
+            <View style={[styles.row, { gap: GAP }]}>
+              {row.map(meta => {
+                const isCurrent = !!currentBookId && currentBookId === meta.bookId;
+                const bookData  = BIBLE_DATA[meta.bookId];
+                const tc        = bookData ? Object.keys(bookData.chapters).length : 1;
+                const ratio     = isCurrent && currentChapter ? currentChapter / tc : 0;
+                return (
+                  <LeatherBook
+                    key={meta.bookId}
+                    meta={meta}
+                    width={bookW}
+                    height={bookH}
+                    isCurrent={isCurrent}
+                    progressRatio={ratio}
+                    resumeChapter={isCurrent ? currentChapter : undefined}
+                  />
+                );
+              })}
             </View>
-          );
-        })}
+            <ShelfPlank />
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -266,7 +378,12 @@ const styles = StyleSheet.create({
   cabinetLight: {
     position: 'absolute',
     top: 0, left: 0, right: 0,
-    height: '55%',
+    height: '50%',
+  },
+  vignette: {
+    position: 'absolute',
+    top: 0, bottom: 0,
+    width: 34,
   },
   cabinetInner: {
     padding: 18,
@@ -284,9 +401,10 @@ const styles = StyleSheet.create({
 
   // Shelf plank
   plankWrap: { marginTop: -2 },
+  plankGlow: { height: 16, marginBottom: -6 },
   plankShadow: { height: 10 },
   plank: {
-    height: 14,
+    height: 15,
     borderRadius: 2,
     overflow: 'hidden',
     justifyContent: 'center',
@@ -308,34 +426,53 @@ const styles = StyleSheet.create({
   bookOuter: {
     flex: 1,
     overflow: 'hidden',
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-    borderBottomLeftRadius: 3,
-    borderBottomRightRadius: 3,
-  },
-  roman: {
-    position: 'absolute',
-    top: '14%',
-    left: 0,
-    right: 0,
-    textAlign: 'center',
-    fontFamily: 'Inter_700Bold',
-    fontWeight: '700' as const,
-    color: 'rgba(255,255,255,0.08)',
-    letterSpacing: -2,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+    borderBottomLeftRadius: 4,
+    borderBottomRightRadius: 4,
   },
   ornamentBorder: {
     position: 'absolute',
-    top: 7, left: 6, right: 6, bottom: 7,
+    top: 9, left: 7, right: 7, bottom: 9,
     borderWidth: 1,
     borderColor: GOLD_SOFT,
-    borderRadius: 4,
+    borderRadius: 5,
   },
-  goldBand: {
+  eraBlock: {
     position: 'absolute',
-    left: 12, right: 12,
-    height: 1,
-    backgroundColor: GOLD_SOFT,
+    top: 16, left: 8, right: 8,
+    alignItems: 'center',
+  },
+  eraLabel: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 8,
+    letterSpacing: 1,
+    color: 'rgba(233,214,168,0.6)',
+  },
+  eraYear: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 7.5,
+    letterSpacing: 0.4,
+    color: 'rgba(233,214,168,0.4)',
+    marginTop: 2,
+  },
+  numeralZone: {
+    position: 'absolute',
+    top: '20%',
+    left: 0, right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  roman: {
+    fontFamily: 'Inter_700Bold',
+    fontWeight: '700' as const,
+    color: 'rgba(255,255,255,0.10)',
+    letterSpacing: -2,
+  },
+  themeIcon: {
+    position: 'absolute',
+    right: '18%',
+    top: '38%',
   },
   spineEdge: {
     position: 'absolute',
@@ -350,21 +487,21 @@ const styles = StyleSheet.create({
   },
   ageMarkA: {
     position: 'absolute',
-    width: 30, height: 30, borderRadius: 15,
+    width: 34, height: 34, borderRadius: 17,
     top: -8, left: -6,
     backgroundColor: 'rgba(0,0,0,0.07)',
   },
   ageMarkB: {
     position: 'absolute',
-    width: 24, height: 24, borderRadius: 12,
+    width: 28, height: 28, borderRadius: 14,
     bottom: -4, right: 6,
     backgroundColor: 'rgba(0,0,0,0.06)',
   },
   titleBlock: {
     position: 'absolute',
-    left: 8, right: 8, bottom: 22,
+    left: 10, right: 10, bottom: 46,
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
   },
   titleEn: {
     fontFamily: 'Lora_700Bold',
@@ -376,20 +513,59 @@ const styles = StyleSheet.create({
     textShadowRadius: 1,
   },
   titleDash: {
-    width: 16, height: 1,
+    width: 18, height: 1,
     backgroundColor: GOLD_SOFT,
   },
   titlePt: {
     fontFamily: 'Lora_400Regular_Italic',
-    fontSize: 9,
+    fontSize: 10,
+    lineHeight: 13,
     color: 'rgba(233,214,168,0.65)',
     textAlign: 'center',
+  },
+  footer: {
+    position: 'absolute',
+    left: 12, right: 12, bottom: 12,
+    gap: 5,
+  },
+  progressTrack: {
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+  },
+  progressFill: {
+    position: 'absolute',
+    left: 0, top: 0, bottom: 0,
+    backgroundColor: GOLD,
+    borderRadius: 1,
+  },
+  progressDot: {
+    position: 'absolute',
+    top: -2, width: 6, height: 6, borderRadius: 3,
+    marginLeft: -3,
+    backgroundColor: GOLD,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  footerText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 9,
+    color: 'rgba(233,214,168,0.7)',
+  },
+  footerTextCenter: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 9,
+    color: 'rgba(233,214,168,0.4)',
+    textAlign: 'center',
+    letterSpacing: 0.3,
   },
   ribbon: {
     position: 'absolute',
     top: -3,
     left: '38%',
-    width: 9,
+    width: 10,
     borderBottomLeftRadius: 1,
     borderBottomRightRadius: 1,
     shadowColor: '#000',
@@ -401,14 +577,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: -5, left: 0,
     width: 0, height: 0,
-    borderLeftWidth: 4.5, borderLeftColor: 'transparent',
+    borderLeftWidth: 5, borderLeftColor: 'transparent',
     borderTopWidth: 5, borderTopColor: RIBBON_RED,
   },
   ribbonNotchR: {
     position: 'absolute',
     bottom: -5, right: 0,
     width: 0, height: 0,
-    borderRightWidth: 4.5, borderRightColor: 'transparent',
+    borderRightWidth: 5, borderRightColor: 'transparent',
     borderTopWidth: 5, borderTopColor: RIBBON_RED,
   },
 });
