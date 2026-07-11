@@ -1,6 +1,6 @@
 import React, { memo, useRef } from 'react';
 import { Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import { type DisplayMode } from '@/context/BibleContext';
@@ -25,6 +25,8 @@ interface VerseRowProps {
   onVersePress?: (v: number, pageY: number, height: number) => void;
   hasNote?: boolean;
   isMarked?: boolean;
+  onSpeak?: () => void;
+  isSpeakingThis?: boolean;
 }
 
 function VerseRow({
@@ -32,6 +34,7 @@ function VerseRow({
   onWordPress, onBookmarkToggle,
   selected = false, onVersePress,
   hasNote = false, isMarked = false,
+  onSpeak, isSpeakingThis = false,
 }: VerseRowProps) {
   const colors  = useColors();
   const rowRef  = useRef<View>(null);
@@ -142,6 +145,22 @@ function VerseRow({
 
       </View>
 
+      {/* Speak button */}
+      {onSpeak && (
+        <TouchableOpacity
+          onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); onSpeak(); }}
+          style={styles.speakBtn}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Feather
+            name={isSpeakingThis ? 'volume-x' : 'volume-2'}
+            size={16}
+            color={isSpeakingThis ? colors.primary : colors.mutedForeground}
+            style={{ opacity: isSpeakingThis ? 1 : 0.38 }}
+          />
+        </TouchableOpacity>
+      )}
+
       {/* Bookmark button */}
       <TouchableOpacity
         onPress={handleBookmark}
@@ -196,6 +215,8 @@ const styles = StyleSheet.create({
   // Separator between EN and PT
   divider: { height: StyleSheet.hairlineWidth, marginVertical: 2 },
 
+  // Speak
+  speakBtn: { paddingTop: 4, flexShrink: 0 },
   // Bookmark
   bookmarkBtn: { paddingTop: 3, flexShrink: 0 },
 

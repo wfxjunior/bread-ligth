@@ -57,6 +57,8 @@
   },
   "dependencies": {
     "@expo-google-fonts/lora": "^0.4.2",
-    "@react-navigation/bottom-tabs": "^7.18.7"
+    "@react-navigation/bottom-tabs": "^7.18.7",
+    "expo-av": "^16.0.8",
+    "expo-speech": "^57.0.0"
   }
 }

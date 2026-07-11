@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColors } from '@/hooks/useColors';
+import { useTTS } from '@/hooks/useTTS';
 import { useLanguage } from '@/context/LanguageContext';
 import { useBible } from '@/context/BibleContext';
 import WordModal from '@/components/WordModal';
@@ -234,6 +235,7 @@ export default function DailyScreen() {
 
   // ── Heart / community engagement ───────────────────────────────────────────
   const heartScale = useRef(new Animated.Value(1)).current;
+  const { speak, isSpeaking: ttsPlaying } = useTTS();
   const [hearted, setHearted] = useState(false);
 
   const handleHeartToggle = useCallback(() => {
@@ -391,6 +393,25 @@ export default function DailyScreen() {
         </Text>
 
         <TappableVerse text={verseObj.en} onWordPress={openWord} />
+
+        {/* Listen button — OpenAI TTS / expo-speech fallback */}
+        <TouchableOpacity
+          onPress={() => {
+            if (Platform.OS !== 'web') Haptics.selectionAsync();
+            speak(verseObj.en);
+          }}
+          activeOpacity={0.7}
+          style={styles.listenBtn}
+        >
+          <Feather
+            name={ttsPlaying ? 'volume-x' : 'volume-2'}
+            size={13}
+            color={ttsPlaying ? D.wine : D.whiteLow}
+          />
+          <Text style={[styles.listenBtnText, { color: ttsPlaying ? D.wine : D.whiteLow }]}>
+            {ttsPlaying ? 'Parar' : 'Ouvir em inglês'}
+          </Text>
+        </TouchableOpacity>
 
         {/* PT translation reveal toggle */}
         <TouchableOpacity
@@ -580,6 +601,25 @@ const styles = StyleSheet.create({
     fontFamily: 'Lora_400Regular_Italic',
     color: D.whiteMid,
     marginBottom: 28,
+  },
+
+  // Listen button
+  listenBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    alignSelf: 'flex-start',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: D.border,
+    backgroundColor: D.whiteFaint,
+    marginBottom: 18,
+  },
+  listenBtnText: {
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
   },
 
   // Tags

@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColors } from '@/hooks/useColors';
+import { useTTS } from '@/hooks/useTTS';
 import { useBible, type DisplayMode } from '@/context/BibleContext';
 import { BIBLE_DATA, type BibleVerse } from '@/constants/bibleData';
 import VerseRow from '@/components/VerseRow';
@@ -198,6 +199,18 @@ export default function ChapterScreen() {
   const hasNext = chapterIdx < chapterKeys.length - 1;
 
   const { displayMode, setDisplayMode, isBookmarked, addBookmark, removeBookmark, saveReadingProgress } = useBible();
+  const { speak, stop, isSpeaking } = useTTS();
+  const [speakingV, setSpeakingV] = useState<number | null>(null);
+
+  const handleSpeak = useCallback((text: string, v: number) => {
+    if (speakingV === v && isSpeaking) {
+      stop();
+      setSpeakingV(null);
+    } else {
+      setSpeakingV(v);
+      speak(text);
+    }
+  }, [speak, stop, isSpeaking, speakingV]);
 
   // Text size — persisted in AsyncStorage
   const [textSize, setTextSize] = useState<TextSize>('medium');
@@ -531,7 +544,7 @@ export default function ChapterScreen() {
           ref={listRef}
           data={verses}
           keyExtractor={(item) => `${currentBookId}-${chapterNum}-${item.v}`}
-          extraData={[focusMode, displayMode, chapterNum, textSize, currentBookId, selectedVerse?.v, marks, notes]}
+          extraData={[focusMode, displayMode, chapterNum, textSize, currentBookId, selectedVerse?.v, marks, notes, isSpeaking, speakingV]}
           onScrollBeginDrag={handleVerseDeselect}
           renderItem={({ item }) => (
             <VerseRow
@@ -545,6 +558,8 @@ export default function ChapterScreen() {
               onVersePress={handleVerseSelect}
               hasNote={!!notes[vKey(currentBookId, chapterNum, item.v)]}
               isMarked={marks.has(vKey(currentBookId, chapterNum, item.v))}
+              onSpeak={() => handleSpeak(item.en, item.v)}
+              isSpeakingThis={isSpeaking && speakingV === item.v}
             />
           )}
           ListHeaderComponent={
