@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import {
   Animated,
+  Image,
   Platform,
   Pressable,
   StyleSheet,
@@ -171,17 +172,33 @@ function LeatherBook({
         }}
       >
         <View style={[styles.bookOuter, { borderRadius: 9 }]}>
+          {/* real leather grain — photographed texture, tinted per category so
+              every volume still reads as its own shelf colour while the cover
+              itself looks and feels like genuine leather, not flat vector fill */}
+          <Image
+            source={require('../assets/images/leather-texture.jpg')}
+            style={StyleSheet.absoluteFill}
+            resizeMode="cover"
+          />
           <LinearGradient
-            colors={[leather.base, leather.deep]}
+            colors={[leather.base + 'E6', leather.deep + 'F2']}
             start={{ x: 0.15, y: 0 }}
             end={{ x: 0.9, y: 1 }}
             style={StyleSheet.absoluteFill}
           />
           {/* soft sheen */}
           <LinearGradient
-            colors={['rgba(255,255,255,0.14)', 'rgba(255,255,255,0)']}
+            colors={['rgba(255,255,255,0.16)', 'rgba(255,255,255,0)']}
             start={{ x: 0, y: 0 }}
             end={{ x: 0.55, y: 0.5 }}
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+          />
+          {/* gentle overhead shelf light grazing the top of the cover */}
+          <LinearGradient
+            colors={['rgba(255,224,170,0.22)', 'rgba(255,224,170,0)']}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 0.38 }}
             style={StyleSheet.absoluteFill}
             pointerEvents="none"
           />
@@ -333,9 +350,10 @@ export function BookshelfLibrary({
         end={{ x: 0.7, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      {/* warm light from above */}
+      {/* warm light from above — a soft glow washing over the shelf, as if
+          a single reading lamp sits just out of frame */}
       <LinearGradient
-        colors={['rgba(255,205,140,0.14)', 'rgba(255,205,140,0)']}
+        colors={['rgba(255,214,158,0.22)', 'rgba(255,205,140,0)']}
         style={styles.cabinetLight}
         pointerEvents="none"
       />

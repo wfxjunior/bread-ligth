@@ -7,6 +7,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
   useWindowDimensions,
@@ -24,6 +25,7 @@ import { useBible } from '@/context/BibleContext';
 import { BIBLE_DATA } from '@/constants/bibleData';
 import { getEntryForDate, resolveVerse, todayKey } from '@/utils/dailyVerse';
 import AudioPlayer from '@/components/AudioPlayer';
+import WordModal from '@/components/WordModal';
 import { BookshelfLibrary, CATEGORY_INFO, type BookCategory } from '@/components/BookshelfLibrary';
 import ProgressModal, { type ProgressStat } from '@/components/ProgressModal';
 
@@ -360,6 +362,239 @@ function BookListRow({ meta, isLast }: { meta: BookMeta; isLast?: boolean }) {
   );
 }
 
+// ── Today's Study — accordion card (Read / Listen / Learn / Reflect) ─────────
+// Steps expand inline (below the shelf, inside the card itself) instead of
+// opening a modal — keeps the Home screen uncluttered while still being real,
+// working functionality: real chapter text, a real audio player, real word
+// look-ups (shared vocabulary system), and a saved personal reflection.
+const REFLECTION_KEY = '@bibliaeN:reflection:john:1';
+const STUDY_QUEUE_KEY = 'study:john:1';
+
+function StudyCard() {
+  const colors = useColors();
+  const audio  = useAudio();
+
+  const [expandedStep, setExpandedStep]     = useState<string | null>(null);
+  const [wordModal, setWordModal]           = useState<{ word: string; context: string } | null>(null);
+  const [reflection, setReflection]         = useState('');
+  const [reflectionSaved, setReflectionSaved] = useState(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem(REFLECTION_KEY).then(v => { if (v) setReflection(v); }).catch(() => {});
+  }, []);
+
+  const johnChapter1 = BIBLE_DATA['john']?.chapters?.[1] ?? [];
+  const previewVerses = johnChapter1.slice(0, 3);
+  const isPt = audio.readingLanguage === 'pt';
+
+  const toggleStep = (id: string) => {
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpandedStep(prev => (prev === id ? null : id));
+  };
+
+  const saveReflection = () => {
+    if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    AsyncStorage.setItem(REFLECTION_KEY, reflection).catch(() => {});
+    setReflectionSaved(true);
+    setTimeout(() => setReflectionSaved(false), 2000);
+  };
+
+  return (
+    <View style={[styles.studyCard, {
+      backgroundColor: colors.card,
+      borderColor:     colors.border,
+      borderRadius:    colors.radius + 2,
+    }]}>
+      {/* Antique-gold top rule */}
+      <View style={[styles.studyTopRule, { backgroundColor: GOLD }]} />
+
+      <View style={styles.studyCardInner}>
+
+        {/* Reference + time */}
+        <View style={styles.studyMeta}>
+          <Text style={[styles.studyMetaRef, { color: colors.primary }]}>John 1</Text>
+          <View style={[styles.studyMetaDot, { backgroundColor: colors.border }]} />
+          <Feather name="clock" size={11} color={colors.mutedForeground} />
+          <Text style={[styles.studyMetaTime, { color: colors.mutedForeground }]}>15 min</Text>
+        </View>
+
+        {/* Chapter title */}
+        <Text style={[styles.studyTitle, { color: colors.foreground }]}>
+          The Word{'\n'}Became Flesh
+        </Text>
+
+        {/* Hairline divider */}
+        <View style={[styles.studyDivider, { backgroundColor: colors.border }]} />
+
+        {/* Four steps — each expands inline when tapped */}
+        <View style={styles.studySteps}>
+          {STUDY_STEPS.map((step, idx) => {
+            const isCurrent  = idx === 0;
+            const isExpanded = expandedStep === step.id;
+            const highlight  = isCurrent || isExpanded;
+            return (
+              <View key={step.id}>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => toggleStep(step.id)}
+                  style={styles.studyStepRow}
+                >
+                  {/* Step connector dot (left gutter) */}
+                  <View style={styles.studyStepGutter}>
+                    <View style={[styles.studyStepDot,
+                      { backgroundColor: highlight ? colors.primary : colors.border }]} />
+                    {(idx < STUDY_STEPS.length - 1 || isExpanded) && (
+                      <View style={[styles.studyStepLine, { backgroundColor: colors.border }]} />
+                    )}
+                  </View>
+
+                  {/* Icon + label */}
+                  <View style={[styles.studyStepIconWrap, {
+                    borderColor:     highlight ? colors.primary + '38' : colors.border,
+                    backgroundColor: highlight ? colors.primary + '0C' : 'transparent',
+                  }]}>
+                    <Feather
+                      name={step.icon as any}
+                      size={13}
+                      color={highlight ? colors.primary : colors.mutedForeground}
+                    />
+                  </View>
+
+                  <Text style={[styles.studyStepLabel, {
+                    color:      highlight ? colors.foreground : colors.mutedForeground,
+                    fontFamily: highlight ? 'Inter_600SemiBold' : 'Inter_400Regular',
+                  }]}>
+                    {step.label}
+                  </Text>
+
+                  <Feather
+                    name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                    size={15}
+                    color={colors.mutedForeground}
+                    style={{ marginTop: 10 }}
+                  />
+                </TouchableOpacity>
+
+                {/* ── Expanded activity content ── */}
+                {isExpanded && (
+                  <View style={styles.studyStepContent}>
+
+                    {step.id === 'read' && (
+                      <>
+                        {previewVerses.map(v => (
+                          <View key={v.v} style={styles.studyReadVerse}>
+                            <Text style={[styles.studyReadEn, { color: colors.foreground }]}>
+                              <Text style={{ color: colors.primary, fontFamily: 'Inter_600SemiBold' }}>{v.v} </Text>
+                              {v.en}
+                            </Text>
+                            <Text style={[styles.studyReadPt, { color: colors.mutedForeground }]}>{v.pt}</Text>
+                          </View>
+                        ))}
+                        <TouchableOpacity
+                          activeOpacity={0.85}
+                          onPress={() => {
+                            if (Platform.OS !== 'web') Haptics.selectionAsync();
+                            router.push({ pathname: '/chapter', params: { bookId: 'john', chapter: '1', bookName: 'João', englishBookName: 'John' } });
+                          }}
+                          style={[styles.studyInlineBtn, { borderColor: colors.primary }]}
+                        >
+                          <Text style={[styles.studyInlineBtnText, { color: colors.primary }]}>Continue Reading</Text>
+                          <Feather name="arrow-right" size={13} color={colors.primary} />
+                        </TouchableOpacity>
+                      </>
+                    )}
+
+                    {step.id === 'listen' && johnChapter1.length > 0 && (
+                      <AudioPlayer
+                        compact
+                        items={johnChapter1.map(v => ({ id: String(v.v), text: isPt ? v.pt : v.en }))}
+                        queueKey={STUDY_QUEUE_KEY}
+                        title="John 1"
+                      />
+                    )}
+
+                    {step.id === 'learn' && (
+                      <View style={styles.studyLearnRow}>
+                        {VOCAB_PREVIEW.map(item => (
+                          <TouchableOpacity
+                            key={item.word}
+                            activeOpacity={0.8}
+                            onPress={() => {
+                              if (Platform.OS !== 'web') Haptics.selectionAsync();
+                              setWordModal({ word: item.word.toLowerCase(), context: previewVerses[0]?.en ?? item.word });
+                            }}
+                            style={[styles.studyLearnChip, { borderColor: colors.border, backgroundColor: colors.background }]}
+                          >
+                            <Text style={[styles.studyLearnChipWord, { color: colors.foreground }]}>{item.word}</Text>
+                            <Text style={[styles.studyLearnChipDef, { color: colors.mutedForeground }]}>{item.def}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
+
+                    {step.id === 'reflect' && (
+                      <View>
+                        <Text style={[styles.studyReflectPrompt, { color: colors.foreground }]}>
+                          O Verbo se fez carne e habitou entre nós. O que essa verdade muda na sua vida hoje?
+                        </Text>
+                        <TextInput
+                          value={reflection}
+                          onChangeText={setReflection}
+                          placeholder="Escreva sua reflexão..."
+                          placeholderTextColor={colors.mutedForeground}
+                          multiline
+                          style={[styles.studyReflectInput, {
+                            color:       colors.foreground,
+                            borderColor: colors.border,
+                            backgroundColor: colors.background,
+                          }]}
+                        />
+                        <TouchableOpacity
+                          activeOpacity={0.85}
+                          onPress={saveReflection}
+                          style={[styles.studyInlineBtn, { borderColor: colors.primary, alignSelf: 'flex-start' }]}
+                        >
+                          <Feather name={reflectionSaved ? 'check' : 'save'} size={13} color={colors.primary} />
+                          <Text style={[styles.studyInlineBtnText, { color: colors.primary }]}>
+                            {reflectionSaved ? 'Salvo' : 'Salvar reflexão'}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                )}
+              </View>
+            );
+          })}
+        </View>
+
+        {/* CTA button */}
+        <TouchableOpacity
+          activeOpacity={0.88}
+          onPress={() => {
+            if (Platform.OS !== 'web') Haptics.selectionAsync();
+            router.push('/daily');
+          }}
+          style={[styles.studyBtn, { backgroundColor: colors.primary, borderRadius: colors.radius }]}
+        >
+          <Text style={[styles.studyBtnText, { color: colors.primaryForeground }]}>
+            Start Today's Study
+          </Text>
+        </TouchableOpacity>
+
+      </View>
+
+      <WordModal
+        visible={!!wordModal}
+        word={wordModal?.word ?? ''}
+        context={wordModal?.context ?? ''}
+        onClose={() => setWordModal(null)}
+      />
+    </View>
+  );
+}
+
 // ── Main Screen ───────────────────────────────────────────────────────────────
 export default function HomeScreen() {
   const colors    = useColors();
@@ -517,87 +752,7 @@ export default function HomeScreen() {
           <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>ESTUDO</Text>
         </View>
 
-        {/* Study card */}
-        <View style={[styles.studyCard, {
-          backgroundColor: colors.card,
-          borderColor:     colors.border,
-          borderRadius:    colors.radius + 2,
-        }]}>
-          {/* Antique-gold top rule */}
-          <View style={[styles.studyTopRule, { backgroundColor: GOLD }]} />
-
-          <View style={styles.studyCardInner}>
-
-            {/* Reference + time */}
-            <View style={styles.studyMeta}>
-              <Text style={[styles.studyMetaRef, { color: colors.primary }]}>John 1</Text>
-              <View style={[styles.studyMetaDot, { backgroundColor: colors.border }]} />
-              <Feather name="clock" size={11} color={colors.mutedForeground} />
-              <Text style={[styles.studyMetaTime, { color: colors.mutedForeground }]}>15 min</Text>
-            </View>
-
-            {/* Chapter title */}
-            <Text style={[styles.studyTitle, { color: colors.foreground }]}>
-              The Word{'\n'}Became Flesh
-            </Text>
-
-            {/* Hairline divider */}
-            <View style={[styles.studyDivider, { backgroundColor: colors.border }]} />
-
-            {/* Four steps */}
-            <View style={styles.studySteps}>
-              {STUDY_STEPS.map((step, idx) => {
-                const active = idx === 0;
-                return (
-                  <View key={step.id} style={styles.studyStepRow}>
-                    {/* Step connector dot (left gutter) */}
-                    <View style={styles.studyStepGutter}>
-                      <View style={[styles.studyStepDot,
-                        { backgroundColor: active ? colors.primary : colors.border }]} />
-                      {idx < STUDY_STEPS.length - 1 && (
-                        <View style={[styles.studyStepLine, { backgroundColor: colors.border }]} />
-                      )}
-                    </View>
-
-                    {/* Icon + label */}
-                    <View style={[styles.studyStepIconWrap, {
-                      borderColor:     active ? colors.primary + '38' : colors.border,
-                      backgroundColor: active ? colors.primary + '0C' : 'transparent',
-                    }]}>
-                      <Feather
-                        name={step.icon as any}
-                        size={13}
-                        color={active ? colors.primary : colors.mutedForeground}
-                      />
-                    </View>
-
-                    <Text style={[styles.studyStepLabel, {
-                      color:      active ? colors.foreground : colors.mutedForeground,
-                      fontFamily: active ? 'Inter_600SemiBold' : 'Inter_400Regular',
-                    }]}>
-                      {step.label}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-
-            {/* CTA button */}
-            <TouchableOpacity
-              activeOpacity={0.88}
-              onPress={() => {
-                if (Platform.OS !== 'web') Haptics.selectionAsync();
-                router.push('/daily');
-              }}
-              style={[styles.studyBtn, { backgroundColor: colors.primary, borderRadius: colors.radius }]}
-            >
-              <Text style={[styles.studyBtnText, { color: colors.primaryForeground }]}>
-                Start Today's Study
-              </Text>
-            </TouchableOpacity>
-
-          </View>
-        </View>
+        <StudyCard />
       </View>
 
       {/* ═══════════════════════════════════════════════════════════════════════
@@ -969,6 +1124,46 @@ const styles = StyleSheet.create({
     fontSize:   14,
     paddingTop: 10,
     lineHeight: 20,
+  },
+  studyStepContent: {
+    paddingLeft:   26,
+    paddingBottom: 18,
+    paddingTop:    2,
+    gap:           12,
+  },
+  studyReadVerse: { gap: 3 },
+  studyReadEn: { fontSize: 14, fontFamily: 'Lora_400Regular', lineHeight: 21 },
+  studyReadPt: { fontSize: 13, fontFamily: 'Inter_400Regular', fontStyle: 'italic', lineHeight: 19 },
+  studyInlineBtn: {
+    flexDirection:   'row',
+    alignItems:      'center',
+    gap:              6,
+    borderWidth:      1,
+    borderRadius:     999,
+    paddingVertical:  8,
+    paddingHorizontal: 14,
+    alignSelf:        'flex-start',
+  },
+  studyInlineBtnText: { fontSize: 12.5, fontFamily: 'Inter_600SemiBold' },
+  studyLearnRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  studyLearnChip: {
+    borderWidth:      StyleSheet.hairlineWidth,
+    borderRadius:     10,
+    paddingVertical:  8,
+    paddingHorizontal: 12,
+    gap:              2,
+  },
+  studyLearnChipWord: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
+  studyLearnChipDef:  { fontSize: 11.5, fontFamily: 'Inter_400Regular' },
+  studyReflectPrompt: { fontSize: 13.5, fontFamily: 'Lora_400Regular_Italic', lineHeight: 20 },
+  studyReflectInput: {
+    borderWidth:     StyleSheet.hairlineWidth,
+    borderRadius:    10,
+    padding:         12,
+    fontSize:        13.5,
+    fontFamily:      'Inter_400Regular',
+    minHeight:       64,
+    textAlignVertical: 'top',
   },
   studyBtn: {
     paddingVertical: 15,
