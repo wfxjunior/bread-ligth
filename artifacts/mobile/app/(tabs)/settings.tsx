@@ -588,6 +588,44 @@ function VoicePillSelector({ value, onChange }: { value: AudioVoice; onChange: (
   );
 }
 
+function ReadingLanguagePillSelector({ value, onChange }: { value: 'en' | 'pt'; onChange: (v: 'en' | 'pt') => void }) {
+  const colors = useColors();
+  const { t }  = useLanguage();
+
+  return (
+    <View style={[styles.pillRow, { rowGap: 8 }]}>
+      {(['en', 'pt'] as const).map(v => {
+        const active = value === v;
+        return (
+          <TouchableOpacity
+            key={v}
+            onPress={() => {
+              if (Platform.OS !== 'web') Haptics.selectionAsync();
+              onChange(v);
+            }}
+            style={[
+              styles.pill,
+              {
+                backgroundColor: active ? colors.primary : colors.background,
+                borderColor:     active ? colors.primary : colors.border,
+                borderRadius:    colors.radius / 2,
+                minWidth: '46%',
+              },
+            ]}
+          >
+            <Text style={[styles.pillText, {
+              color:      active ? colors.primaryForeground : colors.foreground,
+              fontFamily: active ? 'Inter_600SemiBold' : 'Inter_400Regular',
+            }]} numberOfLines={1} adjustsFontSizeToFit>
+              {t(v === 'en' ? 'lang_pill_en' as any : 'lang_pill_pt' as any)}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
+
 // ── Main screen ───────────────────────────────────────────────────────────────
 // ── Issue types ───────────────────────────────────────────────────────────────
 const ISSUE_TYPES: { icon: string; label: string }[] = [
@@ -1133,6 +1171,12 @@ export default function SettingsScreen() {
             <Text style={[styles.innerSubLabel, { color: colors.mutedForeground }]}>{tl('audio_voice_sub')}</Text>
             <View style={{ height: 10 }} />
             <VoicePillSelector value={audio.voice} onChange={audio.setVoice} />
+          </View>
+          <View style={[styles.innerSection, { marginTop: 16 }]}>
+            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>{tl('audio_language')}</Text>
+            <Text style={[styles.innerSubLabel, { color: colors.mutedForeground }]}>{tl('audio_language_sub')}</Text>
+            <View style={{ height: 10 }} />
+            <ReadingLanguagePillSelector value={audio.readingLanguage} onChange={audio.setReadingLanguage} />
           </View>
         </SettingsCard>
 

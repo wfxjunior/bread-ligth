@@ -200,7 +200,7 @@ export default function ChapterScreen() {
 
   const { displayMode, setDisplayMode, isBookmarked, addBookmark, removeBookmark, saveReadingProgress } = useBible();
   const audio = useAudio();
-  const chapterQueueKey = `chapter:${currentBookId}:${chapterNum}`;
+  const chapterQueueKey = `chapter:${currentBookId}:${chapterNum}:${audio.readingLanguage}`;
   const isChapterAudioActive = audio.queueKey === chapterQueueKey;
   const activeVerseNum = isChapterAudioActive && audio.currentItem ? Number(audio.currentItem.id) : null;
   const [practiceVerse, setPracticeVerse] = useState<BibleVerse | null>(null);
@@ -217,7 +217,11 @@ export default function ChapterScreen() {
       audio.resume();
       return;
     }
-    audio.playQueue(verses.map(vr => ({ id: String(vr.v), text: vr.en })), idx, chapterQueueKey);
+    audio.playQueue(
+      verses.map(vr => ({ id: String(vr.v), text: audio.readingLanguage === 'pt' ? vr.pt : vr.en })),
+      idx,
+      chapterQueueKey,
+    );
   }, [verses, audio, chapterQueueKey, isChapterAudioActive, activeVerseNum]);
 
   // Auto-scroll to the verse currently being read aloud
@@ -651,9 +655,9 @@ export default function ChapterScreen() {
       {verses.length > 0 && (
         <View style={[styles.dockedPlayerWrap, { bottom: bottomPad + 10 }]}>
           <AudioPlayer
-            items={verses.map(v => ({ id: String(v.v), text: v.en }))}
+            items={verses.map(v => ({ id: String(v.v), text: audio.readingLanguage === 'pt' ? v.pt : v.en }))}
             queueKey={chapterQueueKey}
-            title={`${book?.englishName ?? ''} ${chapterNum}`}
+            title={audio.readingLanguage === 'pt' ? `${book?.name ?? ''} ${chapterNum}` : `${book?.englishName ?? ''} ${chapterNum}`}
           />
         </View>
       )}

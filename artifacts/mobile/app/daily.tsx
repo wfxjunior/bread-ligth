@@ -333,7 +333,8 @@ export default function DailyScreen() {
   // ── Heart / community engagement ───────────────────────────────────────────
   const heartScale = useRef(new Animated.Value(1)).current;
   const audio = useAudio();
-  const dailyVerseQueueKey = `daily-verse:${todayKey()}`;
+  const dailyVerseQueueKey = `daily-verse:${todayKey()}:${audio.readingLanguage}`;
+  const verseAudioText = audio.readingLanguage === 'pt' ? (verseObj?.pt ?? '') : (verseObj?.en ?? '');
   const [hearted, setHearted] = useState(false);
   const [practiceVisible, setPracticeVisible] = useState(false);
 
@@ -496,14 +497,38 @@ export default function DailyScreen() {
         {/* Unified voice player — same shared engine as the reader */}
         <View style={styles.playerRow}>
           <AudioPlayer
-            items={[{ id: 'verse', text: verseObj.en }]}
+            items={[{ id: 'verse', text: verseAudioText }]}
             queueKey={dailyVerseQueueKey}
-            title={t(lang, 'listen_in_english')}
+            title={audio.readingLanguage === 'pt' ? t(lang, 'listen_in_portuguese') : t(lang, 'listen_in_english')}
             palette={{
               card: D.whiteFaint, border: D.border, foreground: D.white,
               mutedForeground: D.whiteMid, primary: D.wine, primaryForeground: D.bg1, accent: D.wine,
             }}
           />
+          <View style={styles.readLangRow}>
+            {(['en', 'pt'] as const).map(l => (
+              <TouchableOpacity
+                key={l}
+                onPress={() => {
+                  if (Platform.OS !== 'web') Haptics.selectionAsync();
+                  audio.setReadingLanguage(l);
+                }}
+                activeOpacity={0.7}
+                style={[
+                  styles.readLangPill,
+                  { borderColor: D.border, backgroundColor: D.whiteFaint },
+                  audio.readingLanguage === l && { backgroundColor: D.wineFaint, borderColor: D.wineBorder },
+                ]}
+              >
+                <Text style={[
+                  styles.readLangPillText,
+                  { color: audio.readingLanguage === l ? D.wine : D.whiteLow },
+                ]}>
+                  {l === 'en' ? t(lang, 'lang_pill_en') : t(lang, 'lang_pill_pt')}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
         {/* Practice pronunciation */}
@@ -738,7 +763,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'Inter_500Medium',
   },
-  playerRow: { width: '100%', marginBottom: 14 },
+  playerRow: { width: '100%', marginBottom: 14, gap: 8 },
+  readLangRow: { flexDirection: 'row', gap: 8 },
+  readLangPill: {
+    flex: 1, borderWidth: 1, borderRadius: 10,
+    paddingVertical: 7, alignItems: 'center', justifyContent: 'center',
+  },
+  readLangPillText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
 
   // Tags
   bookTag: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 18 },

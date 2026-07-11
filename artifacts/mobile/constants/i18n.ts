@@ -108,6 +108,13 @@ const strings = {
   voice_nova:        { pt: 'Nova',    en: 'Nova'    },
   voice_shimmer:     { pt: 'Shimmer', en: 'Shimmer' },
 
+  // ── Reading language (verse/chapter audio)
+  listen_in_portuguese: { pt: 'Ouvir em português', en: 'Listen in Portuguese' },
+  lang_pill_en:          { pt: 'Inglês',            en: 'English'             },
+  lang_pill_pt:          { pt: 'Português',          en: 'Portuguese'          },
+  audio_language:        { pt: 'Idioma da leitura',  en: 'Reading language'    },
+  audio_language_sub:    { pt: 'Em que idioma o versículo é lido em voz alta', en: 'Which language verses are read aloud in' },
+
   // ── Daily devotional completion
   daily_done_title:     { pt: 'Concluído hoje 🎉',                       en: 'Completed today 🎉'                    },
   daily_done_sub:        { pt: 'Volte amanhã para o próximo versículo',   en: 'Come back tomorrow for the next verse' },

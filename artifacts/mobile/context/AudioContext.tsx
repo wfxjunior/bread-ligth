@@ -10,6 +10,7 @@ const TTS_BASE = _domain ? `https://${_domain}/api/tts` : null;
 
 const RATE_KEY  = '@bibliaeN:audioRate';
 const VOICE_KEY = '@bibliaeN:audioVoice';
+const READING_LANG_KEY = '@bibliaeN:readingLanguage';
 export const MIN_RATE = 0.5;
 export const MAX_RATE = 2.0;
 export const DEFAULT_RATE = 1.0;
@@ -17,6 +18,12 @@ export const DEFAULT_RATE = 1.0;
 export type AudioVoice = 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';
 export const AUDIO_VOICES: AudioVoice[] = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
 export const DEFAULT_VOICE: AudioVoice = 'nova';
+
+// Which language's text gets sent to TTS/playback. Screens hold both `en`
+// and `pt` copies of verse/devotional text already — this just picks which
+// one is read aloud. Independent from `voice` (the speaker timbre).
+export type ReadingLanguage = 'en' | 'pt';
+export const DEFAULT_READING_LANGUAGE: ReadingLanguage = 'en';
 
 export interface AudioQueueItem {
   id: string;
@@ -51,6 +58,7 @@ interface AudioContextValue {
   hasPrevious: boolean;
   usingFallback: boolean;
   voice: AudioVoice;
+  readingLanguage: ReadingLanguage;
   playQueue: (items: AudioQueueItem[], startIndex?: number, queueKey?: string) => void;
   playSingle: (text: string, id?: string) => void;
   togglePlayPause: () => void;
@@ -62,6 +70,7 @@ interface AudioContextValue {
   seekToRatio: (ratio: number) => void;
   setRate: (rate: number) => void;
   setVoice: (voice: AudioVoice) => void;
+  setReadingLanguage: (lang: ReadingLanguage) => void;
 }
 
 const AudioCtx = createContext<AudioContextValue | null>(null);
@@ -85,6 +94,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [duration, setDuration]       = useState(0);
   const [rate, setRateState]          = useState(DEFAULT_RATE);
   const [voice, setVoiceState]        = useState<AudioVoice>(DEFAULT_VOICE);
+  const [readingLanguage, setReadingLanguageState] = useState<ReadingLanguage>(DEFAULT_READING_LANGUAGE);
   const [usingFallback, setUsingFallback] = useState(false);
 
   const soundRef      = useRef<Audio.Sound | null>(null);
@@ -110,6 +120,10 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
     AsyncStorage.getItem(VOICE_KEY)
       .then(v => { if (v && (AUDIO_VOICES as string[]).includes(v)) setVoiceState(v as AudioVoice); })
+      .catch(() => {});
+
+    AsyncStorage.getItem(READING_LANG_KEY)
+      .then(v => { if (v === 'en' || v === 'pt') setReadingLanguageState(v); })
       .catch(() => {});
 
     Audio.setAudioModeAsync({
@@ -307,6 +321,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem(VOICE_KEY, v).catch(() => {});
   }, []);
 
+  const setReadingLanguage = useCallback((lang: ReadingLanguage) => {
+    setReadingLanguageState(lang);
+    AsyncStorage.setItem(READING_LANG_KEY, lang).catch(() => {});
+  }, []);
+
   const currentItem = currentIndex >= 0 ? queue[currentIndex] ?? null : null;
 
   const value: AudioContextValue = {
@@ -319,7 +338,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     hasNext:     currentIndex >= 0 && currentIndex < queue.length - 1,
     hasPrevious: currentIndex > 0,
     usingFallback,
-    playQueue, playSingle, togglePlayPause, pause, resume, stop, next, previous, seekToRatio, setRate, setVoice,
+    readingLanguage,
+    playQueue, playSingle, togglePlayPause, pause, resume, stop, next, previous, seekToRatio, setRate, setVoice, setReadingLanguage,
   };
 
   return <AudioCtx.Provider value={value}>{children}</AudioCtx.Provider>;
