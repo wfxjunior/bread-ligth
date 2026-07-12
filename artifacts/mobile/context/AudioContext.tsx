@@ -4,6 +4,8 @@ import * as Speech from 'expo-speech';
 import { Audio, InterruptionModeIOS, InterruptionModeAndroid } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Crypto from 'expo-crypto';
 
 const _domain  = process.env.EXPO_PUBLIC_DOMAIN;
 const TTS_BASE = _domain ? `https://${_domain}/api/tts` : null;
@@ -11,6 +13,105 @@ const TTS_BASE = _domain ? `https://${_domain}/api/tts` : null;
 const RATE_KEY  = '@bibliaeN:audioRate';
 const VOICE_KEY = '@bibliaeN:audioVoice';
 const READING_LANG_KEY = '@bibliaeN:readingLanguage';
+
+// ── On-device TTS audio cache ────────────────────────────────────────────
+// Bible reading is often done in low-connectivity moments (commuting,
+// travel). This mirrors the server-side cache (routes/tts.ts) but persists
+// to disk on the device itself, so previously-played verses/devotionals
+// keep the premium OpenAI voice offline instead of degrading to the
+// lower-quality expo-speech fallback.
+const TTS_CACHE_DIR = `${FileSystem.cacheDirectory}tts-audio/`;
+const TTS_CACHE_INDEX_KEY = '@bibliaeN:ttsCacheIndex';
+const TTS_CACHE_MAX_BYTES = 60 * 1024 * 1024; // 60 MB cap, LRU eviction beyond this
+
+interface TtsCacheEntry {
+  size: number;
+  lastAccess: number;
+}
+type TtsCacheIndex = Record<string, TtsCacheEntry>;
+
+let cacheDirReadyPromise: Promise<void> | null = null;
+function ensureTtsCacheDir(): Promise<void> {
+  if (!cacheDirReadyPromise) {
+    cacheDirReadyPromise = FileSystem.makeDirectoryAsync(TTS_CACHE_DIR, { intermediates: true }).catch(() => {});
+  }
+  return cacheDirReadyPromise;
+}
+
+async function loadTtsCacheIndex(): Promise<TtsCacheIndex> {
+  try {
+    const raw = await AsyncStorage.getItem(TTS_CACHE_INDEX_KEY);
+    return raw ? (JSON.parse(raw) as TtsCacheIndex) : {};
+  } catch {
+    return {};
+  }
+}
+
+async function saveTtsCacheIndex(idx: TtsCacheIndex): Promise<void> {
+  try { await AsyncStorage.setItem(TTS_CACHE_INDEX_KEY, JSON.stringify(idx)); } catch { /* ignore */ }
+}
+
+function ttsCacheKeyFor(voice: string, text: string): Promise<string> {
+  return Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, `${voice}::${text}`);
+}
+
+function ttsCachePathFor(key: string): string {
+  return `${TTS_CACHE_DIR}${key}.mp3`;
+}
+
+// Evicts the least-recently-used cached audio files until the index is back
+// under the size cap. Runs after every new download; never blocks playback.
+async function evictTtsCacheIfNeeded(idx: TtsCacheIndex): Promise<TtsCacheIndex> {
+  let total = Object.values(idx).reduce((sum, e) => sum + e.size, 0);
+  if (total <= TTS_CACHE_MAX_BYTES) return idx;
+
+  const byOldest = Object.entries(idx).sort((a, b) => a[1].lastAccess - b[1].lastAccess);
+  const next = { ...idx };
+  for (const [key, entry] of byOldest) {
+    if (total <= TTS_CACHE_MAX_BYTES) break;
+    delete next[key];
+    total -= entry.size;
+    await FileSystem.deleteAsync(ttsCachePathFor(key), { idempotent: true }).catch(() => {});
+  }
+  return next;
+}
+
+// Returns a local file:// uri if this voice+text was already cached on
+// device, or null on a cache miss (or if the disk entry vanished).
+async function getCachedTtsUri(voice: string, text: string): Promise<string | null> {
+  const key = await ttsCacheKeyFor(voice, text);
+  const path = ttsCachePathFor(key);
+  const info = await FileSystem.getInfoAsync(path).catch(() => null);
+  if (!info?.exists) return null;
+
+  const idx = await loadTtsCacheIndex();
+  if (idx[key]) {
+    idx[key] = { ...idx[key], lastAccess: Date.now() };
+    saveTtsCacheIndex(idx).catch(() => {});
+  }
+  return path;
+}
+
+// Downloads the remote TTS stream straight to a cache file (avoids buffering
+// the whole clip in memory) and records it in the index, evicting older
+// entries if the cap is exceeded. Returns the local uri to play from.
+async function downloadAndCacheTts(remoteUri: string, voice: string, text: string): Promise<string> {
+  await ensureTtsCacheDir();
+  const key = await ttsCacheKeyFor(voice, text);
+  const path = ttsCachePathFor(key);
+  const result = await FileSystem.downloadAsync(remoteUri, path);
+  if (result.status < 200 || result.status >= 300) {
+    throw new Error(`TTS download failed with status ${result.status}`);
+  }
+  const info = await FileSystem.getInfoAsync(path).catch(() => null);
+  const size = info?.exists ? (info.size ?? 0) : 0;
+
+  let idx = await loadTtsCacheIndex();
+  idx[key] = { size, lastAccess: Date.now() };
+  idx = await evictTtsCacheIfNeeded(idx);
+  await saveTtsCacheIndex(idx);
+  return path;
+}
 export const MIN_RATE = 0.5;
 export const MAX_RATE = 2.0;
 export const DEFAULT_RATE = 1.0;
@@ -214,6 +315,53 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
+    const cleanText = sanitizeForSpeech(item.text);
+    const activeVoice = voiceRef.current;
+
+    // Cache-first: previously played text/voice pairs are stored on-device
+    // (see downloadAndCacheTts above), so offline playback can reuse the
+    // premium voice instead of degrading straight to expo-speech.
+    const cachedUri = await getCachedTtsUri(activeVoice, cleanText).catch(() => null);
+    if (generationRef.current !== gen) return;
+
+    if (cachedUri) {
+      try {
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          playsInSilentModeIOS: true,
+        }).catch(() => {});
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: cachedUri },
+          { shouldPlay: true, rate: rateRef.current, shouldCorrectPitch: true, progressUpdateIntervalMillis: 150 },
+        );
+        if (generationRef.current !== gen) {
+          await sound.unloadAsync().catch(() => {});
+          return;
+        }
+        setUsingFallback(false);
+        soundRef.current = sound;
+        if (pausePendingRef.current) {
+          await sound.pauseAsync().catch(() => {});
+          setStatus('paused');
+        }
+        sound.setOnPlaybackStatusUpdate(st => {
+          if (!st.isLoaded || generationRef.current !== gen) return;
+          setPosition(st.positionMillis ?? 0);
+          setDuration(st.durationMillis ?? 0);
+          if (st.didJustFinish) {
+            setStatus('idle');
+            advance();
+          } else if (!pausePendingRef.current) {
+            setStatus(st.isPlaying ? 'playing' : 'paused');
+          }
+        });
+        return;
+      } catch {
+        soundRef.current = null;
+        // Fall through to network fetch / fallback below.
+      }
+    }
+
     if (TTS_BASE) {
       try {
         // Defensively reset the shared audio session before every playback.
@@ -225,10 +373,19 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
           playsInSilentModeIOS: true,
         }).catch(() => {});
 
-        const cleanText = sanitizeForSpeech(item.text);
-        const uri = `${TTS_BASE}?text=${encodeURIComponent(cleanText)}&voice=${voiceRef.current}`;
+        const remoteUri = `${TTS_BASE}?text=${encodeURIComponent(cleanText)}&voice=${activeVoice}`;
+        let playUri = remoteUri;
+        try {
+          playUri = await downloadAndCacheTts(remoteUri, activeVoice, cleanText);
+        } catch {
+          // Network flaky mid-download — still try to stream directly so
+          // the user isn't dropped straight to the fallback voice.
+          playUri = remoteUri;
+        }
+        if (generationRef.current !== gen) return;
+
         const { sound } = await Audio.Sound.createAsync(
-          { uri },
+          { uri: playUri },
           { shouldPlay: true, rate: rateRef.current, shouldCorrectPitch: true, progressUpdateIntervalMillis: 150 },
         );
         if (generationRef.current !== gen) {
