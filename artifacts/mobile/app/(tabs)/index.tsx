@@ -536,12 +536,37 @@ function StudyCard() {
                     )}
 
                     {step.id === 'listen' && johnChapter1.length > 0 && (
-                      <AudioPlayer
-                        compact
-                        items={johnChapter1.map(v => ({ id: String(v.v), text: isPt ? v.pt : v.en }))}
-                        queueKey={STUDY_QUEUE_KEY}
-                        title="John 1"
-                      />
+                      <View style={{ gap: 8 }}>
+                        <View style={styles.pillLangRow}>
+                          {(['en', 'pt'] as const).map(l => {
+                            const active = audio.readingLanguage === l;
+                            return (
+                              <TouchableOpacity
+                                key={l}
+                                onPress={() => {
+                                  if (Platform.OS !== 'web') Haptics.selectionAsync();
+                                  audio.setReadingLanguage(l);
+                                }}
+                                activeOpacity={0.75}
+                                style={[
+                                  styles.pillLangPill,
+                                  { borderColor: active ? colors.accent : colors.border, backgroundColor: active ? colors.accent + '18' : 'transparent' },
+                                ]}
+                              >
+                                <Text style={[styles.pillLangPillText, { color: active ? colors.accent : colors.mutedForeground }]}>
+                                  {l === 'en' ? 'EN' : 'PT'}
+                                </Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </View>
+                        <AudioPlayer
+                          compact
+                          items={johnChapter1.map(v => ({ id: String(v.v), text: isPt ? v.pt : v.en }))}
+                          queueKey={`${STUDY_QUEUE_KEY}:${audio.readingLanguage}`}
+                          title={isPt ? 'João 1' : 'John 1'}
+                        />
+                      </View>
                     )}
 
                     {step.id === 'learn' && (
