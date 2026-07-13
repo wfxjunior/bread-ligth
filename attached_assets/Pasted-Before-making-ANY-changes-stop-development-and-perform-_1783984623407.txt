@@ -1,0 +1,499 @@
+Before making ANY changes, stop development and perform a complete Product, UX, UI, Architecture and Technical Audit of the entire BreadLight application.
+
+Do NOT immediately redesign or rewrite components.
+
+Your first responsibility is to understand the current application.
+
+Think like:
+
+• Senior Product Designer
+• Apple Human Interface Designer
+• Senior UX Researcher
+• Senior Frontend Architect
+• Mobile Design Expert
+• Accessibility Specialist
+• Language Learning Expert
+• Bible Study Product Specialist
+
+Your goal is to transform BreadLight into the most beautiful, immersive and premium Bible language-learning application ever built.
+
+Never optimize only for aesthetics.
+
+Optimize for:
+
+• learning
+• immersion
+• simplicity
+• emotional connection
+• performance
+• premium craftsmanship
+
+========================================================
+PHASE 1
+FULL PRODUCT AUDIT
+========================================================
+
+Inspect every screen.
+
+Inspect every component.
+
+Inspect every interaction.
+
+Inspect every animation.
+
+Inspect every visual hierarchy.
+
+Inspect every feature.
+
+Create a report describing:
+
+Current implementation
+
+Strengths
+
+Weaknesses
+
+Technical debt
+
+UX issues
+
+Performance issues
+
+Accessibility issues
+
+Design inconsistencies
+
+Missing opportunities
+
+Do not skip anything.
+
+========================================================
+PHASE 2
+LANGUAGE LEARNING EXPERIENCE AUDIT
+========================================================
+
+BreadLight is NOT just another Bible app.
+
+Its main purpose is:
+
+Learning languages through Scripture.
+
+Review the complete learning experience.
+
+Evaluate:
+
+Bible Reader
+
+Vocabulary
+
+Translation
+
+Audio
+
+Pronunciation
+
+Notes
+
+Study Workspace
+
+Search
+
+Learning Progress
+
+Daily Devotional
+
+Determine if every feature actually helps users learn a language.
+
+If not...
+
+Explain why.
+
+Recommend improvements.
+
+========================================================
+PHASE 3
+LANGUAGE SYSTEM AUDIT
+========================================================
+
+The language system currently feels incomplete.
+
+Audit everything related to languages.
+
+Check:
+
+Current translation system
+
+Language selector
+
+Native language
+
+Learning language
+
+Switching between languages
+
+Persistence
+
+UI consistency
+
+Availability across screens
+
+Determine if users can realistically learn multiple languages.
+
+If not...
+
+Redesign the architecture.
+
+Future-proof the application for:
+
+English
+
+Portuguese
+
+Spanish
+
+French
+
+German
+
+Italian
+
+Japanese
+
+Korean
+
+Biblical Greek
+
+Biblical Hebrew
+
+========================================================
+PHASE 4
+VOICE EXPERIENCE AUDIT
+========================================================
+
+The current voice experience is NOT acceptable.
+
+Treat this as a critical issue.
+
+Analyze every part of the audio system.
+
+Current problems include:
+
+• Voice sounds artificial
+• Voice lacks natural rhythm
+• Pauses are incorrect
+• Intonation is incorrect
+• Chapter reading feels robotic
+• Verse transitions feel unnatural
+• Listening experience is not immersive
+• Reading rhythm does not resemble a human narrator
+
+Example:
+
+"Psalm 23"
+
+"The Lord is my shepherd..."
+
+should sound calm, warm, natural and human.
+
+Not robotic.
+
+The same applies to:
+
+Genesis
+
+Proverbs
+
+John
+
+Romans
+
+Every book.
+
+Investigate whether the current TTS engine should be replaced.
+
+Evaluate alternatives such as:
+
+ElevenLabs
+
+OpenAI Voices
+
+Azure Neural Voices
+
+Google Cloud TTS
+
+Amazon Polly
+
+Compare:
+
+Naturalness
+
+Emotion
+
+Reading rhythm
+
+Biblical narration quality
+
+Latency
+
+Cost
+
+Scalability
+
+API integration complexity
+
+Recommend the best long-term solution.
+
+If replacing the voice engine is recommended...
+
+Create a migration strategy.
+
+========================================================
+PHASE 5
+AUDIO PLAYER AUDIT
+========================================================
+
+Review the complete audio experience.
+
+Users should be able to:
+
+Play
+
+Pause
+
+Resume
+
+Seek
+
+Adjust playback speed
+
+Repeat verses
+
+Repeat chapter
+
+Continue listening
+
+Sync highlighted verses
+
+Remember playback position
+
+Share verses
+
+Review if anything is missing.
+
+========================================================
+PHASE 6
+READING ATMOSPHERES AUDIT
+========================================================
+
+The current Reading Background system is incorrect.
+
+It currently contains hobby themes such as:
+
+Golf
+
+Soccer
+
+Cars
+
+Sports
+
+Lifestyle images
+
+These do NOT belong in BreadLight.
+
+Remove this concept.
+
+Replace it with:
+
+Reading Atmospheres.
+
+Design premium reading environments inspired by:
+
+Ancient manuscripts
+
+Luxury printed Bibles
+
+Libraries
+
+Warm paper
+
+Classic typography
+
+Quiet study
+
+Create atmosphere presets that influence the entire application consistently.
+
+========================================================
+PHASE 7
+BIBLE LIBRARY AUDIT
+========================================================
+
+The current Bible Library feels like a grid of cards.
+
+This does not match the BreadLight vision.
+
+The library should feel like:
+
+A premium personal bookshelf.
+
+Books should feel collectible.
+
+Leather bound.
+
+Warm.
+
+Timeless.
+
+Study every aspect of the current implementation.
+
+Explain why it does or does not achieve this feeling.
+
+Then redesign the concept.
+
+Books must become premium leather volumes instead of generic cards.
+
+========================================================
+PHASE 8
+BOOK COVER SYSTEM
+========================================================
+
+The current book covers lack emotional impact.
+
+Create a reusable Book Cover System.
+
+Books should include:
+
+Premium leather
+
+Gold foil typography
+
+Embossed details
+
+Book spine
+
+Gilded page edges
+
+Silk bookmark ribbon
+
+Subtle decorative ornaments
+
+Category-based leather colors
+
+Elegant typography
+
+No generic flat cards.
+
+The books should feel handcrafted.
+
+========================================================
+PHASE 9
+DESIGN SYSTEM AUDIT
+========================================================
+
+Review:
+
+Typography
+
+Spacing
+
+Animations
+
+Buttons
+
+Cards
+
+Shadows
+
+Icons
+
+Radius
+
+Grid
+
+Accessibility
+
+Consistency
+
+Hierarchy
+
+Determine whether BreadLight already has a recognizable visual identity.
+
+If not...
+
+Propose one.
+
+========================================================
+PHASE 10
+HOME EXPERIENCE AUDIT
+========================================================
+
+Review:
+
+Daily Devotional
+
+Continue Reading
+
+Learning Progress
+
+Study Journey
+
+Audio
+
+Navigation
+
+Search
+
+Determine if the Home screen encourages daily study.
+
+Recommend improvements.
+
+========================================================
+PHASE 11
+PRODUCT ROADMAP
+========================================================
+
+After completing the audit...
+
+Create a roadmap.
+
+Separate recommendations into:
+
+Quick Improvements
+
+Medium Improvements
+
+Major Improvements
+
+Future Vision
+
+Estimate complexity.
+
+Prioritize user value.
+
+========================================================
+FINAL DELIVERABLE
+========================================================
+
+Do NOT immediately modify code.
+
+First produce the complete audit.
+
+Then wait for approval before implementation.
+
+The report should read like a professional product review written by a world-class design consultancy.
+
+Every recommendation must explain:
+
+Why it matters.
+
+What problem it solves.
+
+Expected impact on learning.
+
+Expected impact on engagement.
+
+Expected impact on user delight.
+
+The objective is not simply to make BreadLight more beautiful.
+
+The objective is to make BreadLight become the world's reference application for learning languages through Scripture.
