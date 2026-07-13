@@ -13,6 +13,7 @@ import {
   BookHeart
 } from 'lucide-react';
 import { useReadingSpace } from '../context/reading-space-context';
+import { useAtmosphere } from '../context/atmosphere-context';
 import { SpaceBackground } from './space-background';
 
 const NAV_ITEMS = [
@@ -31,6 +32,15 @@ const NAV_ITEMS = [
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { space } = useReadingSpace();
+  const { isDark: atmosphereIsDark } = useAtmosphere();
+
+  // The Reading Space gradient is a calm *mood wash*, but the Atmosphere owns
+  // the base background/foreground contrast. When a Reading Space's own
+  // light/dark tone disagrees with the current atmosphere (e.g. a light space
+  // under a Dark/Night/Library atmosphere), fade the gradient back so the
+  // atmosphere's own background — and the text sitting on it — stays legible.
+  // When they agree (the common case), the gradient renders exactly as before.
+  const spaceMismatch = atmosphereIsDark !== space.isDark;
 
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden text-foreground">
@@ -80,9 +90,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      {/* Main Content — the active Reading Space's calm gradient sits behind it */}
-      <main className="relative flex-1 flex flex-col min-w-0">
-        <SpaceBackground space={space} />
+      {/* Main Content — the active Reading Space's calm gradient sits behind it,
+          on top of the current Atmosphere's own background. */}
+      <main className="relative flex-1 flex flex-col min-w-0 bg-background">
+        <SpaceBackground space={space} className={spaceMismatch ? 'opacity-25' : undefined} />
         <div className="relative flex-1 flex flex-col min-w-0">
           {children}
         </div>

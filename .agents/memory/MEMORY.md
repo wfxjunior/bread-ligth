@@ -11,3 +11,4 @@
 - [Leather book covers](leather-book-covers.md) — one shared photographed leather texture tinted per category (~90% opacity gradient) gives photoreal covers without per-book texture generation.
 - [Reading Spaces atmosphere system](reading-spaces-system.md) — colors.space (gradient/isDark/accent) drives Home/reader/devotional backgrounds; SpaceBackground crossfades; watch for colors baked into static StyleSheet.create.
 - [On-device TTS audio cache](offline-tts-cache.md) — SDK 54 expo-file-system needs `/legacy` subpath import for the old promise API (downloadAsync, cacheDirectory, etc).
+- [Atmosphere + Reading Space coexistence](atmosphere-reading-space-coexistence.md) — web's real atmosphere palette (ported from mobile) and the opaque Reading Space gradient can conflict; layout.tsx fades the gradient on isDark mismatch.

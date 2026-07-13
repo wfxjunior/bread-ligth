@@ -3,10 +3,12 @@ import { Layout } from '../components/layout';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Palette, BookOpen, Globe, Share2, BookHeart, Crown,
-  Check, Lock, Copy, ChevronRight, Mail, Pencil, Plus,
+  Check, Copy, ChevronRight, Mail, Pencil, Plus,
 } from 'lucide-react';
 import { useReadingSpace } from '../context/reading-space-context';
 import { READING_SPACES, READING_SPACE_ORDER, gradientCss } from '../lib/reading-spaces';
+import { useAtmosphere } from '../context/atmosphere-context';
+import { ATMOSPHERES, ATMOSPHERE_ORDER, ACCENTS, ACCENT_ORDER } from '../lib/atmospheres';
 
 // ── Reusable Toggle ─────────────────────────────────────────────────────────
 function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
@@ -54,23 +56,6 @@ const TABS = [
   { id: 'plan',         label: 'Plan & Billing',  icon: Crown },
 ];
 
-const THEMES = [
-  { id: 'classic',  name: 'Classic Parchment', desc: 'Warm, easy on the eyes',   bg: '#fbf9f6', dark: false },
-  { id: 'oxford',   name: 'Oxford Paper',      desc: 'Crisp white, high contrast', bg: '#ffffff', dark: false },
-  { id: 'scholar',  name: 'Scholar',           desc: 'Muted tones, focused',      bg: '#f1f0ed', dark: false },
-  { id: 'night',    name: 'Night Study',       desc: 'Dark mode for evening',     bg: '#1a1a24', dark: true  },
-  { id: 'notebook', name: 'Study Notebook',    desc: 'Ruled lines, casual',       bg: '#fdfaf5', dark: false },
-];
-
-const ACCENT_COLORS = [
-  { id: 'burgundy', hex: '#6B1E2A', label: 'Burgundy', free: true  },
-  { id: 'blue',     hex: '#1E3A6B', label: 'Royal Blue', free: false },
-  { id: 'green',    hex: '#1E4D2B', label: 'Forest',     free: false },
-  { id: 'slate',    hex: '#3D4A5C', label: 'Slate',      free: false },
-  { id: 'violet',   hex: '#3B1E6B', label: 'Violet',     free: false },
-  { id: 'amber',    hex: '#7A5C1E', label: 'Amber',      free: false },
-];
-
 const MOCK_DEVOTIONALS_SETTINGS = [
   { id: 1, title: 'Morning Reflection',  verses: 7,  schedule: 'Daily',      active: true  },
   { id: 2, title: 'John Study Plan',     verses: 14, schedule: 'Weekly',     active: true  },
@@ -86,8 +71,7 @@ export default function SettingsPage() {
   const [email, setEmail] = useState('wilson@email.com');
 
   // Appearance
-  const [theme, setTheme]   = useState('classic');
-  const [accent, setAccent] = useState('burgundy');
+  const { atmosphere, setAtmosphere, accentColor, setAccentColor } = useAtmosphere();
   const { readingSpace, setReadingSpace } = useReadingSpace();
 
   // Reading toggles
@@ -178,70 +162,72 @@ export default function SettingsPage() {
     appearance: (
       <div className="space-y-10">
         <div>
-          <SectionTitle>Reading Theme</SectionTitle>
+          <SectionTitle>Reading Atmosphere</SectionTitle>
+          <p className="text-sm text-muted-foreground -mt-3 mb-4">
+            Sets the base colors of the whole app — background, cards, and text — the same atmospheres available on mobile.
+          </p>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {THEMES.map(t => (
-              <button
-                key={t.id}
-                onClick={() => setTheme(t.id)}
-                className={`relative p-0 rounded-xl text-left border-2 overflow-hidden transition-all ${theme === t.id ? 'border-primary' : 'border-border hover:border-primary/30'}`}
-              >
-                {theme === t.id && (
-                  <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center z-10">
-                    <Check className="w-3 h-3 text-white" />
-                  </span>
-                )}
-                <div className="w-full h-20" style={{ background: t.bg }}>
-                  <div className="p-3 space-y-1.5">
-                    <div className={`w-3/4 h-1.5 rounded-full ${t.dark ? 'bg-white/20' : 'bg-black/15'}`} />
-                    <div className={`w-full h-1.5 rounded-full ${t.dark ? 'bg-white/10' : 'bg-black/8'}`} />
-                    <div className={`w-5/6 h-1.5 rounded-full ${t.dark ? 'bg-white/10' : 'bg-black/8'}`} />
+            {ATMOSPHERE_ORDER.map(id => {
+              const t = ATMOSPHERES[id];
+              const active = atmosphere === id;
+              return (
+                <button
+                  key={id}
+                  onClick={() => setAtmosphere(id)}
+                  className={`relative p-0 rounded-xl text-left border-2 overflow-hidden transition-all ${active ? 'border-primary' : 'border-border hover:border-primary/30'}`}
+                >
+                  {active && (
+                    <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center z-10">
+                      <Check className="w-3 h-3 text-white" />
+                    </span>
+                  )}
+                  <div className="w-full h-20" style={{ background: t.background }}>
+                    <div className="p-3 space-y-1.5">
+                      <div className="w-3/4 h-1.5 rounded-full" style={{ background: t.foreground, opacity: t.isDark ? 0.25 : 0.15 }} />
+                      <div className="w-full h-1.5 rounded-full" style={{ background: t.foreground, opacity: t.isDark ? 0.15 : 0.08 }} />
+                      <div className="w-5/6 h-1.5 rounded-full" style={{ background: t.foreground, opacity: t.isDark ? 0.15 : 0.08 }} />
+                    </div>
                   </div>
-                </div>
-                <div className="p-3">
-                  <p className="font-serif font-medium text-foreground text-sm">{t.name}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{t.desc}</p>
-                </div>
-              </button>
-            ))}
+                  <div className="p-3" style={{ background: t.card }}>
+                    <p className="font-serif font-medium text-sm" style={{ color: t.foreground }}>{t.label}</p>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
         <div>
-          <SectionTitle>Accent Color <span className="normal-case font-normal text-secondary ml-2">· Premium</span></SectionTitle>
+          <SectionTitle>Accent Color</SectionTitle>
           <div className="bg-card border border-border rounded-2xl p-6">
             <div className="flex items-center gap-4 flex-wrap">
-              {ACCENT_COLORS.map(c => (
-                <div key={c.id} className="flex flex-col items-center gap-2">
-                  <button
-                    onClick={() => c.free && setAccent(c.id)}
-                    title={c.free ? c.label : 'Premium feature'}
-                    className="relative w-10 h-10 rounded-full border-2 transition-all focus:outline-none"
-                    style={{
-                      background: c.hex,
-                      borderColor: accent === c.id ? c.hex : 'transparent',
-                      outline: accent === c.id ? `3px solid ${c.hex}30` : undefined,
-                      outlineOffset: '2px',
-                    }}
-                  >
-                    {!c.free && (
-                      <span className="absolute inset-0 rounded-full bg-black/30 flex items-center justify-center">
-                        <Lock className="w-3 h-3 text-white/80" />
-                      </span>
-                    )}
-                    {c.free && accent === c.id && (
-                      <span className="absolute inset-0 rounded-full flex items-center justify-center">
-                        <Check className="w-4 h-4 text-white" />
-                      </span>
-                    )}
-                  </button>
-                  <span className="text-[10px] text-muted-foreground">{c.label}</span>
-                </div>
-              ))}
+              {ACCENT_ORDER.map(id => {
+                const c = ACCENTS[id];
+                const active = accentColor === id;
+                return (
+                  <div key={id} className="flex flex-col items-center gap-2">
+                    <button
+                      onClick={() => setAccentColor(id)}
+                      title={c.label}
+                      className="relative w-10 h-10 rounded-full border-2 transition-all focus:outline-none"
+                      style={{
+                        background: c.primary,
+                        borderColor: active ? c.primary : 'transparent',
+                        outline: active ? `3px solid ${c.primary}30` : undefined,
+                        outlineOffset: '2px',
+                      }}
+                    >
+                      {active && (
+                        <span className="absolute inset-0 rounded-full flex items-center justify-center">
+                          <Check className="w-4 h-4" style={{ color: c.primaryForeground }} />
+                        </span>
+                      )}
+                    </button>
+                    <span className="text-[10px] text-muted-foreground">{c.label}</span>
+                  </div>
+                );
+              })}
             </div>
-            <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1.5">
-              <Lock className="w-3 h-3" /> Custom colors unlock with Premium. <button onClick={() => setActiveTab('plan')} className="text-primary hover:underline">Learn more</button>
-            </p>
           </div>
         </div>
 
