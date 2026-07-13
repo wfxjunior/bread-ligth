@@ -85,9 +85,9 @@ function useDailyColors(): ReturnType<typeof getColors> {
   return ctx ?? fallback;
 }
 
-// PT weekday / month labels
-const WEEKDAYS_PT = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
-const MONTHS_PT   = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+// Weekday / month i18n keys — indexed by Date.getDay() / getMonth()
+const WEEKDAY_KEYS = ['weekday_sun','weekday_mon','weekday_tue','weekday_wed','weekday_thu','weekday_fri','weekday_sat'] as const;
+const MONTH_KEYS   = ['month_jan','month_feb','month_mar','month_apr','month_may','month_jun','month_jul','month_aug','month_sep','month_oct','month_nov','month_dec'] as const;
 
 const _domain = process.env.EXPO_PUBLIC_DOMAIN;
 const API_BASE = _domain ? `https://${_domain}/api` : null;
@@ -131,12 +131,12 @@ function DevotionalModal({
   visible, text, loading, error, onClose,
   verseRef, verseEn, versePt, dateStr,
   textEn, loadingEn, errorEn, onRequestEnglish,
-  lang, onLangChange,
+  lang, onLangChange, appLang,
 }: {
   visible: boolean; text: string; loading: boolean; error: string;
   onClose: () => void; verseRef: string; verseEn: string; versePt: string; dateStr: string;
   textEn: string; loadingEn: boolean; errorEn: string; onRequestEnglish: () => void;
-  lang: 'pt' | 'en'; onLangChange: (l: 'pt' | 'en') => void;
+  lang: 'pt' | 'en'; onLangChange: (l: 'pt' | 'en') => void; appLang: 'pt' | 'en';
 }) {
   const colors = useDailyColors();
   const D = buildPalette(colors);
@@ -187,7 +187,7 @@ function DevotionalModal({
 
           <View style={styles.sheetHeader}>
             {/* Title — no icon */}
-            <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Devocional do Dia</Text>
+            <Text style={[styles.sheetTitle, { color: colors.foreground }]}>{t(appLang, 'devotional_modal_title')}</Text>
 
             {/* Right: PT/EN toggle + listen + share icon + close */}
             <View style={styles.sheetActions}>
@@ -243,7 +243,7 @@ function DevotionalModal({
               <View style={styles.sheetCenter}>
                 <ActivityIndicator color={D.wine} size="large" />
                 <Text style={[styles.sheetHint, { color: colors.mutedForeground }]}>
-                  {lang === 'pt' ? 'Gerando sua reflexão…' : 'Generating your reflection…'}
+                  {t(lang, 'generating_reflection')}
                 </Text>
               </View>
             ) : activeError ? (
@@ -319,7 +319,7 @@ export default function DailyScreen() {
 
   const entry    = getEntryForDate(today);
   const verseObj = resolveVerse(entry);
-  const dateStr  = `${WEEKDAYS_PT[today.getDay()]}, ${today.getDate()} ${MONTHS_PT[today.getMonth()]}`;
+  const dateStr  = `${t(lang, WEEKDAY_KEYS[today.getDay()])}, ${today.getDate()} ${t(lang, MONTH_KEYS[today.getMonth()])}`;
 
   // Completion
   const [done, setDone]       = useState(false);
@@ -515,7 +515,7 @@ export default function DailyScreen() {
         <View style={styles.headerCenter}>
           <View style={[styles.modoBadge, { backgroundColor: D.wineFaint, borderColor: D.wineBorder }]}>
             <Feather name="sun" size={11} color={D.wine} />
-            <Text style={[styles.modoBadgeText, { color: D.wine }]}>MODO DIÁRIO</Text>
+            <Text style={[styles.modoBadgeText, { color: D.wine }]}>{t(lang, 'daily_mode_badge')}</Text>
           </View>
           <Text style={[styles.dateText, { color: D.whiteMid }]}>{dateStr}</Text>
         </View>
@@ -530,7 +530,7 @@ export default function DailyScreen() {
           </TouchableOpacity>
           <View style={styles.vocabBadge}>
             <Text style={[styles.vocabCount, { color: D.white }]}>{vocabulary.length}</Text>
-            <Text style={[styles.vocabLabel, { color: D.whiteLow }]}>palavras</Text>
+            <Text style={[styles.vocabLabel, { color: D.whiteLow }]}>{t(lang, 'words_label')}</Text>
           </View>
         </View>
       </View>
@@ -613,7 +613,7 @@ export default function DailyScreen() {
         >
           <Feather name={showPt ? 'eye-off' : 'eye'} size={13} color={showPt ? D.wine : D.whiteLow} />
           <Text style={[styles.ptToggleText, { color: showPt ? D.wine : D.whiteLow }]}>
-            {showPt ? 'Ocultar tradução' : 'Ver tradução em PT'}
+            {showPt ? t(lang, 'hide_pt_translation') : t(lang, 'show_pt_translation')}
           </Text>
         </TouchableOpacity>
 
@@ -621,15 +621,17 @@ export default function DailyScreen() {
 
         <View style={styles.bookTag}>
           <Feather name="book-open" size={12} color={D.wineBorder} />
-          <Text style={[styles.bookTagText, { color: D.wineBorder }]}>{entry.bookPt} · Capítulo {entry.chapter}</Text>
+          <Text style={[styles.bookTagText, { color: D.wineBorder }]}>
+            {lang === 'pt' ? entry.bookPt : entry.bookEn} · {t(lang, 'chapter_label')} {entry.chapter}
+          </Text>
         </View>
 
         <View style={[styles.tipRow, { backgroundColor: D.whiteFaint, borderColor: D.border }]}>
           <Feather name="zap" size={12} color={D.whiteLow} />
           <Text style={[styles.tipText, { color: D.whiteLow }]} numberOfLines={1}>
             {showPt
-              ? 'Toque nas palavras para ver definições'
-              : 'Toque nas palavras · PT revela a tradução'}
+              ? t(lang, 'tip_tap_words_definitions')
+              : t(lang, 'tip_tap_words_pt_reveal')}
           </Text>
         </View>
 
@@ -639,7 +641,7 @@ export default function DailyScreen() {
           <TouchableOpacity onPress={handleShareVerse} activeOpacity={0.75} style={styles.shareVerseBtn}>
             <Feather name="share" size={16} color="#FFFFFF" />
             <Text style={[styles.shareVerseBtnText, { color: '#FFFFFF' }]}>
-              {lang === 'pt' ? 'Compartilhar' : 'Share'}
+              {t(lang, 'share_action')}
             </Text>
           </TouchableOpacity>
 
@@ -670,7 +672,7 @@ export default function DailyScreen() {
               activeOpacity={0.8}
               style={[styles.devBtn, { borderColor: D.wineBorder, backgroundColor: D.wineFaint }]}
             >
-              <Text style={[styles.devBtnText, { color: D.wine }]}>Ler Devocional</Text>
+              <Text style={[styles.devBtnText, { color: D.wine }]}>{t(lang, 'read_devotional')}</Text>
             </TouchableOpacity>
 
           </View>
@@ -698,7 +700,7 @@ export default function DailyScreen() {
             </Animated.View>
           ) : (
             <TouchableOpacity onPress={handleComplete} activeOpacity={0.85} style={[styles.completeBtn, { backgroundColor: D.wine }]}>
-              <Text style={[styles.completeBtnText, { color: D.bg1 }]}>Marcar como concluído</Text>
+              <Text style={[styles.completeBtnText, { color: D.bg1 }]}>{t(lang, 'mark_done')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -717,6 +719,7 @@ export default function DailyScreen() {
         onClose={() => setDevVisible(false)}
         lang={devLang}
         onLangChange={setDevLang}
+        appLang={lang}
         verseRef={`${entry.bookEn} ${entry.chapter}:${entry.verse}`}
         verseEn={verseObj.en}
         versePt={verseObj.pt}
