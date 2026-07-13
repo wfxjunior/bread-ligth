@@ -12,6 +12,8 @@ import {
   Feather,
   BookHeart
 } from 'lucide-react';
+import { useReadingSpace } from '../context/reading-space-context';
+import { SpaceBackground } from './space-background';
 
 const NAV_ITEMS = [
   { name: 'Home', path: '/home', icon: LayoutDashboard },
@@ -28,6 +30,7 @@ const NAV_ITEMS = [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  const { space } = useReadingSpace();
 
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden text-foreground">
@@ -77,9 +80,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 bg-background">
-        {children}
+      {/* Main Content — the active Reading Space's calm gradient sits behind it */}
+      <main className="relative flex-1 flex flex-col min-w-0">
+        <SpaceBackground space={space} />
+        <div className="relative flex-1 flex flex-col min-w-0">
+          {children}
+        </div>
       </main>
     </div>
   );

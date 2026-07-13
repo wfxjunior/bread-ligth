@@ -5,6 +5,8 @@ import {
   User, Palette, BookOpen, Globe, Share2, BookHeart, Crown,
   Check, Lock, Copy, ChevronRight, Mail, Pencil, Plus,
 } from 'lucide-react';
+import { useReadingSpace } from '../context/reading-space-context';
+import { READING_SPACES, READING_SPACE_ORDER, gradientCss } from '../lib/reading-spaces';
 
 // ── Reusable Toggle ─────────────────────────────────────────────────────────
 function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
@@ -86,6 +88,7 @@ export default function SettingsPage() {
   // Appearance
   const [theme, setTheme]   = useState('classic');
   const [accent, setAccent] = useState('burgundy');
+  const { readingSpace, setReadingSpace } = useReadingSpace();
 
   // Reading toggles
   const [lastPos,    setLastPos]    = useState(true);
@@ -239,6 +242,41 @@ export default function SettingsPage() {
             <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1.5">
               <Lock className="w-3 h-3" /> Custom colors unlock with Premium. <button onClick={() => setActiveTab('plan')} className="text-primary hover:underline">Learn more</button>
             </p>
+          </div>
+        </div>
+
+        <div>
+          <SectionTitle>Reading Space</SectionTitle>
+          <p className="text-sm text-muted-foreground -mt-3 mb-4">
+            A calm background mood for your Home, Reader, and Devotionals — independent of your reading theme.
+          </p>
+          <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
+            {READING_SPACE_ORDER.map(id => {
+              const s = READING_SPACES[id];
+              const active = readingSpace === id;
+              return (
+                <button
+                  key={id}
+                  onClick={() => setReadingSpace(id)}
+                  className={`shrink-0 w-24 rounded-xl border-2 overflow-hidden text-left transition-all ${active ? '' : 'border-border hover:border-primary/30'}`}
+                  style={active ? { borderColor: s.accent } : undefined}
+                >
+                  <div className="w-full h-14 relative" style={{ background: gradientCss(s.gradient) }}>
+                    {active && (
+                      <span
+                        className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full flex items-center justify-center"
+                        style={{ background: s.accent }}
+                      >
+                        <Check className="w-2.5 h-2.5 text-white" />
+                      </span>
+                    )}
+                  </div>
+                  <div className="px-2.5 py-2">
+                    <p className="text-xs font-medium text-foreground">{s.label}</p>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

@@ -19,3 +19,8 @@ Some older screens (e.g. `app/daily.tsx`) defined a **module-scope constant pale
 2. Strip the color-only properties (`color`, `backgroundColor`, `borderColor`, etc.) out of the static `StyleSheet.create` entries — keep only layout (padding, gap, radius, fontFamily/fontSize).
 3. Apply the removed colors inline at each JSX usage site via `style={[styles.x, { color: D.y }]}`, since inline styles ARE re-evaluated every render.
 Any color reference that was already inline (not inside `StyleSheet.create`) is automatically fine once the palette variable itself is computed per-render — no change needed there.
+
+## Web port (artifacts/bible-english)
+The web app mirrors this system independently (no shared package with mobile): `src/lib/reading-spaces.ts` duplicates `READING_SPACES` as CSS gradient strings, `src/context/reading-space-context.tsx` persists to `localStorage` (`bible-english:readingSpace`), and `src/components/space-background.tsx` crossfades via a timed opacity transition (same 420ms pattern, CSS instead of RN Animated). It's wired into `Layout`'s `<main>` as an absolutely-positioned layer behind children — works because page-level wrapper divs don't set `bg-background` (only nested cards/headers do), so the gradient shows through. If a future page needs its own solid wrapper, it will blank out the gradient — check for that first.
+
+**Why:** the web app has no shared package with mobile and no formal i18n system yet, so keeping the data in sync is a manual porting exercise, not a shared import — watch for drift if `READING_SPACES` changes on mobile.
