@@ -22,6 +22,7 @@ import { useColors } from '@/hooks/useColors';
 import SpaceBackground from '@/components/SpaceBackground';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useAudio } from '@/context/AudioContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { useBible } from '@/context/BibleContext';
 import { BIBLE_DATA } from '@/constants/bibleData';
 import { getEntryForDate, resolveVerse, todayKey } from '@/utils/dailyVerse';
@@ -307,10 +308,10 @@ const BOOK_CATALOGUE: BookMeta[] = [
 // rather than a fixed gold, so the Study/vocabulary section follows the chosen atmosphere.
 
 const STUDY_STEPS = [
-  { id: 'read',    icon: 'book-open',  label: 'Read'    },
-  { id: 'listen',  icon: 'headphones', label: 'Listen'  },
-  { id: 'learn',   icon: 'edit-3',     label: 'Learn'   },
-  { id: 'reflect', icon: 'compass',    label: 'Reflect' },
+  { id: 'read',    icon: 'book-open',  labelKey: 'study_step_read'    as const },
+  { id: 'listen',  icon: 'headphones', labelKey: 'study_step_listen'  as const },
+  { id: 'learn',   icon: 'edit-3',     labelKey: 'study_step_learn'   as const },
+  { id: 'reflect', icon: 'compass',    labelKey: 'study_step_reflect' as const },
 ];
 
 const PROGRESS_STATS: ProgressStat[] = [
@@ -403,6 +404,7 @@ const STUDY_QUEUE_KEY = 'study:john:1';
 function StudyCard() {
   const colors = useColors();
   const audio  = useAudio();
+  const { t }  = useLanguage();
 
   const [expandedStep, setExpandedStep]     = useState<string | null>(null);
   const [wordModal, setWordModal]           = useState<{ word: string; context: string } | null>(null);
@@ -451,7 +453,7 @@ function StudyCard() {
 
         {/* Chapter title */}
         <Text style={[styles.studyTitle, { color: colors.foreground }]}>
-          The Word{'\n'}Became Flesh
+          {t('study_chapter_title')}
         </Text>
 
         {/* Hairline divider */}
@@ -495,7 +497,7 @@ function StudyCard() {
                     color:      highlight ? colors.foreground : colors.mutedForeground,
                     fontFamily: highlight ? 'Inter_600SemiBold' : 'Inter_400Regular',
                   }]}>
-                    {step.label}
+                    {t(step.labelKey)}
                   </Text>
 
                   <Feather
@@ -529,7 +531,7 @@ function StudyCard() {
                           }}
                           style={[styles.studyInlineBtn, { borderColor: colors.primary }]}
                         >
-                          <Text style={[styles.studyInlineBtnText, { color: colors.primary }]}>Continue Reading</Text>
+                          <Text style={[styles.studyInlineBtnText, { color: colors.primary }]}>{t('study_continue_reading')}</Text>
                           <Feather name="arrow-right" size={13} color={colors.primary} />
                         </TouchableOpacity>
                       </>
@@ -591,12 +593,12 @@ function StudyCard() {
                     {step.id === 'reflect' && (
                       <View>
                         <Text style={[styles.studyReflectPrompt, { color: colors.foreground }]}>
-                          O Verbo se fez carne e habitou entre nós. O que essa verdade muda na sua vida hoje?
+                          {t('study_reflect_prompt')}
                         </Text>
                         <TextInput
                           value={reflection}
                           onChangeText={setReflection}
-                          placeholder="Escreva sua reflexão..."
+                          placeholder={t('study_reflect_placeholder')}
                           placeholderTextColor={colors.mutedForeground}
                           multiline
                           style={[styles.studyReflectInput, {
@@ -612,7 +614,7 @@ function StudyCard() {
                         >
                           <Feather name={reflectionSaved ? 'check' : 'save'} size={13} color={colors.primary} />
                           <Text style={[styles.studyInlineBtnText, { color: colors.primary }]}>
-                            {reflectionSaved ? 'Salvo' : 'Salvar reflexão'}
+                            {reflectionSaved ? t('study_reflect_saved') : t('study_reflect_save')}
                           </Text>
                         </TouchableOpacity>
                       </View>
@@ -634,7 +636,7 @@ function StudyCard() {
           style={[styles.studyBtn, { backgroundColor: colors.primary, borderRadius: colors.radius }]}
         >
           <Text style={[styles.studyBtnText, { color: colors.primaryForeground }]}>
-            Start Today's Study
+            {t('study_start_today')}
           </Text>
         </TouchableOpacity>
 

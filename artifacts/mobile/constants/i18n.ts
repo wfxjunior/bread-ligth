@@ -241,6 +241,20 @@ const strings = {
 
   // ── Vocabulary audio
   listen_word:          { pt: 'Ouvir palavra', en: 'Listen to word' },
+
+  // ── Home · Study card
+  study_step_read:      { pt: 'Ler',       en: 'Read'    },
+  study_step_listen:    { pt: 'Ouvir',     en: 'Listen'  },
+  study_step_learn:     { pt: 'Aprender',  en: 'Learn'   },
+  study_step_reflect:   { pt: 'Refletir',  en: 'Reflect' },
+  study_chapter_title:  { pt: 'O Verbo se\nfez carne', en: 'The Word\nBecame Flesh' },
+  study_continue_reading: { pt: 'Continuar leitura', en: 'Continue Reading' },
+  study_reflect_save:   { pt: 'Salvar reflexão', en: 'Save reflection' },
+  study_reflect_saved:  { pt: 'Salvo',            en: 'Saved'           },
+  study_reflect_placeholder: { pt: 'Escreva sua reflexão...', en: 'Write your reflection...' },
+  study_reflect_prompt: { pt: 'O Verbo se fez carne e habitou entre nós. O que essa verdade muda na sua vida hoje?',
+                           en: 'The Word became flesh and dwelt among us. What does this truth change in your life today?' },
+  study_start_today:    { pt: 'Começar o Estudo de Hoje', en: "Start Today's Study" },
 } as const;
 
 export type I18nKey = keyof typeof strings;
