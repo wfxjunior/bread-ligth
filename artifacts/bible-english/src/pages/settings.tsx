@@ -1,9 +1,10 @@
 import { useState, type ReactNode } from 'react';
+import { useLocation } from 'wouter';
 import { Layout } from '../components/layout';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Palette, BookOpen, Globe, Share2, BookHeart, Crown,
-  Check, Copy, ChevronRight, Mail, Pencil, Plus, LogOut,
+  Check, Copy, ChevronRight, Mail, Pencil, Plus, LogOut, Lock, Loader2,
 } from 'lucide-react';
 import { Show, useClerk, useUser } from '@clerk/react';
 import { useReadingSpace } from '../context/reading-space-context';
@@ -11,6 +12,8 @@ import { READING_SPACES, READING_SPACE_ORDER, gradientCss } from '../lib/reading
 import { useAtmosphere } from '../context/atmosphere-context';
 import { ATMOSPHERES, ATMOSPHERE_ORDER, ACCENTS, ACCENT_ORDER } from '../lib/atmospheres';
 import { useLanguage } from '../context/language-context';
+import { useBillingStatus, useBillingActions } from '../hooks/use-billing';
+import { isPremium } from '../lib/billing';
 import type { I18nKey } from '../lib/i18n';
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
@@ -156,8 +159,28 @@ const MOCK_DEVOTIONALS_SETTINGS = [
 // ── Main component ───────────────────────────────────────────────────────────
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile');
+  const [, navigate] = useLocation();
   const { lang, setLang, t: tl } = useLanguage();
-  const { user } = useUser();
+
+  // Billing
+  const { data: billingStatus, isLoading: billingLoading, isError: billingError } = useBillingStatus();
+  const { openBillingPortal } = useBillingActions();
+  const userIsPremium = isPremium(billingStatus);
+  const [billingActionPending, setBillingActionPending] = useState(false);
+  const [billingActionError, setBillingActionError] = useState<string | null>(null);
+
+  const goToPricing = () => navigate('/pricing');
+
+  const handleManageBilling = async () => {
+    setBillingActionError(null);
+    setBillingActionPending(true);
+    try {
+      await openBillingPortal();
+    } catch (err) {
+      setBillingActionError(err instanceof Error ? err.message : String(err));
+      setBillingActionPending(false);
+    }
+  };
 
   // Appearance
   const { atmosphere, setAtmosphere, accentColor, setAccentColor } = useAtmosphere();
@@ -193,9 +216,6 @@ export default function SettingsPage() {
   const [newTitle, setNewTitle]     = useState('');
   const [newSched, setNewSched]     = useState('Daily');
 
-  // Plan
-  const [waitlistJoined, setWaitlistJoined] = useState(false);
-
   const content: Record<string, ReactNode> = {
 
     // ── Profile ──────────────────────────────────────────────────────────────
@@ -220,25 +240,33 @@ export default function SettingsPage() {
             {ATMOSPHERE_ORDER.map(id => {
               const t = ATMOSPHERES[id];
               const active = atmosphere === id;
+              const locked = t.premium && !userIsPremium;
               return (
                 <button
                   key={id}
-                  onClick={() => setAtmosphere(id)}
+                  onClick={() => (locked ? goToPricing() : setAtmosphere(id))}
+                  title={locked ? tl('appearance_unlock_cta') : undefined}
                   className={`relative p-0 rounded-xl text-left border-2 overflow-hidden transition-all ${active ? 'border-primary' : 'border-border hover:border-primary/30'}`}
                 >
-                  {active && (
+                  {active && !locked && (
                     <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center z-10">
                       <Check className="w-3 h-3 text-white" />
                     </span>
                   )}
-                  <div className="w-full h-20" style={{ background: t.background }}>
+                  {locked && (
+                    <span className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-sm z-10">
+                      <Lock className="w-2.5 h-2.5 text-white" />
+                      <span className="text-[9px] font-bold uppercase tracking-wide text-white">{tl('appearance_premium_badge')}</span>
+                    </span>
+                  )}
+                  <div className={`w-full h-20 ${locked ? 'opacity-60' : ''}`} style={{ background: t.background }}>
                     <div className="p-3 space-y-1.5">
                       <div className="w-3/4 h-1.5 rounded-full" style={{ background: t.foreground, opacity: t.isDark ? 0.25 : 0.15 }} />
                       <div className="w-full h-1.5 rounded-full" style={{ background: t.foreground, opacity: t.isDark ? 0.15 : 0.08 }} />
                       <div className="w-5/6 h-1.5 rounded-full" style={{ background: t.foreground, opacity: t.isDark ? 0.15 : 0.08 }} />
                     </div>
                   </div>
-                  <div className="p-3" style={{ background: t.card }}>
+                  <div className={`p-3 ${locked ? 'opacity-60' : ''}`} style={{ background: t.card }}>
                     <p className="font-serif font-medium text-sm" style={{ color: t.foreground }}>{t.label}</p>
                   </div>
                 </button>
@@ -254,22 +282,29 @@ export default function SettingsPage() {
               {ACCENT_ORDER.map(id => {
                 const c = ACCENTS[id];
                 const active = accentColor === id;
+                const locked = c.premium && !userIsPremium;
                 return (
                   <div key={id} className="flex flex-col items-center gap-2">
                     <button
-                      onClick={() => setAccentColor(id)}
-                      title={c.label}
+                      onClick={() => (locked ? goToPricing() : setAccentColor(id))}
+                      title={locked ? tl('appearance_unlock_cta') : c.label}
                       className="relative w-10 h-10 rounded-full border-2 transition-all focus:outline-none"
                       style={{
                         background: c.primary,
-                        borderColor: active ? c.primary : 'transparent',
-                        outline: active ? `3px solid ${c.primary}30` : undefined,
+                        borderColor: active && !locked ? c.primary : 'transparent',
+                        outline: active && !locked ? `3px solid ${c.primary}30` : undefined,
                         outlineOffset: '2px',
+                        opacity: locked ? 0.55 : 1,
                       }}
                     >
-                      {active && (
+                      {active && !locked && (
                         <span className="absolute inset-0 rounded-full flex items-center justify-center">
                           <Check className="w-4 h-4" style={{ color: c.primaryForeground }} />
+                        </span>
+                      )}
+                      {locked && (
+                        <span className="absolute inset-0 rounded-full flex items-center justify-center bg-black/30">
+                          <Lock className="w-3.5 h-3.5 text-white" />
                         </span>
                       )}
                     </button>
@@ -278,6 +313,17 @@ export default function SettingsPage() {
                 );
               })}
             </div>
+            {!userIsPremium && (
+              <div className="mt-5 pt-5 border-t border-border/40 flex items-center justify-between gap-4 flex-wrap">
+                <p className="text-xs text-muted-foreground max-w-sm">{tl('appearance_locked_desc')}</p>
+                <button
+                  onClick={goToPricing}
+                  className="shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/15 transition-colors"
+                >
+                  <Crown className="w-3 h-3" /> {tl('appearance_unlock_cta')}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -591,91 +637,127 @@ export default function SettingsPage() {
     // ── Plan & Billing ────────────────────────────────────────────────────────
     plan: (
       <div className="space-y-8">
-        {/* Current */}
-        <div className="bg-card border border-border rounded-2xl p-6 flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Current Plan</p>
-            <p className="font-serif text-2xl text-foreground">Free</p>
-            <p className="text-sm text-muted-foreground mt-1">You're studying the Bible and learning English for free.</p>
+        <Show
+          when="signed-out"
+          fallback={<></>}
+        >
+          <div className="bg-card border border-border rounded-2xl p-8 text-center">
+            <p className="text-sm text-muted-foreground mb-4">{tl('plan_sign_in_to_manage')}</p>
+            <a
+              href={`${basePath}/sign-in`}
+              className="inline-block px-6 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors no-underline"
+            >
+              {tl('auth_sign_in')}
+            </a>
           </div>
-          <span className="px-4 py-1.5 rounded-full bg-muted border border-border text-sm font-medium text-muted-foreground">Free Plan</span>
-        </div>
+        </Show>
 
-        {/* Premium card */}
-        <div className="relative rounded-2xl overflow-hidden border border-primary/20">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 pointer-events-none" />
-          <div className="relative p-8">
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-secondary mb-1">Upgrade</p>
-                <h3 className="font-serif text-3xl text-foreground">Bible English Premium</h3>
-                <p className="text-muted-foreground text-sm mt-1">Cancel anytime. No ads. Ever.</p>
-              </div>
-              <div className="text-right">
-                <div className="flex items-baseline gap-1">
-                  <span className="font-serif text-4xl text-primary">$4.99</span>
-                  <span className="text-muted-foreground text-sm">/month</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-              {[
-                'Unlock all 66 books',
-                'Custom accent colors',
-                'Unlimited devotionals',
-                'Share verse cards',
-                'Export highlights & notes',
-                'Audio playback (all chapters)',
-                'Advanced grammar explanations',
-                'Priority new features',
-              ].map(f => (
-                <div key={f} className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full bg-secondary/20 border border-secondary/40 flex items-center justify-center shrink-0">
-                    <Check className="w-2.5 h-2.5 text-secondary" />
-                  </div>
-                  <span className="text-sm text-foreground">{f}</span>
-                </div>
-              ))}
-            </div>
-
-            <AnimatePresence mode="wait">
-              {waitlistJoined ? (
-                <motion.div
-                  key="joined"
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="w-full py-3.5 rounded-xl bg-secondary/10 border border-secondary/30 text-center"
-                >
-                  <p className="text-sm font-medium text-secondary flex items-center justify-center gap-2">
-                    <Check className="w-4 h-4" /> You're on the list! We'll notify you at {user?.primaryEmailAddress?.emailAddress ?? 'your email'}
+        <Show when="signed-in">
+          {/* Current plan — real Stripe-backed status */}
+          <div className="bg-card border border-border rounded-2xl p-6">
+            {billingLoading ? (
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" /> {tl('plan_loading')}
+              </p>
+            ) : billingError ? (
+              <p className="text-sm text-destructive">{tl('plan_error')}</p>
+            ) : (
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">{tl('plan_current_plan_title')}</p>
+                  <p className="font-serif text-2xl text-foreground">
+                    {userIsPremium ? tl('plan_premium_plan_label') : tl('plan_free_plan_label')}
                   </p>
-                </motion.div>
-              ) : (
-                <motion.button
-                  key="cta"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  onClick={() => setWaitlistJoined(true)}
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {!userIsPremium && tl('plan_free_desc')}
+                    {userIsPremium && billingStatus?.plan === 'premium' && billingStatus.status === 'trialing' && tl('plan_premium_desc_trialing')}
+                    {userIsPremium && billingStatus?.plan === 'premium' && billingStatus.status !== 'trialing' && !billingStatus.cancelAtPeriodEnd && tl('plan_premium_desc_active')}
+                    {userIsPremium && billingStatus?.plan === 'premium' && billingStatus.cancelAtPeriodEnd && tl('plan_premium_desc_canceling')}
+                  </p>
+                  {billingStatus?.plan === 'premium' && billingStatus.status === 'trialing' && billingStatus.trialEnd && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {tl('plan_trial_ends')}: {new Date(billingStatus.trialEnd * 1000).toLocaleDateString()}
+                    </p>
+                  )}
+                  {billingStatus?.plan === 'premium' && billingStatus.status !== 'trialing' && billingStatus.currentPeriodEnd && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {(billingStatus.cancelAtPeriodEnd ? tl('plan_ends_on') : tl('plan_renews_on'))}: {new Date(billingStatus.currentPeriodEnd * 1000).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+
+                {userIsPremium ? (
+                  <button
+                    onClick={handleManageBilling}
+                    disabled={billingActionPending}
+                    className="px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors disabled:opacity-60 flex items-center gap-2"
+                  >
+                    {billingActionPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    {tl('plan_manage_billing')}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => navigate('/pricing')}
+                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-2"
+                  >
+                    <Crown className="w-3.5 h-3.5" /> {tl('plan_view_plans')}
+                  </button>
+                )}
+              </div>
+            )}
+            {billingActionError && (
+              <p className="text-xs text-destructive mt-3">{billingActionError}</p>
+            )}
+          </div>
+
+          {/* Upgrade card — links to the full pricing page for checkout */}
+          {!userIsPremium && (
+            <div className="relative rounded-2xl overflow-hidden border border-primary/20">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 pointer-events-none" />
+              <div className="relative p-8">
+                <div className="flex items-start justify-between mb-6 flex-wrap gap-4">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-secondary mb-1">{tl('plan_upgrade_eyebrow')}</p>
+                    <h3 className="font-serif text-3xl text-foreground">{tl('plan_upgrade_title')}</h3>
+                    <p className="text-muted-foreground text-sm mt-1">{tl('plan_upgrade_subtitle')}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
+                  {[
+                    tl('plan_feature_atmospheres'),
+                    tl('plan_feature_accents'),
+                    tl('plan_feature_mission'),
+                    tl('plan_feature_early_access'),
+                    tl('plan_feature_priority_support'),
+                  ].map(f => (
+                    <div key={f} className="flex items-center gap-2.5">
+                      <div className="w-4 h-4 rounded-full bg-secondary/20 border border-secondary/40 flex items-center justify-center shrink-0">
+                        <Check className="w-2.5 h-2.5 text-secondary" />
+                      </div>
+                      <span className="text-sm text-foreground">{f}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => navigate('/pricing')}
                   className="w-full py-3.5 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-all flex items-center justify-center gap-2"
                 >
-                  <Crown className="w-4 h-4" /> Join the Waitlist
-                </motion.button>
-              )}
-            </AnimatePresence>
-
-            <p className="text-center text-xs text-muted-foreground mt-4">Currently in private beta — launching soon</p>
-          </div>
-        </div>
+                  <Crown className="w-4 h-4" /> {tl('plan_trial_cta')}
+                </button>
+                <p className="text-center text-xs text-muted-foreground mt-4">{tl('plan_trial_disclaimer')}</p>
+              </div>
+            </div>
+          )}
+        </Show>
 
         {/* Always free */}
         <div className="bg-card border border-border/50 rounded-2xl p-6">
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Always Free, Forever</p>
-          <p className="text-sm text-foreground leading-relaxed">
-            John, Psalms, Proverbs, Genesis, Matthew, Romans — always free. Personal notes, bookmarks, vocabulary, word translations — always free.
-          </p>
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">{tl('plan_always_free_title')}</p>
+          <p className="text-sm text-foreground leading-relaxed">{tl('plan_always_free_desc')}</p>
           <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-            <ChevronRight className="w-3 h-3" /> No credit card required to start
+            <ChevronRight className="w-3 h-3" /> {tl('plan_no_card_required')}
           </p>
         </div>
       </div>

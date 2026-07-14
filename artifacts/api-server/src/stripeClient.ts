@@ -7,7 +7,6 @@ import { StripeSync } from "stripe-replit-sync";
  */
 async function getStripeCredentials(): Promise<{
   secretKey: string;
-  webhookSecret?: string;
 }> {
   const hostname = process.env["REPLIT_CONNECTORS_HOSTNAME"];
   const xReplitToken = process.env["REPL_IDENTITY"]
@@ -24,7 +23,7 @@ async function getStripeCredentials(): Promise<{
   }
 
   const resp = await fetch(
-    `https://${hostname}/api/v2/connection?include_secrets=true&connector_names=stripe`,
+    `https://${hostname}/api/v2/connection?include_secrets=true&connector_name=stripe`,
     {
       headers: { Accept: "application/json", X_REPLIT_TOKEN: xReplitToken },
       signal: AbortSignal.timeout(10_000),
@@ -37,10 +36,12 @@ async function getStripeCredentials(): Promise<{
     );
   }
 
-  const data = await resp.json();
+  const data = (await resp.json()) as {
+    items?: Array<{ settings?: { secret?: string; publishable?: string } }>;
+  };
   const settings = data.items?.[0]?.settings;
 
-  if (!settings?.secret_key) {
+  if (!settings?.secret) {
     throw new Error(
       "Stripe integration not connected or missing secret key. " +
         "Connect Stripe via the Integrations tab first.",
@@ -48,8 +49,7 @@ async function getStripeCredentials(): Promise<{
   }
 
   return {
-    secretKey: settings.secret_key,
-    webhookSecret: settings.webhook_secret,
+    secretKey: settings.secret,
   };
 }
 
@@ -72,10 +72,11 @@ export async function getStripeSync(): Promise<StripeSync> {
     throw new Error("DATABASE_URL environment variable is required");
   }
 
-  const { secretKey, webhookSecret } = await getStripeCredentials();
+  const { secretKey } = await getStripeCredentials();
   return new StripeSync({
     poolConfig: { connectionString: databaseUrl },
     stripeSecretKey: secretKey,
-    stripeWebhookSecret: webhookSecret ?? "",
+    // No stripeWebhookSecret needed -- findOrCreateManagedWebhook() manages
+    // signature verification for managed webhooks internally.
   });
 }

@@ -21,6 +21,10 @@ interface AtmosphereBase {
   secondaryAccent: string;
   isDark: boolean;
   label: string;
+  // BreadLight Premium gating: the default atmosphere stays free forever so
+  // signed-out/free readers always have a good-looking option; every other
+  // atmosphere is a Premium perk. See Task #16.
+  premium: boolean;
 }
 
 // Ported verbatim from mobile's ATMOSPHERES — do not invent new colors here.
@@ -28,52 +32,52 @@ export const ATMOSPHERES: Record<Atmosphere, AtmosphereBase> = {
   parchment: {
     background: '#F6F1E4', surface: '#EFE7D2', card: '#FBF7EC',
     foreground: '#4A3D2C', mutedForeground: '#8A7A5F', divider: '#E4D9BE',
-    secondaryAccent: '#B08D4F', isDark: false, label: 'Parchment',
+    secondaryAccent: '#B08D4F', isDark: false, label: 'Parchment', premium: true,
   },
   cozy: {
     background: '#F2E9DC', surface: '#E9DCC5', card: '#F8F1E4',
     foreground: '#4F4030', mutedForeground: '#8F7D68', divider: '#DFD0B8',
-    secondaryAccent: '#C9A06A', isDark: false, label: 'Cozy',
+    secondaryAccent: '#C9A06A', isDark: false, label: 'Cozy', premium: true,
   },
   classic: {
     background: '#FAF8F4', surface: '#EEEBE6', card: '#FEFDFB',
     foreground: '#392E28', mutedForeground: '#7E6F67', divider: '#E7E2DA',
-    secondaryAccent: '#9C7A4A', isDark: false, label: 'Classic',
+    secondaryAccent: '#9C7A4A', isDark: false, label: 'Classic', premium: false,
   },
   dark: {
     background: '#171413', surface: '#211C1A', card: '#271F1D',
     foreground: '#EDE3D6', mutedForeground: '#A79C8E', divider: '#372E2A',
-    secondaryAccent: '#C9A15A', isDark: true, label: 'Dark',
+    secondaryAccent: '#C9A15A', isDark: true, label: 'Dark', premium: true,
   },
   night: {
     background: '#0C0F16', surface: '#141926', card: '#181E2B',
     foreground: '#DCE2EC', mutedForeground: '#8791A3', divider: '#242B3B',
-    secondaryAccent: '#6E8FC4', isDark: true, label: 'Night',
+    secondaryAccent: '#6E8FC4', isDark: true, label: 'Night', premium: true,
   },
   library: {
     background: '#241A12', surface: '#312417', card: '#3A2B1C',
     foreground: '#E8D9C2', mutedForeground: '#A88F72', divider: '#4C3827',
-    secondaryAccent: '#B4813F', isDark: true, label: 'Library',
+    secondaryAccent: '#B4813F', isDark: true, label: 'Library', premium: true,
   },
   morning: {
     background: '#FFF8EC', surface: '#FBEDD3', card: '#FFFCF5',
     foreground: '#4A3B28', mutedForeground: '#9C8B6E', divider: '#F0DFBE',
-    secondaryAccent: '#E3B873', isDark: false, label: 'Morning',
+    secondaryAccent: '#E3B873', isDark: false, label: 'Morning', premium: true,
   },
   minimal: {
     background: '#FFFFFF', surface: '#FAFAFA', card: '#FFFFFF',
     foreground: '#1A1A1A', mutedForeground: '#888888', divider: '#EDEDED',
-    secondaryAccent: '#8A8A8A', isDark: false, label: 'Minimal',
+    secondaryAccent: '#8A8A8A', isDark: false, label: 'Minimal', premium: true,
   },
   sepia: {
     background: '#E8D9BC', surface: '#DECAA5', card: '#F0E2C4',
     foreground: '#3E2E1A', mutedForeground: '#7A6142', divider: '#CBB48A',
-    secondaryAccent: '#A67B3D', isDark: false, label: 'Sepia',
+    secondaryAccent: '#A67B3D', isDark: false, label: 'Sepia', premium: true,
   },
   focus: {
     background: '#E9E9E9', surface: '#DFDFDF', card: '#EFEFEF',
     foreground: '#3A3A3A', mutedForeground: '#7C7C7C', divider: '#D2D2D2',
-    secondaryAccent: '#8A8A8A', isDark: false, label: 'Focus',
+    secondaryAccent: '#8A8A8A', isDark: false, label: 'Focus', premium: true,
   },
 };
 
@@ -86,15 +90,17 @@ interface AccentBase {
   primary: string;
   primaryForeground: string;
   label: string;
+  // Same gating rule as atmospheres: only the default accent is free.
+  premium: boolean;
 }
 
 // Ported verbatim from mobile's ACCENTS.
 export const ACCENTS: Record<AccentColor, AccentBase> = {
-  'royal-blue': { primary: '#1B3A6B', primaryForeground: '#FFFFFF', label: 'Royal Blue' },
-  burgundy:     { primary: '#6B1E2A', primaryForeground: '#FAF8F4', label: 'Burgundy' },
-  forest:       { primary: '#1E4D2B', primaryForeground: '#FFFFFF', label: 'Forest' },
-  slate:        { primary: '#3D4A5C', primaryForeground: '#FFFFFF', label: 'Slate' },
-  violet:       { primary: '#3B1E6B', primaryForeground: '#FFFFFF', label: 'Violet' },
+  'royal-blue': { primary: '#1B3A6B', primaryForeground: '#FFFFFF', label: 'Royal Blue', premium: true },
+  burgundy:     { primary: '#6B1E2A', primaryForeground: '#FAF8F4', label: 'Burgundy', premium: false },
+  forest:       { primary: '#1E4D2B', primaryForeground: '#FFFFFF', label: 'Forest', premium: true },
+  slate:        { primary: '#3D4A5C', primaryForeground: '#FFFFFF', label: 'Slate', premium: true },
+  violet:       { primary: '#3B1E6B', primaryForeground: '#FFFFFF', label: 'Violet', premium: true },
 };
 
 export const ACCENT_ORDER: AccentColor[] = ['royal-blue', 'burgundy', 'forest', 'slate', 'violet'];
@@ -196,5 +202,6 @@ export function getAtmospherePreview(id: Atmosphere) {
     secondaryAccent: t.secondaryAccent,
     isDark: t.isDark,
     label: t.label,
+    premium: t.premium,
   };
 }

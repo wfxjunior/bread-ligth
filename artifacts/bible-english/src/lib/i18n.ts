@@ -55,6 +55,60 @@ const strings = {
   settings_profile_member_since: { pt: 'Membro desde',           en: 'Member since' },
   settings_profile_signed_out_desc: { pt: 'Entre para sincronizar seu progresso entre dispositivos e desbloquear o Premium.', en: 'Sign in to sync your progress across devices and unlock Premium.' },
   settings_profile_change_photo: { pt: 'Alterar foto',           en: 'Change photo' },
+
+  // ── Plan & Billing / Pricing — BreadLight Premium
+  plan_free_plan_label:     { pt: 'Plano Gratuito',    en: 'Free Plan' },
+  plan_premium_plan_label:  { pt: 'Plano Premium',     en: 'Premium Plan' },
+  plan_current_plan_title:  { pt: 'Plano Atual',       en: 'Current Plan' },
+  plan_free_desc:           { pt: 'Você está estudando a Bíblia e aprendendo inglês gratuitamente.', en: "You're studying the Bible and learning English for free." },
+  plan_premium_desc_trialing: { pt: 'Seu teste grátis está ativo.', en: 'Your free trial is active.' },
+  plan_premium_desc_active: { pt: 'Sua assinatura Premium está ativa.', en: 'Your Premium subscription is active.' },
+  plan_premium_desc_canceling: { pt: 'Sua assinatura termina no fim do período atual.', en: 'Your subscription ends at the end of the current period.' },
+  plan_trial_ends:          { pt: 'Teste grátis termina em',  en: 'Free trial ends' },
+  plan_renews_on:           { pt: 'Renova em',                en: 'Renews on' },
+  plan_ends_on:             { pt: 'Termina em',               en: 'Ends on' },
+  plan_manage_billing:      { pt: 'Gerenciar Cobrança',       en: 'Manage Billing' },
+  plan_loading:             { pt: 'Carregando plano...',      en: 'Loading plan...' },
+  plan_error:               { pt: 'Não foi possível carregar seu plano. Tente novamente.', en: 'Could not load your plan. Please try again.' },
+  plan_sign_in_to_manage:   { pt: 'Entre para ver e gerenciar seu plano.', en: 'Sign in to view and manage your plan.' },
+
+  plan_upgrade_eyebrow:     { pt: 'Upgrade',                   en: 'Upgrade' },
+  plan_upgrade_title:       { pt: 'BreadLight Premium',        en: 'BreadLight Premium' },
+  plan_upgrade_subtitle:    { pt: 'Cancele quando quiser. Teste grátis de 7 dias.', en: 'Cancel anytime. 7-day free trial.' },
+  plan_billed_monthly:      { pt: 'Mensal',                    en: 'Monthly' },
+  plan_billed_yearly:       { pt: 'Anual',                     en: 'Yearly' },
+  plan_per_month:           { pt: '/mês',                      en: '/month' },
+  plan_per_year:            { pt: '/ano',                      en: '/year' },
+  plan_yearly_save_badge:   { pt: 'Economize 33%',             en: 'Save 33%' },
+  plan_trial_cta:           { pt: 'Iniciar teste grátis de 7 dias', en: 'Start your 7-day free trial' },
+  plan_trial_disclaimer:    { pt: 'Sem cobrança por 7 dias. Cancele quando quiser.', en: "You won't be charged for 7 days. Cancel anytime." },
+  plan_redirecting:         { pt: 'Redirecionando para o pagamento...', en: 'Redirecting to checkout...' },
+
+  plan_feature_atmospheres: { pt: 'Todas as 10 atmosferas de leitura', en: 'All 10 reading atmospheres' },
+  plan_feature_accents:     { pt: 'Todas as 5 cores de destaque',      en: 'All 5 accent colors' },
+  plan_feature_mission:     { pt: 'Ajude a manter o BreadLight gratuito para outros', en: 'Help keep BreadLight free for others' },
+  plan_feature_early_access: { pt: 'Acesso antecipado a novos recursos', en: 'Early access to new features' },
+  plan_feature_priority_support: { pt: 'Suporte prioritário',      en: 'Priority support' },
+
+  plan_always_free_title:   { pt: 'Sempre Gratuito',            en: 'Always Free, Forever' },
+  plan_always_free_desc:    { pt: 'Toda a leitura da Bíblia, tradução de palavras, anotações, favoritos e vocabulário — sempre gratuitos.', en: 'All Bible reading, word translations, notes, favorites, and vocabulary — always free.' },
+  plan_no_card_required:    { pt: 'Nenhum cartão necessário para começar', en: 'No credit card required to start' },
+  plan_view_plans:          { pt: 'Ver Planos Premium',          en: 'View Premium Plans' },
+
+  pricing_page_title:       { pt: 'Torne-se Premium',            en: 'Go Premium' },
+  pricing_page_subtitle:    { pt: 'Desbloqueie todas as atmosferas de leitura e cores de destaque, e ajude o BreadLight a continuar gratuito para todos.', en: 'Unlock every reading atmosphere and accent color, and help keep BreadLight free for everyone.' },
+  pricing_back_to_app:      { pt: 'Voltar ao aplicativo',        en: 'Back to app' },
+  pricing_already_premium:  { pt: 'Você já é Premium! Obrigado por apoiar o BreadLight.', en: "You're already Premium! Thank you for supporting BreadLight." },
+  pricing_manage_plan:      { pt: 'Gerenciar meu plano',         en: 'Manage my plan' },
+  pricing_checkout_success: { pt: 'Bem-vindo ao Premium! Sua assinatura está ativa.', en: 'Welcome to Premium! Your subscription is active.' },
+  pricing_checkout_cancel:  { pt: 'Pagamento cancelado. Você pode tentar novamente quando quiser.', en: 'Checkout canceled. You can try again anytime.' },
+  pricing_sign_in_first:    { pt: 'Entre na sua conta para assinar o Premium.', en: 'Sign in to your account to subscribe to Premium.' },
+
+  // ── Appearance — premium gating on atmospheres & accents
+  appearance_premium_badge: { pt: 'Premium',                     en: 'Premium' },
+  appearance_locked_title:  { pt: 'Recurso Premium',             en: 'Premium Feature' },
+  appearance_locked_desc:   { pt: 'Assine o BreadLight Premium para desbloquear todas as atmosferas de leitura e cores de destaque.', en: 'Subscribe to BreadLight Premium to unlock every reading atmosphere and accent color.' },
+  appearance_unlock_cta:    { pt: 'Desbloquear com Premium',     en: 'Unlock with Premium' },
 } as const;
 
 export type I18nKey = keyof typeof strings;

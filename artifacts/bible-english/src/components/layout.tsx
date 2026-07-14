@@ -16,6 +16,8 @@ import { Show, useUser } from '@clerk/react';
 import { useReadingSpace } from '../context/reading-space-context';
 import { useAtmosphere } from '../context/atmosphere-context';
 import { useLanguage } from '../context/language-context';
+import { useBillingStatus } from '../hooks/use-billing';
+import { isPremium } from '../lib/billing';
 import { SpaceBackground } from './space-background';
 import type { I18nKey } from '../lib/i18n';
 
@@ -36,8 +38,10 @@ function SignedInFooter() {
   const { user } = useUser();
   const { t } = useLanguage();
   const [, navigate] = useLocation();
+  const { data: billingStatus } = useBillingStatus();
   const initial = (user?.firstName || user?.primaryEmailAddress?.emailAddress || '?')[0]?.toUpperCase();
   const name = user?.fullName || user?.primaryEmailAddress?.emailAddress || t('auth_guest');
+  const planLabel = isPremium(billingStatus) ? t('plan_premium_plan_label') : t('plan_free_plan_label');
 
   return (
     <button
@@ -54,7 +58,7 @@ function SignedInFooter() {
       )}
       <div className="flex flex-col min-w-0">
         <span className="text-sm font-medium text-foreground truncate">{name}</span>
-        <span className="text-xs text-muted-foreground">{t('plan_free_badge')}</span>
+        <span className="text-xs text-muted-foreground">{planLabel}</span>
       </div>
     </button>
   );

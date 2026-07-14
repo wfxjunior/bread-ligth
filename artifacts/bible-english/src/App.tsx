@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
-import { ClerkProvider, SignIn, SignUp, useClerk } from '@clerk/react';
+import { ClerkProvider, SignIn, SignUp, useAuth, useClerk } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { Toaster } from '@/components/ui/toaster';
@@ -8,6 +8,10 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 import { useLanguage } from './context/language-context';
+import { useAtmosphere } from './context/atmosphere-context';
+import { useBillingStatus } from './hooks/use-billing';
+import { isPremium } from './lib/billing';
+import { ATMOSPHERES, ACCENTS, DEFAULT_ATMOSPHERE, DEFAULT_ACCENT } from './lib/atmospheres';
 
 import ReaderPage from './pages/reader';
 import HomePage from './pages/home';
@@ -20,6 +24,7 @@ import FavoritesPage from './pages/favorites';
 import JourneyPage from './pages/journey';
 import SettingsPage from './pages/settings';
 import DevotionalsPage from './pages/devotionals';
+import PricingPage from './pages/pricing';
 
 const queryClient = new QueryClient();
 
@@ -139,6 +144,31 @@ function ClerkQueryClientCacheInvalidator() {
   return null;
 }
 
+// Enforces the free/premium boundary from the *data* side, independent of
+// whatever UI is clicked: if a signed-in user's Premium status lapses (trial
+// ends, subscription canceled) while a Premium atmosphere/accent is still
+// selected from localStorage, fall back to the free defaults instead of
+// silently letting a lapsed user keep a paid look. Waits for both Clerk and
+// the billing status query to settle before deciding, so it never flashes a
+// false "not premium" reset while either is still loading.
+function PremiumThemeGuard() {
+  const { isLoaded: authLoaded, isSignedIn } = useAuth();
+  const { data: status, isLoading: statusLoading } = useBillingStatus();
+  const { atmosphere, accentColor, setAtmosphere, setAccentColor } = useAtmosphere();
+
+  useEffect(() => {
+    if (!authLoaded) return;
+    if (isSignedIn && statusLoading) return;
+
+    if (!isPremium(status)) {
+      if (ATMOSPHERES[atmosphere].premium) setAtmosphere(DEFAULT_ATMOSPHERE);
+      if (ACCENTS[accentColor].premium) setAccentColor(DEFAULT_ACCENT);
+    }
+  }, [authLoaded, isSignedIn, statusLoading, status, atmosphere, accentColor, setAtmosphere, setAccentColor]);
+
+  return null;
+}
+
 function Router() {
   return (
     <Switch>
@@ -153,6 +183,7 @@ function Router() {
       <Route path="/journey" component={JourneyPage} />
       <Route path="/settings" component={SettingsPage} />
       <Route path="/devotionals" component={DevotionalsPage} />
+      <Route path="/pricing" component={PricingPage} />
       {/* REQUIRED — copy "/sign-in/*?" and "/sign-up/*?" verbatim. The /*? optional
           wildcard is the only wouter syntax that matches both the bare URL and Clerk's
           OAuth sub-paths. Not /sign-in, not /sign-in/*, not /sign-in/:rest*. */}
@@ -193,6 +224,7 @@ function ClerkProviderWithRoutes() {
     >
       <QueryClientProvider client={queryClient}>
         <ClerkQueryClientCacheInvalidator />
+        <PremiumThemeGuard />
         <TooltipProvider>
           <Router />
           <Toaster />
