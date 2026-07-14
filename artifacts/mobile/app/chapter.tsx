@@ -32,6 +32,8 @@ import PronunciationPractice from '@/components/PronunciationPractice';
 import { useTheme } from '@/context/ThemeContext';
 import { READING_SPACES } from '@/constants/colors';
 import SpaceBackground from '@/components/SpaceBackground';
+import { useLanguage } from '@/context/LanguageContext';
+import { t } from '@/constants/i18n';
 
 // ── Text size selector ────────────────────────────────────────────────────────
 const TEXT_SIZES = [
@@ -72,13 +74,14 @@ const CH_WORDS_PT = [
   'Vinte e Nove','Trinta','Trinta e Um',
 ];
 
-// Chapter action bar items
+// Chapter action bar items — `key` drives logic (language-independent),
+// `labelKey` drives the displayed text (respects the app language toggle).
 const ACTIONS = [
-  { icon: 'zap'       as const, label: 'Explicar'  },
-  { icon: 'edit-2'    as const, label: 'Marcar'    },
-  { icon: 'bookmark'  as const, label: 'Salvar'    },
-  { icon: 'file-text' as const, label: 'Nota'      },
-  { icon: 'mic'       as const, label: 'Praticar'  },
+  { icon: 'zap'       as const, key: 'explain'  as const, labelKey: 'action_explain' as const },
+  { icon: 'edit-2'    as const, key: 'mark'     as const, labelKey: 'action_mark'    as const },
+  { icon: 'bookmark'  as const, key: 'save'     as const, labelKey: 'action_save'    as const },
+  { icon: 'file-text' as const, key: 'note'     as const, labelKey: 'action_note'    as const },
+  { icon: 'mic'       as const, key: 'practice' as const, labelKey: 'action_practice' as const },
 ];
 
 type Params = { bookId: string; chapter: string; bookName: string; englishBookName: string };
@@ -103,6 +106,7 @@ function BookPickerModal({
 }) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { lang } = useLanguage();
 
   const oldBooks = ALL_BOOKS.filter(b => b.testament === 'old');
   const newBooks = ALL_BOOKS.filter(b => b.testament === 'new');
@@ -132,7 +136,7 @@ function BookPickerModal({
         </View>
         <View style={styles.bookItemRight}>
           <Text style={[styles.bookChapterBadge, { color: colors.mutedForeground }]}>
-            Ch. {chapter}
+            {t(lang, 'chapter_abbr')} {chapter}
           </Text>
           {isActive && <Feather name="check" size={14} color={colors.primary} />}
         </View>
@@ -154,16 +158,16 @@ function BookPickerModal({
           <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
 
           <View style={styles.sheetHeader}>
-            <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Escolher Livro</Text>
+            <Text style={[styles.sheetTitle, { color: colors.foreground }]}>{t(lang, 'book_picker_title')}</Text>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <Feather name="x" size={20} color={colors.mutedForeground} />
             </TouchableOpacity>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 4, paddingBottom: 8 }}>
-            <Text style={[styles.testamentLabel, { color: colors.mutedForeground }]}>ANTIGO TESTAMENTO</Text>
+            <Text style={[styles.testamentLabel, { color: colors.mutedForeground }]}>{t(lang, 'testament_old_caps')}</Text>
             {oldBooks.map(renderBook)}
-            <Text style={[styles.testamentLabel, { color: colors.mutedForeground, marginTop: 12 }]}>NOVO TESTAMENTO</Text>
+            <Text style={[styles.testamentLabel, { color: colors.mutedForeground, marginTop: 12 }]}>{t(lang, 'testament_new_caps')}</Text>
             {newBooks.map(renderBook)}
           </ScrollView>
         </Pressable>
@@ -177,6 +181,7 @@ export default function ChapterScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<Params>();
+  const { lang } = useLanguage();
 
   const [currentBookId, setCurrentBookId] = useState(params.bookId ?? ALL_BOOKS[0].id);
   const [pickerVisible, setPickerVisible] = useState(false);
@@ -448,14 +453,14 @@ export default function ChapterScreen() {
       const res  = await fetch(`${API_BASE}/explain?${params}`);
       const data = await res.json() as { text?: string; error?: string };
       if (!res.ok || !data.text) {
-        setExplainSheet(s => s ? { ...s, loading: false, text: '', error: data.error ?? 'Erro ao carregar.' } : s);
+        setExplainSheet(s => s ? { ...s, loading: false, text: '', error: data.error ?? t(lang, 'explain_error_default') } : s);
       } else {
         setExplainSheet(s => s ? { ...s, loading: false, text: data.text! } : s);
       }
     } catch {
-      setExplainSheet(s => s ? { ...s, loading: false, text: '', error: 'Sem conexão. Tente novamente.' } : s);
+      setExplainSheet(s => s ? { ...s, loading: false, text: '', error: t(lang, 'explain_error_network') } : s);
     }
-  }, [verses, book, chapterNum, audio.readingLanguage]);
+  }, [verses, book, chapterNum, audio.readingLanguage, lang]);
 
   const closeExplain = useCallback(() => setExplainSheet(null), []);
 
@@ -582,7 +587,7 @@ export default function ChapterScreen() {
           </View>
           <View style={styles.modeHint}>
             <Feather name="zap" size={11} color={colors.accent} />
-            <Text style={[styles.modeHintText, { color: colors.mutedForeground }]}>toque nas palavras</Text>
+            <Text style={[styles.modeHintText, { color: colors.mutedForeground }]}>{t(lang, 'tap_words_hint')}</Text>
           </View>
         </View>
       )}
@@ -608,8 +613,8 @@ export default function ChapterScreen() {
       {verses.length === 0 ? (
         <View style={styles.empty}>
           <Feather name="book-open" size={44} color={colors.border} />
-          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Capítulo não disponível</Text>
-          <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>Este capítulo ainda não foi adicionado</Text>
+          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>{t(lang, 'chapter_unavailable_title')}</Text>
+          <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>{t(lang, 'chapter_unavailable_sub')}</Text>
         </View>
       ) : (
         <FlatList
@@ -652,7 +657,7 @@ export default function ChapterScreen() {
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >
                     <Feather name="chevron-left" size={16} color={colors.mutedForeground} />
-                    <Text style={[styles.chapterNavText, { color: colors.mutedForeground }]}>Anterior</Text>
+                    <Text style={[styles.chapterNavText, { color: colors.mutedForeground }]}>{t(lang, 'nav_previous')}</Text>
                   </TouchableOpacity>
 
                   <View style={[styles.chapterDot, { backgroundColor: colors.accent }]} />
@@ -662,7 +667,7 @@ export default function ChapterScreen() {
                     style={[styles.chapterNavBtn, styles.chapterNavBtnRight, !hasNext && { opacity: 0.22 }]}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >
-                    <Text style={[styles.chapterNavText, { color: colors.mutedForeground }]}>Próximo</Text>
+                    <Text style={[styles.chapterNavText, { color: colors.mutedForeground }]}>{t(lang, 'nav_next')}</Text>
                     <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
                   </TouchableOpacity>
                 </View>
@@ -700,7 +705,7 @@ export default function ChapterScreen() {
 
               {/* ── Chapter meta ── */}
               <Text style={[styles.chapterMeta, { color: colors.mutedForeground }]}>
-                {book?.name} {chapterNum} · {verses.length} versículo{verses.length !== 1 ? 's' : ''}
+                {book?.name} {chapterNum} · {verses.length} {t(lang, verses.length !== 1 ? 'verse_plural' : 'verse_singular')}
               </Text>
 
             </View>
@@ -759,39 +764,40 @@ export default function ChapterScreen() {
             },
           ]}
         >
-          {ACTIONS.map(({ icon, label }) => {
+          {ACTIONS.map(({ icon, key, labelKey }) => {
+            const label = t(lang, labelKey);
             const isActive =
-              (label === 'Salvar' && selectedVerse && isBookmarked(currentBookId, chapterNum, selectedVerse.v)) ||
-              (label === 'Marcar' && selectedVerse && marks.has(vKey(currentBookId, chapterNum, selectedVerse.v))) ||
-              (label === 'Nota'   && selectedVerse && !!notes[vKey(currentBookId, chapterNum, selectedVerse.v)]);
+              (key === 'save' && selectedVerse && isBookmarked(currentBookId, chapterNum, selectedVerse.v)) ||
+              (key === 'mark' && selectedVerse && marks.has(vKey(currentBookId, chapterNum, selectedVerse.v))) ||
+              (key === 'note' && selectedVerse && !!notes[vKey(currentBookId, chapterNum, selectedVerse.v)]);
             return (
               <TouchableOpacity
-                key={label}
+                key={key}
                 style={styles.versePopupBtn}
                 onPress={() => {
                   if (Platform.OS !== 'web') Haptics.selectionAsync();
                   if (!selectedVerse) return;
                   const { v } = selectedVerse;
-                  switch (label) {
-                    case 'Explicar':
+                  switch (key) {
+                    case 'explain':
                       handleVerseDeselect();
                       openExplain(v);
                       break;
-                    case 'Marcar':
+                    case 'mark':
                       toggleMark(v);
                       handleVerseDeselect();
                       break;
-                    case 'Salvar': {
+                    case 'save': {
                       const vrs = verses.find(vr => vr.v === v);
                       if (vrs) handleBookmarkToggle(vrs);
                       handleVerseDeselect();
                       break;
                     }
-                    case 'Nota':
+                    case 'note':
                       handleVerseDeselect();
                       openNote(v);
                       break;
-                    case 'Praticar': {
+                    case 'practice': {
                       const vrs = verses.find(vr => vr.v === v);
                       handleVerseDeselect();
                       if (vrs) setPracticeVerse(vrs);
@@ -829,7 +835,7 @@ export default function ChapterScreen() {
                 <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
                 <View style={styles.annotationHeader}>
                   <View>
-                    <Text style={[styles.annotationTitle, { color: colors.foreground }]}>Nota</Text>
+                    <Text style={[styles.annotationTitle, { color: colors.foreground }]}>{t(lang, 'action_note')}</Text>
                     <Text style={[styles.annotationRef, { color: colors.mutedForeground }]}>
                       {book?.englishName} {chapterNum}:{noteSheet.v}
                     </Text>
@@ -841,8 +847,8 @@ export default function ChapterScreen() {
 
                 <TextInput
                   value={noteSheet.text}
-                  onChangeText={t => setNoteSheet(s => s ? { ...s, text: t } : s)}
-                  placeholder="Escreva sua reflexão aqui…"
+                  onChangeText={txt => setNoteSheet(s => s ? { ...s, text: txt } : s)}
+                  placeholder={t(lang, 'note_placeholder')}
                   placeholderTextColor={colors.mutedForeground}
                   multiline
                   autoFocus
@@ -875,7 +881,7 @@ export default function ChapterScreen() {
                     <Text style={[styles.noteSaveText, {
                       color: noteSheet.text.trim() ? colors.primaryForeground : colors.mutedForeground,
                     }]}>
-                      Salvar nota
+                      {t(lang, 'note_save_button')}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -896,7 +902,7 @@ export default function ChapterScreen() {
               <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
               <View style={styles.annotationHeader}>
                 <View>
-                  <Text style={[styles.annotationTitle, { color: colors.foreground }]}>Explicação</Text>
+                  <Text style={[styles.annotationTitle, { color: colors.foreground }]}>{t(lang, 'explain_sheet_title')}</Text>
                   <Text style={[styles.annotationRef, { color: colors.mutedForeground }]}>
                     {book?.englishName} {chapterNum}:{explainSheet.v}
                   </Text>
@@ -935,7 +941,7 @@ export default function ChapterScreen() {
               {explainSheet.loading ? (
                 <View style={styles.explainCenter}>
                   <ActivityIndicator size="large" color={colors.accent} />
-                  <Text style={[styles.explainCenterText, { color: colors.mutedForeground }]}>Gerando explicação…</Text>
+                  <Text style={[styles.explainCenterText, { color: colors.mutedForeground }]}>{t(lang, 'explain_generating')}</Text>
                 </View>
               ) : explainSheet.error ? (
                 <View style={styles.explainCenter}>

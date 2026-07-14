@@ -399,6 +399,27 @@ const strings = {
   progress_streak_suffix:   { pt: ' dias seguidos', en: '-day streak' },
   progress_words_word:      { pt: 'palavras', en: 'words' },
   progress_verses_word:     { pt: 'versículos', en: 'verses' },
+
+  // ── Chapter reader screen
+  book_picker_title:        { pt: 'Escolher Livro',   en: 'Choose Book' },
+  tap_words_hint:            { pt: 'toque nas palavras', en: 'tap the words' },
+  chapter_unavailable_title: { pt: 'Capítulo não disponível', en: 'Chapter not available' },
+  chapter_unavailable_sub:   { pt: 'Este capítulo ainda não foi adicionado', en: "This chapter hasn't been added yet" },
+  nav_previous:              { pt: 'Anterior', en: 'Previous' },
+  nav_next:                  { pt: 'Próximo',  en: 'Next' },
+  verse_singular:            { pt: 'versículo',  en: 'verse'  },
+  verse_plural:              { pt: 'versículos', en: 'verses' },
+  action_explain:            { pt: 'Explicar', en: 'Explain'  },
+  action_mark:               { pt: 'Marcar',   en: 'Mark'     },
+  action_save:               { pt: 'Salvar',   en: 'Save'     },
+  action_note:               { pt: 'Nota',     en: 'Note'     },
+  action_practice:           { pt: 'Praticar', en: 'Practice' },
+  note_placeholder:          { pt: 'Escreva sua reflexão aqui…', en: 'Write your reflection here…' },
+  note_save_button:          { pt: 'Salvar nota', en: 'Save note' },
+  explain_sheet_title:       { pt: 'Explicação',            en: 'Explanation' },
+  explain_generating:        { pt: 'Gerando explicação…',   en: 'Generating explanation…' },
+  explain_error_default:     { pt: 'Erro ao carregar.',     en: 'Error loading.' },
+  explain_error_network:     { pt: 'Sem conexão. Tente novamente.', en: 'No connection. Try again.' },
 } as const;
 
 export type I18nKey = keyof typeof strings;
