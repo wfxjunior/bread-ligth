@@ -231,10 +231,15 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       .then(v => { if (v === 'en' || v === 'pt') setReadingLanguageState(v); })
       .catch(() => {});
 
+    // staysActiveInBackground keeps chapter/book auto-advance going when the
+    // app is backgrounded or the device is locked — the whole point of
+    // hands-free continuous listening. Every other setAudioModeAsync call in
+    // this file also repeats it, since the native mode is replaced wholesale
+    // on each call, not merged with the previous one.
     Audio.setAudioModeAsync({
       allowsRecordingIOS: false,
       playsInSilentModeIOS: true,
-      staysActiveInBackground: false,
+      staysActiveInBackground: true,
       interruptionModeIOS: InterruptionModeIOS.DuckOthers,
       interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
       shouldDuckAndroid: true,
@@ -329,6 +334,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: false,
           playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
         }).catch(() => {});
         const { sound } = await Audio.Sound.createAsync(
           { uri: cachedUri },
@@ -371,6 +377,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: false,
           playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
         }).catch(() => {});
 
         const remoteUri = `${TTS_BASE}?text=${encodeURIComponent(cleanText)}&voice=${activeVoice}`;

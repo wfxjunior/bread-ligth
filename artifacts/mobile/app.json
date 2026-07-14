@@ -17,12 +17,13 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.goden.app",
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Bread&Light uses the microphone so you can practice reading Bible verses aloud and get gentle pronunciation feedback."
+        "NSMicrophoneUsageDescription": "Bread&Light uses the microphone so you can practice reading Bible verses aloud and get gentle pronunciation feedback.",
+        "UIBackgroundModes": ["audio"]
       }
     },
     "android": {
       "package": "com.goden.app",
-      "permissions": ["RECORD_AUDIO"]
+      "permissions": ["RECORD_AUDIO", "FOREGROUND_SERVICE", "FOREGROUND_SERVICE_MEDIA_PLAYBACK"]
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
