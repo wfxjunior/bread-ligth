@@ -1,0 +1,271 @@
+Perform a complete Localization & Translation Audit across the entire BreadLight application.
+
+This is a QUALITY ASSURANCE task.
+
+Do not assume translations are correct.
+
+Inspect every screen, every component, every dialog, every button, every label, every menu, every modal, every tooltip, every placeholder, every error message, every loading state and every notification.
+
+The application must be 100% localized.
+
+==================================================
+GOAL
+==================================================
+
+The application currently supports multiple interface languages.
+
+No text should remain untranslated.
+
+No mixed-language interface is acceptable.
+
+Every visible string must exist in every supported language.
+
+==================================================
+SUPPORTED CONTENT
+==================================================
+
+Audit all existing Bible books currently available in the application.
+
+Verify every screen related to:
+
+• Home
+• Daily Devotional
+• Bible Library
+• Bible Reader
+• Continue Reading
+• Vocabulary
+• Notes
+• Search
+• Favorites
+• Profile
+• Settings
+• Reading Atmospheres
+• Audio Player
+• Study Workspace
+• Progress
+• Authentication
+• Onboarding
+
+Inspect absolutely everything.
+
+==================================================
+TRANSLATION AUDIT
+==================================================
+
+Verify every translation key.
+
+Detect:
+
+• Missing translations
+• Empty values
+• Placeholder text
+• Hardcoded strings
+• English text inside Portuguese UI
+• Portuguese text inside English UI
+• Mixed capitalization
+• Incorrect punctuation
+• Duplicate keys
+• Unused keys
+• Missing interpolation variables
+• Broken formatting
+• Incorrect pluralization
+• Incorrect gender rules
+• Date formatting inconsistencies
+• Number formatting inconsistencies
+
+==================================================
+BIBLE CONTENT
+==================================================
+
+Inspect every available Bible book.
+
+For each implemented book verify:
+
+• Book title
+• Chapter titles
+• Verse references
+• Navigation labels
+• Audio labels
+• Vocabulary labels
+• Study Workspace
+• Devotional references
+
+Ensure every reference is translated correctly.
+
+==================================================
+UI CONSISTENCY
+==================================================
+
+When App Language = English
+
+Everything must appear in English.
+
+When App Language = Portuguese
+
+Everything must appear in Portuguese.
+
+Never mix interface languages.
+
+The only exception is Bible study content intentionally shown in bilingual mode.
+
+==================================================
+BILINGUAL MODE
+==================================================
+
+Verify bilingual reading mode.
+
+Ensure:
+
+English appears correctly.
+
+Portuguese appears correctly.
+
+Switching between languages works instantly.
+
+No missing verses.
+
+No incorrect alignment.
+
+No duplicated verses.
+
+==================================================
+SEARCH
+==================================================
+
+Verify that search behaves correctly in every supported language.
+
+Ensure translated titles are searchable.
+
+Ensure Bible book names work in every language.
+
+Example:
+
+Proverbs
+
+Provérbios
+
+Both should resolve correctly according to the current language settings.
+
+==================================================
+BOOK NAMES
+==================================================
+
+Verify every implemented Bible book.
+
+Confirm:
+
+Display name
+
+Localized name
+
+Abbreviation
+
+Navigation
+
+Reader
+
+Continue Reading
+
+Bookmarks
+
+Favorites
+
+Search
+
+Study Workspace
+
+All remain consistent.
+
+==================================================
+SETTINGS
+==================================================
+
+Inspect:
+
+Language selector
+
+App language
+
+Learning language
+
+Reading Atmosphere
+
+Profile
+
+Notifications
+
+Audio
+
+Playback
+
+Every option must be translated.
+
+==================================================
+ERRORS
+==================================================
+
+Inspect:
+
+404
+
+Network errors
+
+Loading
+
+Offline
+
+Empty states
+
+Permission errors
+
+Validation messages
+
+Authentication messages
+
+Everything must be localized.
+
+==================================================
+REPORT
+==================================================
+
+Produce a detailed report.
+
+For every issue include:
+
+Screen
+
+Component
+
+Current text
+
+Expected text
+
+Missing key
+
+Severity
+
+Recommended fix
+
+==================================================
+IMPLEMENTATION
+==================================================
+
+After the audit:
+
+Automatically create any missing localization keys.
+
+Replace every hardcoded string with localization resources.
+
+Normalize capitalization.
+
+Normalize punctuation.
+
+Normalize terminology.
+
+Ensure every interface string exists in every supported language.
+
+The application must achieve 100% localization coverage.
+
+No untranslated interface text should remain anywhere in the application.
+
+The audit is only complete when every visible string has been verified and every missing translation has been fixed.
