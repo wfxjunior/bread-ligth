@@ -59,6 +59,23 @@ function ttsCachePathFor(key: string): string {
   return `${TTS_CACHE_DIR}${key}.mp3`;
 }
 
+// Sums the on-disk size recorded for every cached clip. Cheap: reads the
+// AsyncStorage index only, never touches the filesystem.
+async function getTtsCacheTotalBytes(): Promise<number> {
+  const idx = await loadTtsCacheIndex();
+  return Object.values(idx).reduce((sum, e) => sum + e.size, 0);
+}
+
+// Wipes every cached TTS clip on disk plus its AsyncStorage index, so the
+// next play of any verse/devotional re-downloads (e.g. after switching
+// voice) and the reclaimed space actually shows up to the user.
+async function clearTtsCacheOnDisk(): Promise<void> {
+  await FileSystem.deleteAsync(TTS_CACHE_DIR, { idempotent: true }).catch(() => {});
+  cacheDirReadyPromise = null;
+  await ensureTtsCacheDir();
+  await AsyncStorage.removeItem(TTS_CACHE_INDEX_KEY).catch(() => {});
+}
+
 // Evicts the least-recently-used cached audio files until the index is back
 // under the size cap. Runs after every new download; never blocks playback.
 async function evictTtsCacheIfNeeded(idx: TtsCacheIndex): Promise<TtsCacheIndex> {
@@ -172,6 +189,9 @@ interface AudioContextValue {
   setRate: (rate: number) => void;
   setVoice: (voice: AudioVoice) => void;
   setReadingLanguage: (lang: ReadingLanguage) => void;
+  offlineCacheBytes: number;
+  refreshOfflineCacheSize: () => Promise<void>;
+  clearOfflineCache: () => Promise<void>;
 }
 
 const AudioCtx = createContext<AudioContextValue | null>(null);
@@ -197,6 +217,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [voice, setVoiceState]        = useState<AudioVoice>(DEFAULT_VOICE);
   const [readingLanguage, setReadingLanguageState] = useState<ReadingLanguage>(DEFAULT_READING_LANGUAGE);
   const [usingFallback, setUsingFallback] = useState(false);
+  const [offlineCacheBytes, setOfflineCacheBytes] = useState(0);
 
   const soundRef      = useRef<Audio.Sound | null>(null);
   const queueRef       = useRef<AudioQueueItem[]>([]);
@@ -245,10 +266,22 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       shouldDuckAndroid: true,
     }).catch(() => {});
 
+    getTtsCacheTotalBytes().then(setOfflineCacheBytes).catch(() => {});
+
     return () => {
       Speech.stop();
       soundRef.current?.unloadAsync().catch(() => {});
     };
+  }, []);
+
+  const refreshOfflineCacheSize = useCallback(async () => {
+    const bytes = await getTtsCacheTotalBytes().catch(() => 0);
+    setOfflineCacheBytes(bytes);
+  }, []);
+
+  const clearOfflineCache = useCallback(async () => {
+    await clearTtsCacheOnDisk();
+    setOfflineCacheBytes(0);
   }, []);
 
   const cleanupSound = useCallback(async () => {
@@ -533,6 +566,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     usingFallback,
     readingLanguage,
     playQueue, playSingle, togglePlayPause, pause, resume, stop, next, previous, seekToRatio, setRate, setVoice, setReadingLanguage,
+    offlineCacheBytes, refreshOfflineCacheSize, clearOfflineCache,
   };
 
   return <AudioCtx.Provider value={value}>{children}</AudioCtx.Provider>;

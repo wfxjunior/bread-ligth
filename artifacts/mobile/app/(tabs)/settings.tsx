@@ -866,6 +866,35 @@ export default function SettingsScreen() {
       .then(v => { if (v === 'beginner' || v === 'advanced') setLevel(v as LevelKey); })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    audio.refreshOfflineCacheSize();
+  }, []);
+
+  const formatCacheSize = (bytes: number): string => {
+    if (bytes <= 0) return tl('offline_audio_empty');
+    const mb = bytes / (1024 * 1024);
+    return mb < 0.1 ? '< 0.1 MB' : `${mb.toFixed(1)} MB`;
+  };
+
+  const handleClearOfflineAudio = () => {
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    Alert.alert(
+      tl('offline_audio_clear_confirm_title'),
+      tl('offline_audio_clear_confirm_body'),
+      [
+        { text: tl('cancel'), style: 'cancel' },
+        {
+          text: tl('offline_audio_clear'),
+          style: 'destructive',
+          onPress: async () => {
+            await audio.clearOfflineCache();
+            if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          },
+        },
+      ],
+    );
+  };
   const handleLevelChange = (v: LevelKey) => {
     setLevel(v);
     AsyncStorage.setItem(LEVEL_KEY, v).catch(() => {});
@@ -1233,6 +1262,26 @@ export default function SettingsScreen() {
             <View style={{ height: 10 }} />
             <ReadingLanguagePillSelector value={audio.readingLanguage} onChange={audio.setReadingLanguage} />
           </View>
+        </SettingsCard>
+
+        <SettingsCard>
+          <SettingsRow
+            icon="download"
+            label={tl('offline_audio')}
+            sub={tl('offline_audio_sub')}
+            border={false}
+            right={
+              <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>
+                {formatCacheSize(audio.offlineCacheBytes)}
+              </Text>
+            }
+          />
+          <SettingsRow
+            icon="trash-2"
+            label={tl('offline_audio_clear')}
+            border={false}
+            onPress={handleClearOfflineAudio}
+          />
         </SettingsCard>
 
         {/* ── Compartilhar ── */}

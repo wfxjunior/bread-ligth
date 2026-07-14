@@ -127,6 +127,18 @@ const strings = {
   audio_language:        { pt: 'Idioma da leitura',  en: 'Reading language'    },
   audio_language_sub:    { pt: 'Em que idioma o versículo é lido em voz alta', en: 'Which language verses are read aloud in' },
 
+  // ── Offline audio storage
+  offline_audio:                  { pt: 'Áudio Offline',           en: 'Offline Audio' },
+  offline_audio_sub:              { pt: 'Versículos e devocionais salvos no dispositivo para ouvir sem internet', en: 'Verses and devotionals saved on your device for offline listening' },
+  offline_audio_empty:            { pt: 'Vazio',                   en: 'Empty' },
+  offline_audio_clear:            { pt: 'Limpar áudio offline',    en: 'Clear offline audio' },
+  offline_audio_clear_confirm_title: { pt: 'Limpar áudio offline?', en: 'Clear offline audio?' },
+  offline_audio_clear_confirm_body:  {
+    pt: 'Isso apaga todos os áudios salvos no dispositivo. Eles serão baixados novamente da próxima vez que você ouvir.',
+    en: 'This deletes all audio saved on your device. It will be downloaded again the next time you listen.',
+  },
+  cancel: { pt: 'Cancelar', en: 'Cancel' },
+
   // ── Daily devotional completion
   daily_done_title:     { pt: 'Concluído hoje 🎉',                       en: 'Completed today 🎉'                    },
   daily_done_sub:        { pt: 'Volte amanhã para o próximo versículo',   en: 'Come back tomorrow for the next verse' },
