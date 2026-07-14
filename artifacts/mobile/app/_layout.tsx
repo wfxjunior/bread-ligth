@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ClerkProvider, ClerkLoaded } from '@clerk/expo';
+import { tokenCache } from '@clerk/expo/token-cache';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import {
   Inter_400Regular,
@@ -27,6 +29,9 @@ import { AudioProvider } from '@/context/AudioContext';
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
+
+const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
+const clerkProxyUrl = process.env.EXPO_PUBLIC_CLERK_PROXY_URL || undefined;
 
 // Soft, Apple Books-style veil shown briefly while a Reading Atmosphere swap
 // is in flight, so the instant color change underneath never flashes.
@@ -85,40 +90,46 @@ export default function RootLayout() {
 
   if (!fontsLoaded && !fontError) {
     return (
-      <SafeAreaProvider>
-        <View style={{ flex: 1, backgroundColor: '#F7F3EC', alignItems: 'center', justifyContent: 'center' }}>
-          <View style={{ alignItems: 'center', gap: 10 }}>
-            <View style={{ width: 60, height: 60, borderRadius: 14, backgroundColor: '#1B3A6B', alignItems: 'center', justifyContent: 'center' }}>
-              <View style={{ width: 32, height: 32, borderRadius: 4, borderWidth: 3, borderColor: '#6B1E2A', borderBottomColor: 'transparent', transform: [{ rotate: '45deg' }] }} />
-            </View>
-            <View style={{ width: 100, height: 3, borderRadius: 2, backgroundColor: '#E8E4DC', overflow: 'hidden' }}>
-              <View style={{ width: '60%', height: '100%', backgroundColor: '#1B3A6B', borderRadius: 2 }} />
+      <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache} proxyUrl={clerkProxyUrl}>
+        <SafeAreaProvider>
+          <View style={{ flex: 1, backgroundColor: '#F7F3EC', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ alignItems: 'center', gap: 10 }}>
+              <View style={{ width: 60, height: 60, borderRadius: 14, backgroundColor: '#1B3A6B', alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 32, height: 32, borderRadius: 4, borderWidth: 3, borderColor: '#6B1E2A', borderBottomColor: 'transparent', transform: [{ rotate: '45deg' }] }} />
+              </View>
+              <View style={{ width: 100, height: 3, borderRadius: 2, backgroundColor: '#E8E4DC', overflow: 'hidden' }}>
+                <View style={{ width: '60%', height: '100%', backgroundColor: '#1B3A6B', borderRadius: 2 }} />
+              </View>
             </View>
           </View>
-        </View>
-      </SafeAreaProvider>
+        </SafeAreaProvider>
+      </ClerkProvider>
     );
   }
 
   return (
-    <SafeAreaProvider>
-      <ErrorBoundary>
-        <QueryClientProvider client={queryClient}>
-          <GestureHandlerRootView style={{ flex: 1 }}>
-            <KeyboardProvider>
-              <LanguageProvider>
-                <ThemeProvider>
-                  <BibleProvider>
-                    <AudioProvider>
-                      <RootLayoutNav />
-                    </AudioProvider>
-                  </BibleProvider>
-                </ThemeProvider>
-              </LanguageProvider>
-            </KeyboardProvider>
-          </GestureHandlerRootView>
-        </QueryClientProvider>
-      </ErrorBoundary>
-    </SafeAreaProvider>
+    <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache} proxyUrl={clerkProxyUrl}>
+      <ClerkLoaded>
+        <SafeAreaProvider>
+          <ErrorBoundary>
+            <QueryClientProvider client={queryClient}>
+              <GestureHandlerRootView style={{ flex: 1 }}>
+                <KeyboardProvider>
+                  <LanguageProvider>
+                    <ThemeProvider>
+                      <BibleProvider>
+                        <AudioProvider>
+                          <RootLayoutNav />
+                        </AudioProvider>
+                      </BibleProvider>
+                    </ThemeProvider>
+                  </LanguageProvider>
+                </KeyboardProvider>
+              </GestureHandlerRootView>
+            </QueryClientProvider>
+          </ErrorBoundary>
+        </SafeAreaProvider>
+      </ClerkLoaded>
+    </ClerkProvider>
   );
 }

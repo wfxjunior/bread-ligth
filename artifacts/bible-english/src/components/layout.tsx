@@ -12,6 +12,7 @@ import {
   Feather,
   BookHeart
 } from 'lucide-react';
+import { Show, useUser } from '@clerk/react';
 import { useReadingSpace } from '../context/reading-space-context';
 import { useAtmosphere } from '../context/atmosphere-context';
 import { useLanguage } from '../context/language-context';
@@ -30,6 +31,34 @@ const NAV_ITEMS: { key: I18nKey; path: string; icon: typeof LayoutDashboard }[] 
   { key: 'nav_journey',     path: '/journey',     icon: Flag },
   { key: 'nav_settings',    path: '/settings',    icon: Settings },
 ];
+
+function SignedInFooter() {
+  const { user } = useUser();
+  const { t } = useLanguage();
+  const [, navigate] = useLocation();
+  const initial = (user?.firstName || user?.primaryEmailAddress?.emailAddress || '?')[0]?.toUpperCase();
+  const name = user?.fullName || user?.primaryEmailAddress?.emailAddress || t('auth_guest');
+
+  return (
+    <button
+      type="button"
+      onClick={() => navigate('/settings')}
+      className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted transition-colors text-left"
+    >
+      {user?.imageUrl ? (
+        <img src={user.imageUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
+      ) : (
+        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-serif italic text-sm">
+          {initial}
+        </div>
+      )}
+      <div className="flex flex-col min-w-0">
+        <span className="text-sm font-medium text-foreground truncate">{name}</span>
+        <span className="text-xs text-muted-foreground">{t('plan_free_badge')}</span>
+      </div>
+    </button>
+  );
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
@@ -81,15 +110,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="p-4 border-t border-border/50">
-          <div className="flex items-center gap-3 px-3 py-2">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-serif italic text-sm">
-              W
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-foreground">Wilson</span>
-              <span className="text-xs text-muted-foreground">{t('plan_free_badge')}</span>
-            </div>
-          </div>
+          <Show when="signed-in">
+            <SignedInFooter />
+          </Show>
+          <Show when="signed-out">
+            <Link
+              href="/sign-in"
+              className="flex items-center gap-3 px-3 py-2 rounded-md no-underline hover:bg-muted transition-colors"
+            >
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <Feather className="w-4 h-4" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-foreground">{t('auth_sign_in')}</span>
+                <span className="text-xs text-muted-foreground">{t('auth_sign_in_prompt')}</span>
+              </div>
+            </Link>
+          </Show>
         </div>
       </aside>
 

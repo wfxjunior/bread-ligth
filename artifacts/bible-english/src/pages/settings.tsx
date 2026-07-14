@@ -3,14 +3,103 @@ import { Layout } from '../components/layout';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Palette, BookOpen, Globe, Share2, BookHeart, Crown,
-  Check, Copy, ChevronRight, Mail, Pencil, Plus,
+  Check, Copy, ChevronRight, Mail, Pencil, Plus, LogOut,
 } from 'lucide-react';
+import { Show, useClerk, useUser } from '@clerk/react';
 import { useReadingSpace } from '../context/reading-space-context';
 import { READING_SPACES, READING_SPACE_ORDER, gradientCss } from '../lib/reading-spaces';
 import { useAtmosphere } from '../context/atmosphere-context';
 import { ATMOSPHERES, ATMOSPHERE_ORDER, ACCENTS, ACCENT_ORDER } from '../lib/atmospheres';
 import { useLanguage } from '../context/language-context';
 import type { I18nKey } from '../lib/i18n';
+
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+// ── Profile tab ──────────────────────────────────────────────────────────────
+function ProfileTab({ onUpgrade }: { onUpgrade: () => void }) {
+  const { t } = useLanguage();
+  const { user } = useUser();
+  const { signOut } = useClerk();
+
+  return (
+    <Show
+      when="signed-in"
+      fallback={
+        <div className="bg-card border border-border rounded-2xl p-10 flex flex-col items-center text-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+            <User className="w-7 h-7 text-primary" />
+          </div>
+          <div>
+            <p className="font-serif text-xl text-foreground mb-1">{t('auth_guest')}</p>
+            <p className="text-sm text-muted-foreground max-w-xs">{t('settings_profile_signed_out_desc')}</p>
+          </div>
+          <a
+            href={`${basePath}/sign-in`}
+            className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors no-underline"
+          >
+            {t('auth_sign_in')}
+          </a>
+        </div>
+      }
+    >
+      <div className="bg-card border border-border rounded-2xl p-8">
+        <div className="flex flex-col items-center mb-8">
+          {user?.imageUrl ? (
+            <img src={user.imageUrl} alt="" className="w-20 h-20 rounded-full object-cover mb-3" />
+          ) : (
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+              <span className="font-serif italic text-4xl text-primary">
+                {(user?.firstName || user?.primaryEmailAddress?.emailAddress || '?')[0]?.toUpperCase()}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-5">
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
+              {t('settings_profile_name')}
+            </label>
+            <div className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-foreground">
+              {user?.fullName || t('auth_guest')}
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
+              {t('settings_profile_email')}
+            </label>
+            <div className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-foreground">
+              {user?.primaryEmailAddress?.emailAddress ?? '—'}
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Learning</label>
+            <div className="bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-foreground">
+              Português → English
+            </div>
+          </div>
+          <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border/40">
+            <span>
+              {user?.createdAt
+                ? `${t('settings_profile_member_since')} ${new Date(user.createdAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}`
+                : null}
+            </span>
+            <div className="flex items-center gap-3">
+              <span className="px-2.5 py-0.5 rounded-full bg-muted border border-border text-muted-foreground font-medium">{t('plan_free_badge')}</span>
+              <button onClick={onUpgrade} className="text-primary hover:underline font-medium">Upgrade</button>
+            </div>
+          </div>
+          <button
+            onClick={() => signOut({ redirectUrl: basePath || '/' })}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors"
+          >
+            <LogOut className="w-4 h-4" /> {t('auth_sign_out')}
+          </button>
+        </div>
+      </div>
+    </Show>
+  );
+}
 
 // ── Reusable Toggle ─────────────────────────────────────────────────────────
 function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
@@ -68,10 +157,7 @@ const MOCK_DEVOTIONALS_SETTINGS = [
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile');
   const { lang, setLang, t: tl } = useLanguage();
-
-  // Profile
-  const [name, setName]   = useState('Wilson');
-  const [email, setEmail] = useState('wilson@email.com');
+  const { user } = useUser();
 
   // Appearance
   const { atmosphere, setAtmosphere, accentColor, setAccentColor } = useAtmosphere();
@@ -116,47 +202,8 @@ export default function SettingsPage() {
     profile: (
       <div className="space-y-8">
         <div>
-          <SectionTitle>Your Account</SectionTitle>
-          <div className="bg-card border border-border rounded-2xl p-8">
-            <div className="flex flex-col items-center mb-8">
-              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-                <span className="font-serif italic text-4xl text-primary">W</span>
-              </div>
-              <button className="text-xs text-muted-foreground hover:text-primary transition-colors">Change photo</button>
-            </div>
-
-            <div className="space-y-5">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Name</label>
-                <input
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Email</label>
-                <input
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Learning</label>
-                <div className="bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-foreground">
-                  Português → English
-                </div>
-              </div>
-              <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border/40">
-                <span>Member since January 2024</span>
-                <div className="flex items-center gap-3">
-                  <span className="px-2.5 py-0.5 rounded-full bg-muted border border-border text-muted-foreground font-medium">Free Plan</span>
-                  <button onClick={() => setActiveTab('plan')} className="text-primary hover:underline font-medium">Upgrade</button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <SectionTitle>{tl('settings_profile_your_account')}</SectionTitle>
+          <ProfileTab onUpgrade={() => setActiveTab('plan')} />
         </div>
       </div>
     ),
@@ -601,7 +648,7 @@ export default function SettingsPage() {
                   className="w-full py-3.5 rounded-xl bg-secondary/10 border border-secondary/30 text-center"
                 >
                   <p className="text-sm font-medium text-secondary flex items-center justify-center gap-2">
-                    <Check className="w-4 h-4" /> You're on the list! We'll notify you at {email}
+                    <Check className="w-4 h-4" /> You're on the list! We'll notify you at {user?.primaryEmailAddress?.emailAddress ?? 'your email'}
                   </p>
                 </motion.div>
               ) : (

@@ -8,7 +8,7 @@
  * primary action. Clean and light, not gloomy — the opposite mood of the
  * dark leather bookshelf, on purpose.
  */
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -25,7 +25,23 @@ import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import * as WebBrowser from 'expo-web-browser';
+import * as AuthSession from 'expo-auth-session';
+import { useSignIn, useSignUp, useSSO } from '@clerk/expo';
 import { useLanguage } from '@/context/LanguageContext';
+
+// Handle any pending authentication sessions returning from the browser.
+WebBrowser.maybeCompleteAuthSession();
+
+function useWarmUpBrowser() {
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    void WebBrowser.warmUpAsync();
+    return () => {
+      void WebBrowser.coolDownAsync();
+    };
+  }, []);
+}
 
 // ── Parchment palette ───────────────────────────────────────────────────────
 const PARCHMENT: [string, string] = ['#F7EFDA', '#EEDDB2'];
@@ -50,20 +66,42 @@ export default function AuthScreen() {
   const [confirm, setConfirm]         = useState('');
   const [showPw, setShowPw]           = useState(false);
   const [loading, setLoading]         = useState(false);
+  const [verifying, setVerifying]     = useState(false);
+  const [code, setCode]               = useState('');
+
+  useWarmUpBrowser();
+
+  const { signIn, errors: signInErrors } = useSignIn();
+  const { signUp, errors: signUpErrors } = useSignUp();
+  const { startSSOFlow } = useSSO();
+
+  const isLogin = mode === 'login';
+  const emailError = isLogin ? signInErrors.fields.identifier?.message : signUpErrors.fields.emailAddress?.message;
+  const passwordError = isLogin ? signInErrors.fields.password?.message : signUpErrors.fields.password?.message;
 
   const haptic = () => { if (Platform.OS !== 'web') Haptics.selectionAsync(); };
 
   const handleSkip = () => { haptic(); router.back(); };
 
-  const handleGoogle = async () => {
-    haptic();
-    // TODO: expo-auth-session Google OAuth
-  };
+  const goHome = () => { router.back(); };
 
-  const handleApple = async () => {
+  const startOAuth = useCallback(async (strategy: 'oauth_google' | 'oauth_apple') => {
     haptic();
-    // TODO: expo-apple-authentication
-  };
+    try {
+      const { createdSessionId, setActive } = await startSSOFlow({
+        strategy,
+        redirectUrl: AuthSession.makeRedirectUri({ scheme: 'goden' }),
+      });
+      if (createdSessionId && setActive) {
+        await setActive({ session: createdSessionId, navigate: () => goHome() });
+      }
+    } catch (err) {
+      console.error(JSON.stringify(err, null, 2));
+    }
+  }, [startSSOFlow]);
+
+  const handleGoogle = () => startOAuth('oauth_google');
+  const handleApple  = () => startOAuth('oauth_apple');
 
   const handleSubmit = async () => {
     if (loading) return;
@@ -76,19 +114,53 @@ export default function AuthScreen() {
       );
       return;
     }
+
     setLoading(true);
-    // TODO: wire to auth provider
-    await new Promise(r => setTimeout(r, 800));
-    setLoading(false);
+    try {
+      if (isLogin) {
+        const { error } = await signIn.password({ emailAddress: email.trim(), password });
+        if (error) return;
+
+        if (signIn.status === 'complete') {
+          await signIn.finalize({ navigate: () => goHome() });
+        } else if (signIn.status === 'needs_second_factor') {
+          Alert.alert(t('auth_login'), lang === 'pt'
+            ? 'Este login exige verificação adicional, que não é suportada aqui.'
+            : 'This sign-in requires additional verification, which isn\'t supported here.');
+        }
+      } else {
+        const { error } = await signUp.password({ emailAddress: email.trim(), password });
+        if (error) return;
+
+        await signUp.verifications.sendEmailCode();
+        setVerifying(true);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    if (loading || !code.trim()) return;
+    haptic();
+    setLoading(true);
+    try {
+      await signUp.verifications.verifyEmailCode({ code: code.trim() });
+      if (signUp.status === 'complete') {
+        await signUp.finalize({ navigate: () => goHome() });
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleMode = () => {
     haptic();
     setMode(m => m === 'login' ? 'register' : 'login');
     setConfirm('');
+    setVerifying(false);
+    setCode('');
   };
-
-  const isLogin = mode === 'login';
 
   return (
     <View style={styles.root}>
@@ -165,7 +237,45 @@ export default function AuthScreen() {
 
         {/* ── Auth card ── */}
         <View style={[styles.card, { paddingBottom: insets.bottom + 32 }]}>
+        {verifying ? (
+          <>
+            <Text style={styles.verifyTitle}>{t('auth_verify_title')}</Text>
+            <Text style={styles.verifySubtitle}>{t('auth_verify_subtitle')}</Text>
 
+            <View style={styles.fields}>
+              <InputField
+                placeholder={t('auth_verify_code_placeholder')}
+                value={code}
+                onChangeText={setCode}
+                keyboardType="number-pad"
+                icon="key"
+              />
+            </View>
+            {signUpErrors.fields.code && (
+              <Text style={styles.fieldError}>{signUpErrors.fields.code.message}</Text>
+            )}
+
+            <TouchableOpacity onPress={handleVerify} activeOpacity={0.85} style={styles.submitBtn} disabled={loading}>
+              {loading
+                ? <Feather name="loader" size={18} color="#F6ECD6" />
+                : <Text style={styles.submitText}>{t('auth_verify_button')}</Text>
+              }
+              <View style={styles.wax}>
+                <MaterialCommunityIcons name="fire" size={13} color="#F6ECD6" />
+              </View>
+            </TouchableOpacity>
+
+            <View style={styles.secondaryRow}>
+              <TouchableOpacity onPress={() => { haptic(); signUp.verifications.sendEmailCode(); }}>
+                <Text style={styles.secondaryLink}>{t('auth_resend_code')}</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity onPress={() => { haptic(); setVerifying(false); setCode(''); }} style={styles.skipBtn} activeOpacity={0.7}>
+              <Text style={styles.skipText}>{t('auth_start_over')}</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
           {/* Social buttons */}
           <View style={styles.socialSection}>
             <SocialButton
@@ -248,12 +358,15 @@ export default function AuthScreen() {
               </>
             )}
           </View>
+          {emailError && <Text style={styles.fieldError}>{emailError}</Text>}
+          {passwordError && <Text style={styles.fieldError}>{passwordError}</Text>}
 
           {/* Submit — wax-seal style */}
           <TouchableOpacity
             onPress={handleSubmit}
             activeOpacity={0.85}
             style={styles.submitBtn}
+            disabled={loading}
           >
             {loading
               ? <Feather name="loader" size={18} color="#F6ECD6" />
@@ -280,6 +393,11 @@ export default function AuthScreen() {
             <Text style={styles.skipText}>{t('auth_skip')}</Text>
             <Feather name="arrow-right" size={12} color={INK_FAINT} />
           </TouchableOpacity>
+
+          {/* Required for sign-up flows — Clerk's bot sign-up protection */}
+          {!isLogin && <View nativeID="clerk-captcha" />}
+          </>
+        )}
         </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -604,5 +722,25 @@ const styles = StyleSheet.create({
     fontSize:    13,
     fontFamily:  'Inter_400Regular',
     color:       INK_FAINT,
+  },
+
+  // ── Errors / verification ─────────────────────────────────────────────────
+  fieldError: {
+    fontSize:    12,
+    fontFamily:  'Inter_400Regular',
+    color:       SEAL,
+    marginTop:   -8,
+  },
+  verifyTitle: {
+    fontSize:    20,
+    fontFamily:  'Lora_700Bold',
+    color:       INK,
+  },
+  verifySubtitle: {
+    fontSize:    14,
+    fontFamily:  'Inter_400Regular',
+    color:       INK_SOFT,
+    marginTop:   -8,
+    marginBottom: 4,
   },
 });

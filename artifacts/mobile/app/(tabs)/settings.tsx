@@ -23,6 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useUser, useAuth } from '@clerk/expo';
 import { useColors } from '@/hooks/useColors';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useBible } from '@/context/BibleContext';
@@ -829,12 +830,26 @@ export default function SettingsScreen() {
   const [audioSpeed,  setAudioSpeed]  = useState('Normal');
   const [supportVisible, setSupportVisible] = useState(false);
   const [avatarUri,   setAvatarUri]   = useState<string | null>(null);
-  const [userName,    setUserName]    = useState('');
-  const [userEmail,   setUserEmail]   = useState('');
 
   const { atmosphere, setAtmosphere, accentColor, setAccentColor, readingSpace, setReadingSpace } = useTheme();
   const { lang, setLang, t: tl } = useLanguage();
   const audio = useAudio();
+  const { user, isSignedIn } = useUser();
+  const { signOut } = useAuth();
+  const userName  = user?.fullName || user?.firstName || '';
+  const userEmail = user?.primaryEmailAddress?.emailAddress || '';
+
+  const handleSignOut = () => {
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    Alert.alert(
+      tl('auth_sign_out'),
+      lang === 'pt' ? 'Tem certeza que deseja sair?' : 'Are you sure you want to sign out?',
+      [
+        { text: tl('cancel'), style: 'cancel' },
+        { text: tl('auth_sign_out'), style: 'destructive', onPress: () => signOut() },
+      ],
+    );
+  };
 
   // ── Scroll-to-section ───────────────────────────────────────────────────────
   const scrollRef      = useRef<ScrollView>(null);
@@ -912,8 +927,6 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     AsyncStorage.getItem(AVATAR_KEY).then(v => { if (v) setAvatarUri(v); }).catch(() => {});
-    AsyncStorage.getItem('@bibliaeN:userName').then(v => { if (v) setUserName(v); }).catch(() => {});
-    AsyncStorage.getItem('@bibliaeN:userEmail').then(v => { if (v) setUserEmail(v); }).catch(() => {});
   }, []);
 
   const handlePickAvatar = async () => {
@@ -1002,8 +1015,8 @@ export default function SettingsScreen() {
         <SettingsCard>
           <View style={styles.profileRow}>
             <TouchableOpacity onPress={handlePickAvatar} activeOpacity={0.8} style={styles.avatarWrapper}>
-              {avatarUri ? (
-                <Image source={{ uri: avatarUri }} style={styles.avatar} />
+              {avatarUri || user?.imageUrl ? (
+                <Image source={{ uri: avatarUri || user!.imageUrl }} style={styles.avatar} />
               ) : (
                 <View style={[styles.avatar, { backgroundColor: colors.primary + '18' }]}>
                   <Text style={[styles.avatarText, { color: colors.primary }]}>
@@ -1024,7 +1037,10 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <TouchableOpacity
-              onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); router.push('/auth'); }}
+              onPress={() => {
+                if (Platform.OS !== 'web') Haptics.selectionAsync();
+                if (isSignedIn) { handleSignOut(); } else { router.push('/auth'); }
+              }}
               activeOpacity={0.8}
               style={[styles.planBadge, {
                 backgroundColor: colors.primary + '14',
@@ -1032,7 +1048,7 @@ export default function SettingsScreen() {
               }]}
             >
               <Text style={[styles.planText, { color: colors.primary }]}>
-                {tl('auth_login')} →
+                {isSignedIn ? tl('auth_sign_out') : `${tl('auth_login')} →`}
               </Text>
             </TouchableOpacity>
           </View>
