@@ -2,14 +2,17 @@ import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
+import { useLanguage } from '@/context/LanguageContext';
 
 const GOLD = '#B8921A';
 
 export interface ProgressStat {
   icon: keyof typeof Feather.glyphMap;
   value: string;
-  label: string;
-  desc: string;
+  labelPt: string;
+  labelEn: string;
+  descPt: string;
+  descEn: string;
 }
 
 interface ProgressModalProps {
@@ -20,6 +23,7 @@ interface ProgressModalProps {
 
 export default function ProgressModal({ visible, onClose, stats }: ProgressModalProps) {
   const colors = useColors();
+  const { t, lang } = useLanguage();
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
@@ -29,9 +33,9 @@ export default function ProgressModal({ visible, onClose, stats }: ProgressModal
 
           <View style={styles.header}>
             <View>
-              <Text style={[styles.title, { color: colors.foreground }]}>Seu progresso</Text>
+              <Text style={[styles.title, { color: colors.foreground }]}>{t('progress_modal_title')}</Text>
               <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-                Um retrato do seu estudo até agora
+                {t('progress_modal_subtitle')}
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
@@ -44,7 +48,7 @@ export default function ProgressModal({ visible, onClose, stats }: ProgressModal
           <View style={styles.list}>
             {stats.map((stat, idx) => (
               <View
-                key={stat.label}
+                key={stat.labelEn}
                 style={[
                   styles.row,
                   idx > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
@@ -57,17 +61,19 @@ export default function ProgressModal({ visible, onClose, stats }: ProgressModal
                   <View style={styles.rowTop}>
                     <Text style={[styles.rowValue, { color: colors.foreground }]}>{stat.value}</Text>
                     <Text style={[styles.rowLabel, { color: colors.foreground }]}>
-                      {stat.label.replace('\n', ' ')}
+                      {(lang === 'pt' ? stat.labelPt : stat.labelEn).replace('\n', ' ')}
                     </Text>
                   </View>
-                  <Text style={[styles.rowDesc, { color: colors.mutedForeground }]}>{stat.desc}</Text>
+                  <Text style={[styles.rowDesc, { color: colors.mutedForeground }]}>
+                    {lang === 'pt' ? stat.descPt : stat.descEn}
+                  </Text>
                 </View>
               </View>
             ))}
           </View>
 
           <Text style={[styles.footer, { color: colors.mutedForeground }]}>
-            Continue lendo para manter sua constância viva.
+            {t('progress_modal_footer')}
           </Text>
         </Pressable>
       </Pressable>

@@ -9,6 +9,7 @@ import Animated, {
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
+import { useLanguage } from '@/context/LanguageContext';
 import { type VocabWord } from '@/context/BibleContext';
 import { AudioPlayButton } from './AudioPlayButton';
 
@@ -20,6 +21,7 @@ interface FlashCardProps {
 
 export default function FlashCard({ item, onMastered, onDelete }: FlashCardProps) {
   const colors = useColors();
+  const { t } = useLanguage();
   const [flipped, setFlipped] = useState(false);
   const rotate = useSharedValue(0);
 
@@ -57,7 +59,7 @@ export default function FlashCard({ item, onMastered, onDelete }: FlashCardProps
       <Pressable onPress={flip} style={styles.cardContainer}>
         {/* Front - English */}
         <Animated.View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }, frontStyle]}>
-          <Text style={[styles.hint, { color: colors.mutedForeground }]}>Inglês · Toque para ver</Text>
+          <Text style={[styles.hint, { color: colors.mutedForeground }]}>{t('flashcard_hint_en')}</Text>
           <View style={styles.wordRow}>
             <Text style={[styles.wordEn, { color: colors.englishText }]}>{item.word}</Text>
             <AudioPlayButton text={item.word} id={`vocab:${item.word}`} size={17} style={styles.wordListenBtn} />
@@ -66,13 +68,13 @@ export default function FlashCard({ item, onMastered, onDelete }: FlashCardProps
             <Text style={[styles.pronunciation, { color: colors.mutedForeground }]}>/{item.pronunciation}/</Text>
           ) : null}
           <View style={[styles.tag, { backgroundColor: colors.primary + '18' }]}>
-            <Text style={[styles.tagText, { color: colors.primary }]}>Inglês</Text>
+            <Text style={[styles.tagText, { color: colors.primary }]}>{t('mode_english')}</Text>
           </View>
         </Animated.View>
 
         {/* Back - Portuguese */}
         <Animated.View style={[styles.card, { backgroundColor: colors.primary, borderColor: colors.primary }, backStyle]}>
-          <Text style={[styles.hint, { color: colors.primaryForeground + 'AA' }]}>Português</Text>
+          <Text style={[styles.hint, { color: colors.primaryForeground + 'AA' }]}>{t('mode_portuguese')}</Text>
           <Text style={[styles.wordPt, { color: colors.primaryForeground }]}>{item.translation}</Text>
           {item.context ? (
             <Text style={[styles.contextText, { color: colors.primaryForeground + 'BB' }]} numberOfLines={2}>
@@ -80,7 +82,7 @@ export default function FlashCard({ item, onMastered, onDelete }: FlashCardProps
             </Text>
           ) : null}
           <View style={[styles.tag, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-            <Text style={[styles.tagText, { color: colors.primaryForeground }]}>Português</Text>
+            <Text style={[styles.tagText, { color: colors.primaryForeground }]}>{t('mode_portuguese')}</Text>
           </View>
         </Animated.View>
       </Pressable>
@@ -99,7 +101,7 @@ export default function FlashCard({ item, onMastered, onDelete }: FlashCardProps
         >
           <Feather name="check-circle" size={16} color={item.mastered ? colors.accent : colors.mutedForeground} />
           <Text style={[styles.actionText, { color: item.mastered ? colors.accent : colors.mutedForeground }]}>
-            {item.mastered ? 'Dominada' : 'Dominar'}
+            {item.mastered ? t('flashcard_mastered') : t('flashcard_master_action')}
           </Text>
         </TouchableOpacity>
 

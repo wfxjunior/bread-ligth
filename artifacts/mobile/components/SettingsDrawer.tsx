@@ -164,8 +164,8 @@ export default function SettingsDrawer({
             <Feather name="user" size={15} color={colors.primary} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.loginTitle, { color: colors.foreground }]}>Entrar</Text>
-            <Text style={[styles.loginSub,   { color: colors.mutedForeground }]}>Sincronize seu progresso</Text>
+            <Text style={[styles.loginTitle, { color: colors.foreground }]}>{t('auth_login')}</Text>
+            <Text style={[styles.loginSub,   { color: colors.mutedForeground }]}>{t('drawer_login_sub')}</Text>
           </View>
           <Feather name="chevron-right" size={14} color={colors.mutedForeground} />
         </TouchableOpacity>

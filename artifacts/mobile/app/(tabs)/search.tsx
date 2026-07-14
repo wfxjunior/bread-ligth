@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColors } from '@/hooks/useColors';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
+import { useLanguage } from '@/context/LanguageContext';
 import { BIBLE_DATA, FEATURED_PASSAGES, searchBible } from '@/constants/bibleData';
 
 const RECENT_KEY = '@bibliaeN:recentSearches';
@@ -25,6 +26,7 @@ const POPULAR_TOPICS = ['amor', 'fé', 'esperança', 'perdão', 'paz', 'sabedori
 export default function SearchScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { t: tl } = useLanguage();
   const [query, setQuery] = useState('');
   const [recent, setRecent] = useState<string[]>([]);
 
@@ -78,12 +80,12 @@ export default function SearchScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + 12, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Buscar</Text>
+        <Text style={[styles.headerTitle, { color: colors.foreground }]}>{tl('search_title')}</Text>
         <View style={[styles.searchBox, { backgroundColor: colors.muted, borderRadius: colors.radius, borderColor: colors.border }]}>
           <Feather name="search" size={18} color={colors.mutedForeground} />
           <TextInput
             style={[styles.searchInput, { color: colors.foreground }]}
-            placeholder="Buscar em inglês ou português..."
+            placeholder={tl('search_placeholder')}
             placeholderTextColor={colors.mutedForeground}
             value={query}
             onChangeText={setQuery}
@@ -109,18 +111,18 @@ export default function SearchScreen() {
             <View style={styles.suggestWrap}>
               <View style={styles.emptyIntro}>
                 <Feather name="search" size={36} color={colors.border} />
-                <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Buscar na Bíblia</Text>
+                <Text style={[styles.emptyTitle, { color: colors.foreground }]}>{tl('search_intro_title')}</Text>
                 <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
-                  Digite uma palavra ou frase em inglês ou português para encontrar versículos
+                  {tl('search_intro_sub')}
                 </Text>
               </View>
 
               {recent.length > 0 && (
                 <View style={styles.section}>
                   <View style={styles.sectionHeader}>
-                    <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Buscas recentes</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{tl('search_recent')}</Text>
                     <TouchableOpacity onPress={clearRecent} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                      <Text style={[styles.clearLink, { color: colors.mutedForeground }]}>Limpar</Text>
+                      <Text style={[styles.clearLink, { color: colors.mutedForeground }]}>{tl('search_clear')}</Text>
                     </TouchableOpacity>
                   </View>
                   <View style={styles.chipRow}>
@@ -139,7 +141,7 @@ export default function SearchScreen() {
               )}
 
               <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Buscas populares</Text>
+                <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{tl('search_popular')}</Text>
                 <View style={styles.chipRow}>
                   {POPULAR_TOPICS.map((term) => (
                     <TouchableOpacity
@@ -154,7 +156,7 @@ export default function SearchScreen() {
               </View>
 
               <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Passagens em destaque</Text>
+                <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{tl('search_featured')}</Text>
                 {FEATURED_PASSAGES.slice(0, 6).map((fp) => {
                   const book = BIBLE_DATA[fp.bookId];
                   return (
@@ -185,15 +187,15 @@ export default function SearchScreen() {
       ) : query.trim().length < 3 ? (
         <View style={styles.empty}>
           <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
-            Digite pelo menos 3 caracteres para buscar
+            {tl('search_min_chars')}
           </Text>
         </View>
       ) : results.length === 0 ? (
         <View style={styles.empty}>
           <Feather name="frown" size={44} color={colors.border} />
-          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Sem resultados</Text>
+          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>{tl('search_no_results_title')}</Text>
           <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
-            Nenhum versículo encontrado para "{query}"
+            {tl('search_no_results_for')} "{query}"
           </Text>
         </View>
       ) : (
@@ -202,7 +204,7 @@ export default function SearchScreen() {
           keyExtractor={(item) => `${item.bookId}-${item.chapter}-${item.verse.v}`}
           ListHeaderComponent={
             <Text style={[styles.resultCount, { color: colors.mutedForeground }]}>
-              {results.length} resultado{results.length !== 1 ? 's' : ''}
+              {results.length} {results.length !== 1 ? tl('search_result_plural') : tl('search_result_singular')}
             </Text>
           }
           renderItem={({ item }) => {
@@ -230,7 +232,7 @@ export default function SearchScreen() {
                   {item.verse.pt}
                 </Text>
                 <View style={styles.resultFooter}>
-                  <Text style={[styles.readMore, { color: colors.accent }]}>Ler capítulo</Text>
+                  <Text style={[styles.readMore, { color: colors.accent }]}>{tl('read_chapter')}</Text>
                   <Feather name="arrow-right" size={14} color={colors.accent} />
                 </View>
               </TouchableOpacity>

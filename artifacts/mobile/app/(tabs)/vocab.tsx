@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useBible } from '@/context/BibleContext';
+import { useLanguage } from '@/context/LanguageContext';
 import FlashCard from '@/components/FlashCard';
 
 type Filter = 'all' | 'learning' | 'mastered';
@@ -20,6 +21,7 @@ export default function VocabScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { vocabulary, toggleMastered, removeFromVocabulary } = useBible();
+  const { t: tl } = useLanguage();
   const [filter, setFilter] = useState<Filter>('all');
 
   const filtered = vocabulary.filter(v => {
@@ -32,18 +34,18 @@ export default function VocabScreen() {
   const bottomPad = useTabBarHeight();
 
   const filters: { key: Filter; label: string }[] = [
-    { key: 'all', label: `Todas (${vocabulary.length})` },
-    { key: 'learning', label: `Aprendendo (${vocabulary.filter(v => !v.mastered).length})` },
-    { key: 'mastered', label: `Dominadas (${vocabulary.filter(v => v.mastered).length})` },
+    { key: 'all', label: `${tl('vocab_filter_all')} (${vocabulary.length})` },
+    { key: 'learning', label: `${tl('vocab_filter_learning')} (${vocabulary.filter(v => !v.mastered).length})` },
+    { key: 'mastered', label: `${tl('vocab_filter_mastered')} (${vocabulary.filter(v => v.mastered).length})` },
   ];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + 12, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Vocabulário</Text>
+        <Text style={[styles.headerTitle, { color: colors.foreground }]}>{tl('vocab_title')}</Text>
         <Text style={[styles.headerSub, { color: colors.mutedForeground }]}>
-          Palavras salvas durante a leitura
+          {tl('vocab_subtitle')}
         </Text>
         {/* Filter tabs */}
         <View style={[styles.filterRow, { backgroundColor: colors.muted, borderRadius: colors.radius }]}>
@@ -76,12 +78,12 @@ export default function VocabScreen() {
         <View style={styles.empty}>
           <Feather name="layers" size={44} color={colors.border} />
           <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
-            {vocabulary.length === 0 ? 'Nenhuma palavra ainda' : 'Nenhuma palavra nesta categoria'}
+            {vocabulary.length === 0 ? tl('vocab_empty_title') : tl('vocab_empty_filtered_title')}
           </Text>
           <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
             {vocabulary.length === 0
-              ? 'Toque em palavras em inglês durante a leitura para salvar no vocabulário'
-              : 'Altere o filtro para ver outras palavras'}
+              ? tl('vocab_empty_sub')
+              : tl('vocab_empty_filtered_sub')}
           </Text>
         </View>
       ) : (

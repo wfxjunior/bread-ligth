@@ -93,7 +93,7 @@ function DonationModal({ visible, onClose }: { visible: boolean; onClose: () => 
     if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
     if (!_apiBase) {
-      Alert.alert('Erro', 'Serviço de pagamento indisponível.');
+      Alert.alert(t('Erro', 'Error'), t('Serviço de pagamento indisponível.', 'Payment service unavailable.'));
       return;
     }
 
@@ -106,12 +106,12 @@ function DonationModal({ visible, onClose }: { visible: boolean; onClose: () => 
         body:    JSON.stringify({ amount: cents, currency: 'usd' }),
       });
       const data  = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Erro desconhecido');
+      if (!res.ok) throw new Error(data.error ?? t('Erro desconhecido', 'Unknown error'));
       await Linking.openURL(data.url);
       onClose();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Tente novamente.';
-      Alert.alert('Erro', msg);
+      const msg = err instanceof Error ? err.message : t('Tente novamente.', 'Try again.');
+      Alert.alert(t('Erro', 'Error'), msg);
     } finally {
       setLoading(false);
     }
@@ -222,27 +222,35 @@ function DonationModal({ visible, onClose }: { visible: boolean; onClose: () => 
 }
 
 // ── Ambassador modal ──────────────────────────────────────────────────────────
-const AMBASSADOR_FEATURES: { icon: string; text: string }[] = [
-  { icon: 'zap',       text: 'Acesso antecipado a novos livros e recursos' },
-  { icon: 'award',     text: 'Selo de Embaixador no seu perfil' },
-  { icon: 'book-open', text: 'Suporte direto ao desenvolvimento do app' },
-  { icon: 'heart',     text: 'Missão: inglês gratuito para todos' },
+const AMBASSADOR_FEATURES: { icon: string; pt: string; en: string }[] = [
+  { icon: 'zap',       pt: 'Acesso antecipado a novos livros e recursos', en: 'Early access to new books and features' },
+  { icon: 'award',     pt: 'Selo de Embaixador no seu perfil', en: 'Ambassador badge on your profile' },
+  { icon: 'book-open', pt: 'Suporte direto ao desenvolvimento do app', en: 'Direct support for app development' },
+  { icon: 'heart',     pt: 'Missão: inglês gratuito para todos', en: 'Mission: free English for everyone' },
 ];
 
 function AmbassadorModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { lang } = useLanguage();
+  const t = (pt: string, en: string) => lang === 'en' ? en : pt;
 
   const handleSubscribe = () => {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
-    Alert.alert('Em breve! 🌟', 'As assinaturas de Embaixador estarão disponíveis em breve.\nFique ligado nas novidades!');
+    Alert.alert(
+      t('Em breve! 🌟', 'Coming soon! 🌟'),
+      t('As assinaturas de Embaixador estarão disponíveis em breve.\nFique ligado nas novidades!', 'Ambassador subscriptions will be available soon.\nStay tuned for updates!'),
+    );
   };
 
   const handleShare = async () => {
     try {
       if (Platform.OS !== 'web') Haptics.selectionAsync();
       await Share.share({
-        message: `📖 Estou aprendendo inglês com o Bread&Light — gratuito e incrível! Confira: ${APP_SHARE_URL}`,
+        message: t(
+          `📖 Estou aprendendo inglês com o Bread&Light — gratuito e incrível! Confira: ${APP_SHARE_URL}`,
+          `📖 I'm learning English with Bread&Light — free and amazing! Check it out: ${APP_SHARE_URL}`,
+        ),
         url: APP_SHARE_URL,
       });
     } catch {}
@@ -266,10 +274,10 @@ function AmbassadorModal({ visible, onClose }: { visible: boolean; onClose: () =
             <Text style={[styles.ambassadorTitle, { color: colors.foreground }]}>Bread{'&'}Light Ambassador</Text>
             <View style={styles.ambassadorPriceRow}>
               <Text style={[styles.ambassadorPrice, { color: colors.primary }]}>R$9,90</Text>
-              <Text style={[styles.ambassadorPer,   { color: colors.mutedForeground }]}>/mês</Text>
+              <Text style={[styles.ambassadorPer,   { color: colors.mutedForeground }]}>{t('/mês', '/month')}</Text>
             </View>
             <Text style={[styles.ambassadorDesc, { color: colors.mutedForeground }]}>
-              Ajude a missão e ganhe vantagens exclusivas
+              {t('Ajude a missão e ganhe vantagens exclusivas', 'Help the mission and earn exclusive perks')}
             </Text>
           </View>
 
@@ -282,7 +290,7 @@ function AmbassadorModal({ visible, onClose }: { visible: boolean; onClose: () =
                 <View style={[styles.ambassadorFeatureIcon, { backgroundColor: colors.accent + '14', borderRadius: colors.radius }]}>
                   <Feather name={f.icon as any} size={14} color={colors.accent} />
                 </View>
-                <Text style={[styles.ambassadorFeatureText, { color: colors.foreground }]}>{f.text}</Text>
+                <Text style={[styles.ambassadorFeatureText, { color: colors.foreground }]}>{t(f.pt, f.en)}</Text>
               </View>
             ))}
           </View>
@@ -294,7 +302,7 @@ function AmbassadorModal({ visible, onClose }: { visible: boolean; onClose: () =
             style={[styles.ambassadorBtn, { backgroundColor: colors.primary, borderRadius: colors.radius }]}
           >
             <Text style={[styles.ambassadorBtnText, { color: colors.primaryForeground }]}>
-              Assinar — R$9,90/mês
+              {t('Assinar — R$9,90/mês', 'Subscribe — R$9.90/month')}
             </Text>
           </TouchableOpacity>
 
@@ -305,7 +313,7 @@ function AmbassadorModal({ visible, onClose }: { visible: boolean; onClose: () =
           >
             <Feather name="share-2" size={15} color={colors.mutedForeground} />
             <Text style={[styles.ambassadorShareText, { color: colors.mutedForeground }]}>
-              Compartilhar sem assinar
+              {t('Compartilhar sem assinar', 'Share without subscribing')}
             </Text>
           </TouchableOpacity>
         </Pressable>
@@ -628,19 +636,21 @@ function ReadingLanguagePillSelector({ value, onChange }: { value: 'en' | 'pt'; 
 
 // ── Main screen ───────────────────────────────────────────────────────────────
 // ── Issue types ───────────────────────────────────────────────────────────────
-const ISSUE_TYPES: { icon: string; label: string }[] = [
-  { icon: 'type',            label: 'Texto incorreto'       },
-  { icon: 'globe',           label: 'Tradução errada'       },
-  { icon: 'book-open',       label: 'Capítulo faltando'     },
-  { icon: 'cloud-off',       label: 'Devocional não carrega' },
-  { icon: 'alert-triangle',  label: 'App travando'          },
-  { icon: 'more-horizontal', label: 'Outro'                 },
+const ISSUE_TYPES: { key: string; icon: string; pt: string; en: string }[] = [
+  { key: 'wrong_text',        icon: 'type',            pt: 'Texto incorreto',        en: 'Incorrect text' },
+  { key: 'wrong_translation', icon: 'globe',           pt: 'Tradução errada',        en: 'Wrong translation' },
+  { key: 'missing_chapter',   icon: 'book-open',       pt: 'Capítulo faltando',      en: 'Missing chapter' },
+  { key: 'devotional_fail',   icon: 'cloud-off',       pt: 'Devocional não carrega', en: "Devotional won't load" },
+  { key: 'app_crash',         icon: 'alert-triangle',  pt: 'App travando',           en: 'App crashing' },
+  { key: 'other',             icon: 'more-horizontal', pt: 'Outro',                  en: 'Other' },
 ];
 
 // ── Support modal ─────────────────────────────────────────────────────────────
 function SupportModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { lang } = useLanguage();
+  const t = (pt: string, en: string) => lang === 'en' ? en : pt;
   const [selected, setSelected]       = useState<string[]>([]);
   const [description, setDescription] = useState('');
   const [sent, setSent]               = useState(false);
@@ -653,10 +663,10 @@ function SupportModal({ visible, onClose }: { visible: boolean; onClose: () => v
     onClose();
   };
 
-  const toggleType = (label: string) => {
+  const toggleType = (key: string) => {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
     setSelected(prev =>
-      prev.includes(label) ? prev.filter(l => l !== label) : [...prev, label]
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
     );
   };
 
@@ -696,7 +706,7 @@ function SupportModal({ visible, onClose }: { visible: boolean; onClose: () => v
 
             {/* Header */}
             <View style={styles.supportModalHeader}>
-              <Text style={[styles.supportModalTitle, { color: colors.foreground }]}>Reportar problema</Text>
+              <Text style={[styles.supportModalTitle, { color: colors.foreground }]}>{t('Reportar problema', 'Report a problem')}</Text>
               <TouchableOpacity onPress={handleClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
                 <Feather name="x" size={20} color={colors.mutedForeground} />
               </TouchableOpacity>
@@ -706,9 +716,9 @@ function SupportModal({ visible, onClose }: { visible: boolean; onClose: () => v
             {sent ? (
               <View style={styles.supportSentBox}>
                 <Feather name="check-circle" size={40} color={colors.primary} />
-                <Text style={[styles.supportSentTitle, { color: colors.foreground }]}>Obrigado!</Text>
+                <Text style={[styles.supportSentTitle, { color: colors.foreground }]}>{t('Obrigado!', 'Thank you!')}</Text>
                 <Text style={[styles.supportSentSub, { color: colors.mutedForeground }]}>
-                  Seu relatório foi registrado.{'\n'}Vamos trabalhar nisso em breve.
+                  {t('Seu relatório foi registrado.', 'Your report has been recorded.')}{'\n'}{t('Vamos trabalhar nisso em breve.', "We'll work on it soon.")}
                 </Text>
               </View>
             ) : (
@@ -719,15 +729,15 @@ function SupportModal({ visible, onClose }: { visible: boolean; onClose: () => v
               >
                 {/* Issue type chips */}
                 <Text style={[styles.supportFieldLabel, { color: colors.mutedForeground }]}>
-                  TIPO DE PROBLEMA
+                  {t('TIPO DE PROBLEMA', 'ISSUE TYPE')}
                 </Text>
                 <View style={styles.supportChips}>
-                  {ISSUE_TYPES.map(({ icon, label }) => {
-                    const active = selected.includes(label);
+                  {ISSUE_TYPES.map(({ key, icon, pt, en }) => {
+                    const active = selected.includes(key);
                     return (
                       <TouchableOpacity
-                        key={label}
-                        onPress={() => toggleType(label)}
+                        key={key}
+                        onPress={() => toggleType(key)}
                         activeOpacity={0.75}
                         style={[styles.supportChip, {
                           borderColor:     active ? colors.primary : colors.border,
@@ -740,7 +750,7 @@ function SupportModal({ visible, onClose }: { visible: boolean; onClose: () => v
                           color:      active ? colors.primary : colors.foreground,
                           fontFamily: active ? 'Inter_500Medium' : 'Inter_400Regular',
                         }]}>
-                          {label}
+                          {t(pt, en)}
                         </Text>
                       </TouchableOpacity>
                     );
@@ -749,12 +759,12 @@ function SupportModal({ visible, onClose }: { visible: boolean; onClose: () => v
 
                 {/* Description */}
                 <Text style={[styles.supportFieldLabel, { color: colors.mutedForeground, marginTop: 20 }]}>
-                  DESCRIÇÃO
+                  {t('DESCRIÇÃO', 'DESCRIPTION')}
                 </Text>
                 <TextInput
                   value={description}
                   onChangeText={setDescription}
-                  placeholder="Descreva o que aconteceu…"
+                  placeholder={t('Descreva o que aconteceu…', 'Describe what happened…')}
                   placeholderTextColor={colors.mutedForeground}
                   multiline
                   style={[styles.supportInput, {
@@ -779,7 +789,7 @@ function SupportModal({ visible, onClose }: { visible: boolean; onClose: () => v
                   <Text style={[styles.supportSendText, {
                     color: canSend ? colors.primaryForeground : colors.mutedForeground,
                   }]}>
-                    Enviar
+                    {t('Enviar', 'Send')}
                   </Text>
                 </TouchableOpacity>
               </ScrollView>
@@ -910,7 +920,7 @@ export default function SettingsScreen() {
     if (Platform.OS !== 'web') {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permissão necessária', 'Precisamos de acesso à galeria para alterar sua foto.');
+        Alert.alert(tl('avatar_permission_title'), tl('avatar_permission_body'));
         return;
       }
     }
@@ -930,16 +940,16 @@ export default function SettingsScreen() {
 
   const handleClearVocab = () => {
     if (Platform.OS === 'web') {
-      if (window.confirm('Limpar todo o vocabulário salvo? Esta ação não pode ser desfeita.')) {
+      if (window.confirm(tl('clear_vocab_confirm_body'))) {
         clearVocabulary?.();
       }
     } else {
       Alert.alert(
-        'Limpar Vocabulário',
-        'Remover todas as palavras salvas? Esta ação não pode ser desfeita.',
+        tl('clear_vocab_confirm_title'),
+        tl('clear_vocab_confirm_body'),
         [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Limpar', style: 'destructive', onPress: () => clearVocabulary?.() },
+          { text: tl('cancel'), style: 'cancel' },
+          { text: tl('clear_vocab_confirm_action'), style: 'destructive', onPress: () => clearVocabulary?.() },
         ],
       );
     }
@@ -1069,7 +1079,7 @@ export default function SettingsScreen() {
                     ]}
                   >
                     <Text style={[styles.pillText, { color: active ? colors.primaryForeground : colors.mutedForeground }]}>
-                      {l === 'pt' ? 'Português' : 'English'}
+                      {tl(l === 'pt' ? 'app_language_pt' : 'app_language_en')}
                     </Text>
                   </TouchableOpacity>
                 );

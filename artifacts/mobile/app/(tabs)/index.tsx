@@ -68,6 +68,7 @@ const SIZE_LABEL: Record<VerseSize, number> = { S: 10, M: 13, L: 16 };
 function DailyPill() {
   const colors = useColors();
   const audio  = useAudio();
+  const { t: tl } = useLanguage();
 
   const [today,    setToday]    = useState(() => new Date());
   const [expanded, setExpanded] = useState(false);
@@ -156,7 +157,7 @@ function DailyPill() {
         <View style={styles.pillTopRow}>
           <View style={styles.pillBadge}>
             <Feather name="sun" size={11} color={colors.accent} />
-            <Text style={[styles.pillBadgeText, { color: colors.accent }]}>Versículo do dia</Text>
+            <Text style={[styles.pillBadgeText, { color: colors.accent }]}>{tl('home_daily_verse_badge')}</Text>
           </View>
           <Text style={[styles.pillRef, { color: colors.mutedForeground }]}>
             {entry.bookEn} {entry.chapter}:{entry.verse}
@@ -281,7 +282,7 @@ function DailyPill() {
               router.push('/daily');
             }}
           >
-            <Text style={[styles.pillOpenText, { color: colors.accent }]}>Abrir</Text>
+            <Text style={[styles.pillOpenText, { color: colors.accent }]}>{tl('open_action')}</Text>
             <Feather name="arrow-right" size={12} color={colors.accent} />
           </TouchableOpacity>
         </View>
@@ -298,18 +299,18 @@ type BookMeta = {
   bookId: string;
   category: BookCategory;
   roman: string;
-  testamentPt: string;
+  testament: 'old' | 'new';
 };
 
 const BOOK_CATALOGUE: BookMeta[] = [
-  { bookId: 'genesis',      category: 'pentateuch',     roman: 'I',   testamentPt: 'Antigo Testamento' },
-  { bookId: 'psalms',       category: 'poetry',         roman: 'XIX', testamentPt: 'Antigo Testamento' },
-  { bookId: 'proverbs',     category: 'poetry',         roman: 'XX',  testamentPt: 'Antigo Testamento' },
-  { bookId: 'matthew',      category: 'gospels',        roman: 'I',   testamentPt: 'Novo Testamento'   },
-  { bookId: 'john',         category: 'gospels',        roman: 'IV',  testamentPt: 'Novo Testamento'   },
-  { bookId: 'romans',       category: 'paulineLetters', roman: 'VI',  testamentPt: 'Novo Testamento'   },
-  { bookId: 'philippians',  category: 'paulineLetters', roman: 'XI',  testamentPt: 'Novo Testamento'   },
-  { bookId: '1corinthians', category: 'paulineLetters', roman: 'VII', testamentPt: 'Novo Testamento'   },
+  { bookId: 'genesis',      category: 'pentateuch',     roman: 'I',   testament: 'old' },
+  { bookId: 'psalms',       category: 'poetry',         roman: 'XIX', testament: 'old' },
+  { bookId: 'proverbs',     category: 'poetry',         roman: 'XX',  testament: 'old' },
+  { bookId: 'matthew',      category: 'gospels',        roman: 'I',   testament: 'new' },
+  { bookId: 'john',         category: 'gospels',        roman: 'IV',  testament: 'new' },
+  { bookId: 'romans',       category: 'paulineLetters', roman: 'VI',  testament: 'new' },
+  { bookId: 'philippians',  category: 'paulineLetters', roman: 'XI',  testament: 'new' },
+  { bookId: '1corinthians', category: 'paulineLetters', roman: 'VII', testament: 'new' },
 ];
 
 // ── Study / Learning centre constants ─────────────────────────────────────────
@@ -324,10 +325,10 @@ const STUDY_STEPS = [
 ];
 
 const PROGRESS_STATS: ProgressStat[] = [
-  { icon: 'type',      value: '12', label: 'Words\nlearned',  desc: 'Palavras salvas no seu vocabulário pessoal.' },
-  { icon: 'book-open', value: '4',  label: 'Verses\nstudied', desc: 'Versículos que você já leu e refletiu.'      },
-  { icon: 'clock',     value: '18', label: 'Min\nstudy time', desc: 'Minutos investidos na Palavra esta semana.'  },
-  { icon: 'zap',       value: '7',  label: 'Day\nstreak',     desc: 'Dias seguidos de estudo constante.'          },
+  { icon: 'type',      value: '12', labelEn: 'Words\nlearned',  labelPt: 'Palavras\naprendidas', descEn: 'Words saved to your personal vocabulary.',        descPt: 'Palavras salvas no seu vocabulário pessoal.' },
+  { icon: 'book-open', value: '4',  labelEn: 'Verses\nstudied', labelPt: 'Versículos\nestudados', descEn: 'Verses you have already read and reflected on.', descPt: 'Versículos que você já leu e refletiu.'      },
+  { icon: 'clock',     value: '18', labelEn: 'Min\nstudy time', labelPt: 'Min de\nestudo',        descEn: 'Minutes invested in the Word this week.',        descPt: 'Minutos investidos na Palavra esta semana.'  },
+  { icon: 'zap',       value: '7',  labelEn: 'Day\nstreak',     labelPt: 'Dias\nseguidos',        descEn: 'Consecutive days of steady study.',               descPt: 'Dias seguidos de estudo constante.'          },
 ];
 
 const VOCAB_PREVIEW = [
@@ -339,6 +340,7 @@ const VOCAB_PREVIEW = [
 // ── Book list row ─────────────────────────────────────────────────────────────
 function BookListRow({ meta, isLast }: { meta: BookMeta; isLast?: boolean }) {
   const colors = useColors();
+  const { t: tl } = useLanguage();
   const book   = BIBLE_DATA[meta.bookId];
   if (!book) return null;
 
@@ -386,7 +388,7 @@ function BookListRow({ meta, isLast }: { meta: BookMeta; isLast?: boolean }) {
         </Text>
         <View style={[styles.listTag, { backgroundColor: colors.primary + '14' }]}>
           <Text style={[styles.listTagText, { color: colors.primary }]}>
-            {meta.testamentPt}
+            {tl(meta.testament === 'old' ? 'testament_old' : 'testament_new')}
           </Text>
         </View>
       </View>
@@ -394,7 +396,7 @@ function BookListRow({ meta, isLast }: { meta: BookMeta; isLast?: boolean }) {
       {/* Right: chapter count + chevron */}
       <View style={styles.listRight}>
         <Text style={[styles.listChapters, { color: colors.mutedForeground }]}>
-          {chapterCount} cap.
+          {chapterCount} {tl('chapter_abbr_lower')}
         </Text>
         <Feather name="chevron-right" size={14} color={colors.mutedForeground} />
       </View>
@@ -454,7 +456,7 @@ function StudyCard() {
 
         {/* Reference + time */}
         <View style={styles.studyMeta}>
-          <Text style={[styles.studyMetaRef, { color: colors.primary }]}>John 1</Text>
+          <Text style={[styles.studyMetaRef, { color: colors.primary }]}>{isPt ? 'João 1' : 'John 1'}</Text>
           <View style={[styles.studyMetaDot, { backgroundColor: colors.border }]} />
           <Feather name="clock" size={11} color={colors.mutedForeground} />
           <Text style={[styles.studyMetaTime, { color: colors.mutedForeground }]}>15 min</Text>
@@ -782,7 +784,7 @@ export default function HomeScreen() {
             }]}
           >
             <Feather name="bookmark" size={13} color={colors.primary} />
-            <Text style={[styles.continueLabel, { color: colors.mutedForeground }]}>Continuar</Text>
+            <Text style={[styles.continueLabel, { color: colors.mutedForeground }]}>{t('continue_label')}</Text>
             <Text style={[styles.continueName, { color: colors.primary }]}>
               {readingProgress.englishBookName} {readingProgress.chapter}
             </Text>
@@ -795,10 +797,10 @@ export default function HomeScreen() {
       {/* ── Library ── */}
       <View style={[styles.section, { marginTop: readingProgress ? 24 : 20 }]}>
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>BIBLIOTECA</Text>
+          <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>{t('library_section_title')}</Text>
           <View style={styles.sectionRight}>
             <Text style={[styles.sectionCount, { color: colors.accent }]}>
-              {BOOK_CATALOGUE.length} livros
+              {BOOK_CATALOGUE.length} {t(BOOK_CATALOGUE.length !== 1 ? 'book_count_plural' : 'book_count_singular')}
             </Text>
             {/* View-mode toggle */}
             <View style={[styles.viewToggle, { borderColor: colors.border, backgroundColor: colors.card }]}>
@@ -807,7 +809,7 @@ export default function HomeScreen() {
                 hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                 style={[styles.viewToggleBtn, viewMode === 'grid' && { backgroundColor: colors.primary + '18' }]}
                 accessibilityRole="button"
-                accessibilityLabel="Visualização em grade"
+                accessibilityLabel={t('library_view_grid_a11y')}
                 accessibilityState={{ selected: viewMode === 'grid' }}
               >
                 <MaterialCommunityIcons name="bookshelf" size={14} color={viewMode === 'grid' ? colors.primary : colors.mutedForeground} />
@@ -817,7 +819,7 @@ export default function HomeScreen() {
                 hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                 style={[styles.viewToggleBtn, viewMode === 'list' && { backgroundColor: colors.primary + '18' }]}
                 accessibilityRole="button"
-                accessibilityLabel="Visualização em lista"
+                accessibilityLabel={t('library_view_list_a11y')}
                 accessibilityState={{ selected: viewMode === 'list' }}
               >
                 <Feather name="list" size={13} color={viewMode === 'list' ? colors.primary : colors.mutedForeground} />
@@ -846,7 +848,7 @@ export default function HomeScreen() {
       ════════════════════════════════════════════════════════════════════════ */}
       <View style={[styles.section, { marginTop: 36 }]}>
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>ESTUDO</Text>
+          <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>{t('study_section_title')}</Text>
         </View>
 
         <StudyCard />
@@ -857,7 +859,7 @@ export default function HomeScreen() {
       ════════════════════════════════════════════════════════════════════════ */}
       <View style={[styles.section, { marginTop: 32 }]}>
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>PROGRESSO</Text>
+          <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>{t('progress_section_title')}</Text>
         </View>
 
         <TouchableOpacity
@@ -878,10 +880,10 @@ export default function HomeScreen() {
 
           <View style={styles.progressSummaryText}>
             <Text style={[styles.progressHeroValue, { color: colors.foreground }]}>
-              {PROGRESS_STATS[3].value}-day streak
+              {PROGRESS_STATS[3].value}{t('progress_streak_suffix')}
             </Text>
             <Text style={[styles.progressHeroSub, { color: colors.mutedForeground }]} numberOfLines={1}>
-              {PROGRESS_STATS[0].value} words · {PROGRESS_STATS[1].value} verses · {PROGRESS_STATS[2].value} min
+              {PROGRESS_STATS[0].value} {t('progress_words_word')} · {PROGRESS_STATS[1].value} {t('progress_verses_word')} · {PROGRESS_STATS[2].value} min
             </Text>
           </View>
 
@@ -900,7 +902,7 @@ export default function HomeScreen() {
       ════════════════════════════════════════════════════════════════════════ */}
       <View style={[styles.section, { marginTop: 32 }]}>
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>VOCABULÁRIO</Text>
+          <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>{t('vocab_section_title')}</Text>
         </View>
 
         <View style={[styles.vocabCard, {
@@ -932,7 +934,7 @@ export default function HomeScreen() {
           }}
           style={[styles.outlineBtn, { borderColor: colors.primary, borderRadius: colors.radius, marginTop: 12 }]}
         >
-          <Text style={[styles.outlineBtnText, { color: colors.primary }]}>Review Vocabulary</Text>
+          <Text style={[styles.outlineBtnText, { color: colors.primary }]}>{t('review_vocabulary_btn')}</Text>
           <Feather name="arrow-right" size={13} color={colors.primary} />
         </TouchableOpacity>
       </View>
@@ -942,7 +944,7 @@ export default function HomeScreen() {
       ════════════════════════════════════════════════════════════════════════ */}
       <View style={[styles.section, { marginTop: 32 }]}>
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>ANOTAÇÕES</Text>
+          <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>{t('notes_section_title')}</Text>
         </View>
 
         <View style={[styles.noteCard, {
@@ -956,7 +958,7 @@ export default function HomeScreen() {
           <View style={styles.noteBody}>
             <Text style={[styles.noteRef, { color: colors.primary }]}>John 1:1</Text>
             <Text style={[styles.noteText, { color: colors.foreground }]}>
-              Jesus is presented as eternal, God, and the source of everything.
+              {t('note_sample_text')}
             </Text>
           </View>
         </View>
@@ -969,7 +971,7 @@ export default function HomeScreen() {
           }}
           style={[styles.outlineBtn, { borderColor: colors.primary, borderRadius: colors.radius, marginTop: 12 }]}
         >
-          <Text style={[styles.outlineBtnText, { color: colors.primary }]}>Open Notes</Text>
+          <Text style={[styles.outlineBtnText, { color: colors.primary }]}>{t('open_notes_btn')}</Text>
           <Feather name="arrow-right" size={13} color={colors.primary} />
         </TouchableOpacity>
       </View>

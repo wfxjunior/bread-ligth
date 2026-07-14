@@ -184,8 +184,8 @@ const strings = {
   terms:             { pt: 'Termos de Uso',      en: 'Terms of Use'  },
 
   // ── Plan badges
-  plan_free:         { pt: 'Free',   en: 'Free'   },
-  plan_member:       { pt: 'Member', en: 'Member' },
+  plan_free:         { pt: 'Grátis', en: 'Free'   },
+  plan_member:       { pt: 'Membro', en: 'Member' },
 
   // ── Home screen
   home_brand:        { pt: 'Bread&Light', en: 'Bread&Light' },
@@ -259,7 +259,7 @@ const strings = {
   study_step_listen:    { pt: 'Ouvir',     en: 'Listen'  },
   study_step_learn:     { pt: 'Aprender',  en: 'Learn'   },
   study_step_reflect:   { pt: 'Refletir',  en: 'Reflect' },
-  study_chapter_title:  { pt: 'O Verbo se\nfez carne', en: 'The Word\nBecame Flesh' },
+  study_chapter_title:  { pt: 'O Verbo se\nfez carne', en: 'The Word\nbecame flesh' },
   study_continue_reading: { pt: 'Continuar leitura', en: 'Continue Reading' },
   study_reflect_save:   { pt: 'Salvar reflexão', en: 'Save reflection' },
   study_reflect_saved:  { pt: 'Salvo',            en: 'Saved'           },
@@ -294,6 +294,111 @@ const strings = {
   month_full_oct: { pt: 'outubro',   en: 'October'   },
   month_full_nov: { pt: 'novembro',  en: 'November'  },
   month_full_dec: { pt: 'dezembro',  en: 'December'  },
+
+  // ── Vocabulary screen
+  vocab_title:                { pt: 'Vocabulário', en: 'Vocabulary' },
+  vocab_subtitle:              { pt: 'Palavras salvas durante a leitura', en: 'Words saved while reading' },
+  vocab_filter_all:            { pt: 'Todas', en: 'All' },
+  vocab_filter_learning:       { pt: 'Aprendendo', en: 'Learning' },
+  vocab_filter_mastered:       { pt: 'Dominadas', en: 'Mastered' },
+  vocab_empty_title:           { pt: 'Nenhuma palavra ainda', en: 'No words yet' },
+  vocab_empty_filtered_title:  { pt: 'Nenhuma palavra nesta categoria', en: 'No words in this category' },
+  vocab_empty_sub:             { pt: 'Toque em palavras em inglês durante a leitura para salvar no vocabulário', en: 'Tap English words while reading to save them to your vocabulary' },
+  vocab_empty_filtered_sub:    { pt: 'Altere o filtro para ver outras palavras', en: 'Change the filter to see other words' },
+
+  // ── Bookmarks screen
+  bookmarks_title:          { pt: 'Favoritos', en: 'Favorites' },
+  bookmark_count_singular:  { pt: 'versículo salvo', en: 'saved verse' },
+  bookmark_count_plural:    { pt: 'versículos salvos', en: 'saved verses' },
+  bookmarks_empty_title:    { pt: 'Sem favoritos ainda', en: 'No favorites yet' },
+  bookmarks_empty_sub:      { pt: 'Toque no ícone de marcador ao lado de um versículo durante a leitura para salvá-lo aqui', en: 'Tap the bookmark icon next to a verse while reading to save it here' },
+  read_chapter:             { pt: 'Ler capítulo', en: 'Read chapter' },
+
+  // ── Search screen
+  search_title:             { pt: 'Buscar', en: 'Search' },
+  search_placeholder:       { pt: 'Buscar em inglês ou português...', en: 'Search in English or Portuguese...' },
+  search_intro_title:       { pt: 'Buscar na Bíblia', en: 'Search the Bible' },
+  search_intro_sub:         { pt: 'Digite uma palavra ou frase em inglês ou português para encontrar versículos', en: 'Type a word or phrase in English or Portuguese to find verses' },
+  search_recent:            { pt: 'Buscas recentes', en: 'Recent searches' },
+  search_clear:             { pt: 'Limpar', en: 'Clear' },
+  search_popular:           { pt: 'Buscas populares', en: 'Popular searches' },
+  search_featured:          { pt: 'Passagens em destaque', en: 'Featured passages' },
+  search_min_chars:         { pt: 'Digite pelo menos 3 caracteres para buscar', en: 'Type at least 3 characters to search' },
+  search_no_results_title:  { pt: 'Sem resultados', en: 'No results' },
+  search_no_results_for:    { pt: 'Nenhum versículo encontrado para', en: 'No verse found for' },
+  search_result_singular:   { pt: 'resultado', en: 'result' },
+  search_result_plural:     { pt: 'resultados', en: 'results' },
+
+  // ── Not-found screen
+  not_found_page_title: { pt: 'Ops!', en: 'Oops!' },
+  not_found_title:      { pt: 'Esta tela não existe.', en: "This screen doesn't exist." },
+  not_found_link:       { pt: 'Ir para a tela inicial!', en: 'Go to home screen!' },
+
+  // ── Error fallback
+  error_fallback_title:         { pt: 'Algo deu errado', en: 'Something went wrong' },
+  error_fallback_message:       { pt: 'Recarregue o aplicativo para continuar.', en: 'Please reload the app to continue.' },
+  error_fallback_retry:         { pt: 'Tentar novamente', en: 'Try Again' },
+  error_fallback_view_details:  { pt: 'Ver detalhes do erro', en: 'View error details' },
+  error_fallback_details_title: { pt: 'Detalhes do Erro', en: 'Error Details' },
+  error_fallback_close_details: { pt: 'Fechar detalhes do erro', en: 'Close error details' },
+
+  // ── Settings drawer
+  drawer_login_sub: { pt: 'Sincronize seu progresso', en: 'Sync your progress' },
+
+  // ── Word modal
+  word_modal_translation_label: { pt: 'Tradução em Português', en: 'Portuguese Translation' },
+  word_modal_example_prefix:    { pt: 'Ex:', en: 'Ex:' },
+  word_modal_already_saved:     { pt: 'Já salvo no vocabulário', en: 'Already saved to vocabulary' },
+  word_modal_save:              { pt: 'Salvar no vocabulário', en: 'Save to vocabulary' },
+  word_modal_not_found:         { pt: 'Palavra não encontrada no dicionário.', en: 'Word not found in dictionary.' },
+
+  // ── Flash card
+  flashcard_hint_en:       { pt: 'Inglês · Toque para ver', en: 'English · Tap to reveal' },
+  flashcard_mastered:      { pt: 'Dominada', en: 'Mastered' },
+  flashcard_master_action: { pt: 'Dominar', en: 'Master' },
+
+  // ── Progress modal
+  progress_modal_title:    { pt: 'Seu progresso', en: 'Your progress' },
+  progress_modal_subtitle: { pt: 'Um retrato do seu estudo até agora', en: 'A snapshot of your study so far' },
+  progress_modal_footer:   { pt: 'Continue lendo para manter sua constância viva.', en: 'Keep reading to keep your streak alive.' },
+
+  // ── Settings — avatar & vocabulary management
+  avatar_permission_title:    { pt: 'Permissão necessária', en: 'Permission needed' },
+  avatar_permission_body:     { pt: 'Precisamos de acesso à galeria para alterar sua foto.', en: 'We need access to your photo library to change your picture.' },
+  clear_vocab_confirm_title:  { pt: 'Limpar Vocabulário', en: 'Clear Vocabulary' },
+  clear_vocab_confirm_body:   { pt: 'Remover todas as palavras salvas? Esta ação não pode ser desfeita.', en: 'Remove all saved words? This action cannot be undone.' },
+  clear_vocab_confirm_action: { pt: 'Limpar', en: 'Clear' },
+  word_count_singular:        { pt: 'palavra salva', en: 'saved word' },
+  word_count_plural:          { pt: 'palavras salvas', en: 'saved words' },
+
+  // ── Home screen
+  home_daily_verse_badge:   { pt: 'Versículo do dia', en: 'Verse of the day' },
+  open_action:              { pt: 'Abrir', en: 'Open' },
+  continue_label:           { pt: 'Continuar', en: 'Continue' },
+  library_section_title:    { pt: 'BIBLIOTECA', en: 'LIBRARY' },
+  book_count_singular:      { pt: 'livro', en: 'book' },
+  book_count_plural:        { pt: 'livros', en: 'books' },
+  library_view_grid_a11y:   { pt: 'Visualização em grade', en: 'Grid view' },
+  library_view_list_a11y:   { pt: 'Visualização em lista', en: 'List view' },
+  study_section_title:      { pt: 'ESTUDO', en: 'STUDY' },
+  progress_section_title:   { pt: 'PROGRESSO', en: 'PROGRESS' },
+  vocab_section_title:      { pt: 'VOCABULÁRIO', en: 'VOCABULARY' },
+  notes_section_title:      { pt: 'ANOTAÇÕES', en: 'NOTES' },
+  review_vocabulary_btn:    { pt: 'Revisar Vocabulário', en: 'Review Vocabulary' },
+  open_notes_btn:           { pt: 'Abrir Anotações', en: 'Open Notes' },
+  note_sample_text:         { pt: 'Jesus é apresentado como eterno, Deus, e a fonte de tudo.', en: 'Jesus is presented as eternal, God, and the source of everything.' },
+  testament_old:            { pt: 'Antigo Testamento', en: 'Old Testament' },
+  testament_new:            { pt: 'Novo Testamento', en: 'New Testament' },
+  testament_old_caps:       { pt: 'ANTIGO TESTAMENTO', en: 'OLD TESTAMENT' },
+  testament_new_caps:       { pt: 'NOVO TESTAMENTO', en: 'NEW TESTAMENT' },
+  chapter_abbr:             { pt: 'Cap.', en: 'Ch.' },
+  chapter_abbr_lower:       { pt: 'cap.', en: 'ch.' },
+  of_word:                  { pt: 'de', en: 'of' },
+  chapter_count_singular:   { pt: 'capítulo', en: 'chapter' },
+  chapter_count_plural:     { pt: 'capítulos', en: 'chapters' },
+  progress_streak_suffix:   { pt: ' dias seguidos', en: '-day streak' },
+  progress_words_word:      { pt: 'palavras', en: 'words' },
+  progress_verses_word:     { pt: 'versículos', en: 'verses' },
 } as const;
 
 export type I18nKey = keyof typeof strings;

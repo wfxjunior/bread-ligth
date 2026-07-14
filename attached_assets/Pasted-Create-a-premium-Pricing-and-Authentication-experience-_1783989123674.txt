@@ -1,0 +1,320 @@
+Create a premium Pricing and Authentication experience for BreadLight.
+
+Before implementing, inspect the existing authentication, billing, localization and design system.
+
+Reuse existing components whenever possible.
+
+Do not redesign the entire application.
+
+Keep the implementation lightweight and maintainable.
+
+==================================================
+PRODUCT STRATEGY
+==================================================
+
+BreadLight will launch with only ONE paid subscription.
+
+There will NOT be multiple plans.
+
+Do not create:
+
+Free
+Pro
+Business
+Enterprise
+
+Create only:
+
+BreadLight Premium
+
+The free experience remains available.
+
+Premium simply unlocks advanced learning tools.
+
+==================================================
+PRICING
+==================================================
+
+Create a clean in-app Pricing page.
+
+The design should feel inspired by Apple and Attio.
+
+Minimal.
+
+Elegant.
+
+Lots of whitespace.
+
+Premium typography.
+
+One centered pricing card.
+
+==================================================
+PLAN
+==================================================
+
+BreadLight Premium
+
+Monthly
+
+US$ 4.99/month
+
+Yearly
+
+US$ 39.99/year
+
+Display:
+
+Save 33%
+
+Annual billing should be selected by default.
+
+==================================================
+FEATURES
+==================================================
+
+Premium includes:
+
+✓ Natural Premium Voices
+
+✓ AI Pronunciation Feedback
+
+✓ Unlimited Vocabulary Review
+
+✓ Advanced Learning Progress
+
+✓ Premium Reading Atmospheres
+
+✓ Offline Reading
+
+✓ Offline Audio
+
+✓ Future Premium AI Features
+
+==================================================
+BUTTONS
+==================================================
+
+Primary button:
+
+Start 7-Day Free Trial
+
+Secondary button:
+
+Continue with Free
+
+Do not pressure users.
+
+Keep the page calm and respectful.
+
+==================================================
+MISSION
+==================================================
+
+Display a small message below the pricing card.
+
+"Your subscription helps us continue improving BreadLight and expanding access to Scripture-based language learning."
+
+Keep it subtle.
+
+==================================================
+AUTHENTICATION
+==================================================
+
+Create a new Authentication page.
+
+Minimal.
+
+Elegant.
+
+Premium.
+
+Support:
+
+Continue with Google
+
+Continue with Apple
+
+Continue with Email
+
+Email Login
+
+Password Login
+
+Forgot Password
+
+Create Account
+
+Do not create unnecessary onboarding.
+
+==================================================
+DESIGN
+==================================================
+
+Use the BreadLight Design System.
+
+Warm cream
+
+Deep burgundy
+
+Leather brown
+
+Muted antique gold
+
+Elegant serif headings
+
+Modern sans-serif UI
+
+Soft borders
+
+Subtle shadows
+
+No gradients except extremely subtle ones.
+
+No glassmorphism.
+
+No visual clutter.
+
+==================================================
+LOCALIZATION
+==================================================
+
+Everything must support localization.
+
+Never hardcode text.
+
+All interface strings must use the localization system.
+
+When App Language = Portuguese
+
+The entire Pricing page must appear in Portuguese.
+
+The Authentication page must also appear in Portuguese.
+
+Examples:
+
+Entrar
+
+Criar conta
+
+Continuar com Google
+
+Continuar com Apple
+
+Continuar com e-mail
+
+Esqueci minha senha
+
+BreadLight Premium
+
+Começar teste grátis
+
+Gerenciar assinatura
+
+Plano atual
+
+Mensal
+
+Anual
+
+Economize 33%
+
+Continuar com o plano gratuito
+
+--------------------------------------------------
+
+When App Language = English
+
+Everything must automatically switch to English.
+
+Examples:
+
+Sign In
+
+Create Account
+
+Continue with Google
+
+Continue with Apple
+
+Continue with Email
+
+Forgot Password?
+
+Start Free Trial
+
+Manage Subscription
+
+Current Plan
+
+Monthly
+
+Yearly
+
+Save 33%
+
+Continue with Free
+
+Never mix interface languages.
+
+The language must change instantly when App Language changes.
+
+==================================================
+IMPLEMENTATION
+==================================================
+
+Audit the current billing, authentication and localization implementation.
+
+Reuse existing architecture.
+
+Create missing localization keys if necessary.
+
+Replace hardcoded strings.
+
+Keep the implementation responsive.
+
+Keep accessibility.
+
+Keep performance.
+
+==================================================
+FINAL VALIDATION
+==================================================
+
+Verify:
+
+✓ Login works
+
+✓ Register works
+
+✓ Password recovery works
+
+✓ Google Sign-In works
+
+✓ Apple Sign-In works (if configured)
+
+✓ Pricing page works
+
+✓ Monthly and yearly selector works
+
+✓ Localization works
+
+✓ Mobile layout works
+
+✓ Desktop layout works
+
+✓ No console errors
+
+Provide a concise report of:
+
+- components created
+
+- components reused
+
+- localization keys added
+
+- billing flow
+
+- authentication flow
+
+- remaining configuration required

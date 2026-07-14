@@ -11,6 +11,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
+import { useLanguage } from '@/context/LanguageContext';
 import { WORD_DICTIONARY } from '@/constants/wordDictionary';
 import { type VocabWord, useBible } from '@/context/BibleContext';
 import { AudioPlayButton } from './AudioPlayButton';
@@ -24,6 +25,7 @@ interface WordModalProps {
 
 export default function WordModal({ visible, word, context, onClose }: WordModalProps) {
   const colors = useColors();
+  const { t } = useLanguage();
   const { addToVocabulary, vocabulary } = useBible();
   const entry = WORD_DICTIONARY[word] ?? WORD_DICTIONARY[word.toLowerCase()];
   const alreadySaved = vocabulary.some(v => v.word === word);
@@ -70,14 +72,14 @@ export default function WordModal({ visible, word, context, onClose }: WordModal
             <>
               <View style={[styles.translationBox, { backgroundColor: colors.secondary }]}>
                 <Text style={[styles.translationLabel, { color: colors.mutedForeground }]}>
-                  Tradução em Português
+                  {t('word_modal_translation_label')}
                 </Text>
                 <Text style={[styles.translation, { color: colors.portugueseText }]}>
                   {entry.pt}
                 </Text>
                 {entry.example && (
                   <Text style={[styles.example, { color: colors.mutedForeground }]}>
-                    Ex: "{entry.example}"
+                    {t('word_modal_example_prefix')} "{entry.example}"
                   </Text>
                 )}
               </View>
@@ -105,14 +107,14 @@ export default function WordModal({ visible, word, context, onClose }: WordModal
                     { color: alreadySaved ? colors.mutedForeground : colors.primaryForeground },
                   ]}
                 >
-                  {alreadySaved ? 'Já salvo no vocabulário' : 'Salvar no vocabulário'}
+                  {alreadySaved ? t('word_modal_already_saved') : t('word_modal_save')}
                 </Text>
               </TouchableOpacity>
             </>
           ) : (
             <View style={[styles.translationBox, { backgroundColor: colors.secondary }]}>
               <Text style={[styles.notFound, { color: colors.mutedForeground }]}>
-                Palavra não encontrada no dicionário.
+                {t('word_modal_not_found')}
               </Text>
             </View>
           )}

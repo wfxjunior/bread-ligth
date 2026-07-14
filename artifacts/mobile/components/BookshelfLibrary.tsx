@@ -14,6 +14,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { BIBLE_DATA } from '@/constants/bibleData';
+import { useLanguage } from '@/context/LanguageContext';
 
 // ── Leather category palette ────────────────────────────────────────────────
 // Each biblical category owns one leather tone — a real bookshelf groups
@@ -95,6 +96,7 @@ function LeatherBook({
   resumeChapter?: number;
 }) {
   const book = BIBLE_DATA[meta.bookId];
+  const { t: tl } = useLanguage();
   const scale   = useRef(new Animated.Value(1)).current;
   const lift    = useRef(new Animated.Value(isCurrent ? -6 : 0)).current;
   const rotate  = useRef(new Animated.Value(0)).current;
@@ -209,7 +211,7 @@ function LeatherBook({
           {/* era header */}
           <View style={styles.eraBlock} pointerEvents="none">
             <Text style={styles.eraLabel} numberOfLines={1}>
-              {book.testament === 'old' ? 'ANTIGO TESTAMENTO' : 'NOVO TESTAMENTO'}
+              {book.testament === 'old' ? tl('testament_old_caps') : tl('testament_new_caps')}
             </Text>
             <Text style={styles.eraYear} numberOfLines={1}>— {ERA[meta.bookId] ?? ''} —</Text>
           </View>
@@ -275,12 +277,14 @@ function LeatherBook({
                   <View style={[styles.progressDot, { left: `${Math.round(Math.min(1, progressRatio) * 100)}%` }]} />
                 </View>
                 <View style={styles.footerRow}>
-                  <Text style={styles.footerText}>Cap. {resumeChapter ?? 1} de {totalChapters}</Text>
+                  <Text style={styles.footerText}>{tl('chapter_abbr')} {resumeChapter ?? 1} {tl('of_word')} {totalChapters}</Text>
                   <Text style={styles.footerText}>{Math.round(Math.min(1, progressRatio) * 100)}%</Text>
                 </View>
               </>
             ) : (
-              <Text style={styles.footerTextCenter}>{totalChapters} capítulos</Text>
+              <Text style={styles.footerTextCenter}>
+                {totalChapters} {tl(totalChapters !== 1 ? 'chapter_count_plural' : 'chapter_count_singular')}
+              </Text>
             )}
           </View>
 

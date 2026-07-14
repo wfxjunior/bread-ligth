@@ -13,10 +13,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useBible, type Bookmark } from '@/context/BibleContext';
+import { useLanguage } from '@/context/LanguageContext';
 import * as Haptics from 'expo-haptics';
 
 function BookmarkCard({ item, onRemove }: { item: Bookmark; onRemove: () => void }) {
   const colors = useColors();
+  const { t: tl } = useLanguage();
 
   const handlePress = () => {
     router.push({
@@ -69,7 +71,7 @@ function BookmarkCard({ item, onRemove }: { item: Bookmark; onRemove: () => void
           {item.bookName} {item.chapter}:{item.verse}
         </Text>
         <View style={styles.readMore}>
-          <Text style={[styles.readMoreText, { color: colors.primary }]}>Ler capítulo</Text>
+          <Text style={[styles.readMoreText, { color: colors.primary }]}>{tl('read_chapter')}</Text>
           <Feather name="arrow-right" size={13} color={colors.primary} />
         </View>
       </View>
@@ -81,6 +83,7 @@ export default function BookmarksScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { bookmarks, removeBookmark } = useBible();
+  const { t: tl } = useLanguage();
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = useTabBarHeight();
@@ -88,18 +91,18 @@ export default function BookmarksScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Favoritos</Text>
+        <Text style={[styles.headerTitle, { color: colors.foreground }]}>{tl('bookmarks_title')}</Text>
         <Text style={[styles.headerSub, { color: colors.mutedForeground }]}>
-          {bookmarks.length} versículo{bookmarks.length !== 1 ? 's' : ''} salvo{bookmarks.length !== 1 ? 's' : ''}
+          {bookmarks.length} {bookmarks.length !== 1 ? tl('bookmark_count_plural') : tl('bookmark_count_singular')}
         </Text>
       </View>
 
       {bookmarks.length === 0 ? (
         <View style={styles.empty}>
           <Feather name="bookmark" size={44} color={colors.border} />
-          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Sem favoritos ainda</Text>
+          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>{tl('bookmarks_empty_title')}</Text>
           <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
-            Toque no ícone de marcador ao lado de um versículo durante a leitura para salvá-lo aqui
+            {tl('bookmarks_empty_sub')}
           </Text>
         </View>
       ) : (
