@@ -23,6 +23,7 @@ import SpaceBackground from '@/components/SpaceBackground';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useAudio } from '@/context/AudioContext';
 import { useLanguage } from '@/context/LanguageContext';
+import type { I18nKey } from '@/constants/i18n';
 import { useBible } from '@/context/BibleContext';
 import { BIBLE_DATA } from '@/constants/bibleData';
 import { getEntryForDate, resolveVerse, todayKey } from '@/utils/dailyVerse';
@@ -36,15 +37,23 @@ const GAP    = 10;
 
 const VIEW_MODE_KEY = '@bibliaeN:libraryViewMode';
 
-const WEEKDAYS_PT      = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-const WEEKDAYS_FULL_PT = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
-const MONTHS_PT        = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+// Calm, time-of-day greeting — no exclamation marks, no mixed languages.
+// The weekday/month keys map to full localized names (t() looks them up).
+const WEEKDAY_KEYS: I18nKey[] = [
+  'weekday_full_sun', 'weekday_full_mon', 'weekday_full_tue', 'weekday_full_wed',
+  'weekday_full_thu', 'weekday_full_fri', 'weekday_full_sat',
+];
+const MONTH_KEYS: I18nKey[] = [
+  'month_full_jan', 'month_full_feb', 'month_full_mar', 'month_full_apr',
+  'month_full_may', 'month_full_jun', 'month_full_jul', 'month_full_aug',
+  'month_full_sep', 'month_full_oct', 'month_full_nov', 'month_full_dec',
+];
 
-function getGreeting() {
+function getGreetingKey(): I18nKey {
   const h = new Date().getHours();
-  if (h < 12) return 'Bom dia!';
-  if (h < 18) return 'Boa tarde!';
-  return 'Boa noite!';
+  if (h < 12) return 'greeting_morning';
+  if (h < 18) return 'greeting_afternoon';
+  return 'greeting_evening';
 }
 
 type VerseSize = 'S' | 'M' | 'L';
@@ -663,13 +672,20 @@ export default function HomeScreen() {
   const topPad    = Platform.OS === 'web' ? 67 : insets.top;
   const bottomPad = useTabBarHeight();
 
+  const { t, lang } = useLanguage();
+
   const [userName,  setUserName]  = useState('');
   const [viewMode,  setViewMode]  = useState<'grid' | 'list'>('grid');
   const [progressModalVisible, setProgressModalVisible] = useState(false);
+  const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
     AsyncStorage.getItem('@bibliaeN:userName').then(n => setUserName(n ?? '')).catch(() => setUserName(''));
     AsyncStorage.getItem(VIEW_MODE_KEY).then(v => { if (v === 'list' || v === 'grid') setViewMode(v); }).catch(() => {});
+    // Refresh the greeting/date whenever the app is brought back to the
+    // foreground, so a morning greeting doesn't linger into the evening.
+    const sub = AppState.addEventListener('change', s => { if (s === 'active') setNow(new Date()); });
+    return () => sub.remove();
   }, []);
 
   const toggleView = (mode: 'grid' | 'list') => {
@@ -678,9 +694,31 @@ export default function HomeScreen() {
     AsyncStorage.setItem(VIEW_MODE_KEY, mode).catch(() => {});
   };
 
-  const today    = new Date();
-  const dateStr  = `${WEEKDAYS_PT[today.getDay()]}, ${today.getDate()} ${MONTHS_PT[today.getMonth()]}`;
-  const greeting = getGreeting();
+  const today = now;
+  // "Good evening, Wilson" / "Bom dia" — never mixed languages, never an
+  // exclamation mark, falls back gracefully when there's no name on file.
+  const greetingWord = t(getGreetingKey());
+  const greetingLine = userName ? `${greetingWord}, ${userName}` : greetingWord;
+  // "Monday • July 13" / "Segunda-feira • 13 de julho" — word order follows
+  // each language's own convention rather than a single hardcoded template.
+  const weekdayName = t(WEEKDAY_KEYS[today.getDay()]);
+  const monthName   = t(MONTH_KEYS[today.getMonth()]);
+  const dayNumber   = today.getDate();
+  const dateLine    = lang === 'pt'
+    ? `${weekdayName} • ${dayNumber} de ${monthName}`
+    : `${weekdayName} • ${monthName} ${dayNumber}`;
+
+  // Smooth crossfade whenever the greeting text changes (time-of-day tick
+  // or language switch) instead of an abrupt swap.
+  const [displayGreeting, setDisplayGreeting] = useState(greetingLine);
+  const greetingOpacity = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (greetingLine === displayGreeting) return;
+    Animated.timing(greetingOpacity, { toValue: 0, duration: 140, useNativeDriver: true }).start(() => {
+      setDisplayGreeting(greetingLine);
+      Animated.timing(greetingOpacity, { toValue: 1, duration: 220, useNativeDriver: true }).start();
+    });
+  }, [greetingLine]);
 
   const handleContinue = () => {
     if (!readingProgress) return;
@@ -710,19 +748,19 @@ export default function HomeScreen() {
         styles.header,
         { paddingTop: topPad + 16, borderBottomColor: colors.border },
       ]}>
-        {/* Greeting — comma when name follows, exclamation when alone */}
-        <Text style={[styles.headerGreeting, { color: colors.mutedForeground }]}>
-          {greeting}{userName ? ',' : '!'}
+        {/* Personalized greeting — calm, no exclamation marks, crossfades on change */}
+        <Animated.Text style={[styles.headerGreeting, { color: colors.foreground, opacity: greetingOpacity }]}>
+          {displayGreeting}
+        </Animated.Text>
+
+        {/* "Today" / "Hoje" */}
+        <Text style={[styles.headerToday, { color: colors.mutedForeground }]}>
+          {t('today_label')}
         </Text>
 
-        {/* Name when logged in, "Hoje" when guest */}
-        <Text style={[styles.headerName, { color: colors.foreground }]}>
-          {userName || 'Hoje'}
-        </Text>
-
-        {/* Date */}
+        {/* Full localized date */}
         <Text style={[styles.headerDate, { color: colors.mutedForeground }]}>
-          {WEEKDAYS_FULL_PT[today.getDay()]} · {today.getDate()} {MONTHS_PT[today.getMonth()]}
+          {dateLine}
         </Text>
       </View>
 
@@ -953,20 +991,20 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   headerGreeting: {
-    fontSize: 13,
-    fontFamily: 'Inter_400Regular',
-    marginBottom: 2,
-  },
-  headerName: {
     fontSize: 30,
     fontFamily: 'Inter_700Bold',
     letterSpacing: -0.6,
     lineHeight: 36,
   },
+  headerToday: {
+    fontSize: 15,
+    fontFamily: 'Inter_600SemiBold',
+    marginTop: 6,
+  },
   headerDate: {
     fontSize: 13,
     fontFamily: 'Inter_400Regular',
-    marginTop: 4,
+    marginTop: 2,
   },
 
   // Section wrapper

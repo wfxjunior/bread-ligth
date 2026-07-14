@@ -255,6 +255,33 @@ const strings = {
   study_reflect_prompt: { pt: 'O Verbo se fez carne e habitou entre nós. O que essa verdade muda na sua vida hoje?',
                            en: 'The Word became flesh and dwelt among us. What does this truth change in your life today?' },
   study_start_today:    { pt: 'Começar o Estudo de Hoje', en: "Start Today's Study" },
+
+  // ── Home · personalized greeting (time-of-day, no exclamation marks)
+  greeting_morning:   { pt: 'Bom dia',    en: 'Good morning'   },
+  greeting_afternoon: { pt: 'Boa tarde',  en: 'Good afternoon' },
+  greeting_evening:   { pt: 'Boa noite',  en: 'Good evening'   },
+  today_label:        { pt: 'Hoje',       en: 'Today'          },
+
+  // ── Full weekday / month names for the home header date line
+  weekday_full_sun: { pt: 'Domingo',       en: 'Sunday'    },
+  weekday_full_mon: { pt: 'Segunda-feira', en: 'Monday'    },
+  weekday_full_tue: { pt: 'Terça-feira',   en: 'Tuesday'   },
+  weekday_full_wed: { pt: 'Quarta-feira',  en: 'Wednesday' },
+  weekday_full_thu: { pt: 'Quinta-feira',  en: 'Thursday'  },
+  weekday_full_fri: { pt: 'Sexta-feira',   en: 'Friday'    },
+  weekday_full_sat: { pt: 'Sábado',        en: 'Saturday'  },
+  month_full_jan: { pt: 'janeiro',   en: 'January'   },
+  month_full_feb: { pt: 'fevereiro', en: 'February'  },
+  month_full_mar: { pt: 'março',     en: 'March'     },
+  month_full_apr: { pt: 'abril',     en: 'April'     },
+  month_full_may: { pt: 'maio',      en: 'May'       },
+  month_full_jun: { pt: 'junho',     en: 'June'      },
+  month_full_jul: { pt: 'julho',     en: 'July'      },
+  month_full_aug: { pt: 'agosto',    en: 'August'    },
+  month_full_sep: { pt: 'setembro',  en: 'September' },
+  month_full_oct: { pt: 'outubro',   en: 'October'   },
+  month_full_nov: { pt: 'novembro',  en: 'November'  },
+  month_full_dec: { pt: 'dezembro',  en: 'December'  },
 } as const;
 
 export type I18nKey = keyof typeof strings;
