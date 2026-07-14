@@ -22,13 +22,62 @@ const READING_LANG_KEY = '@bibliaeN:readingLanguage';
 // lower-quality expo-speech fallback.
 const TTS_CACHE_DIR = `${FileSystem.cacheDirectory}tts-audio/`;
 const TTS_CACHE_INDEX_KEY = '@bibliaeN:ttsCacheIndex';
-const TTS_CACHE_MAX_BYTES = 60 * 1024 * 1024; // 60 MB cap, LRU eviction beyond this
+const TTS_CACHE_CAP_KEY = '@bibliaeN:ttsCacheCapBytes';
+const TTS_CACHE_EVICTION_KEY = '@bibliaeN:ttsCacheEvictionNotice';
+const DEFAULT_TTS_CACHE_MAX_BYTES = 60 * 1024 * 1024; // 60 MB cap, LRU eviction beyond this
+
+// Selectable cache size caps a user can pick from in Settings → Offline Audio.
+// Kept small/simple since these are just device storage tradeoffs, not
+// feature tiers — every option is available to every user.
+export const TTS_CACHE_CAP_OPTIONS_MB = [30, 60, 120, 250] as const;
 
 interface TtsCacheEntry {
   size: number;
   lastAccess: number;
 }
 type TtsCacheIndex = Record<string, TtsCacheEntry>;
+
+// Persisted the moment LRU eviction actually removes something, so a user
+// who was mid-listen (and never looked at Settings) still finds out later
+// that older offline audio was silently cleared to make room for new clips.
+// Accumulates until the user dismisses it in Settings.
+interface TtsEvictionNotice {
+  bytes: number;
+  at: number;
+}
+
+async function loadEvictionNotice(): Promise<TtsEvictionNotice | null> {
+  try {
+    const raw = await AsyncStorage.getItem(TTS_CACHE_EVICTION_KEY);
+    return raw ? (JSON.parse(raw) as TtsEvictionNotice) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function recordEvictionNotice(evictedBytes: number): Promise<TtsEvictionNotice> {
+  const existing = await loadEvictionNotice();
+  const notice: TtsEvictionNotice = {
+    bytes: (existing?.bytes ?? 0) + evictedBytes,
+    at: Date.now(),
+  };
+  await AsyncStorage.setItem(TTS_CACHE_EVICTION_KEY, JSON.stringify(notice)).catch(() => {});
+  return notice;
+}
+
+async function clearEvictionNotice(): Promise<void> {
+  await AsyncStorage.removeItem(TTS_CACHE_EVICTION_KEY).catch(() => {});
+}
+
+async function loadTtsCacheCap(): Promise<number> {
+  try {
+    const raw = await AsyncStorage.getItem(TTS_CACHE_CAP_KEY);
+    const n = raw ? parseInt(raw, 10) : NaN;
+    return !isNaN(n) && n > 0 ? n : DEFAULT_TTS_CACHE_MAX_BYTES;
+  } catch {
+    return DEFAULT_TTS_CACHE_MAX_BYTES;
+  }
+}
 
 let cacheDirReadyPromise: Promise<void> | null = null;
 function ensureTtsCacheDir(): Promise<void> {
@@ -77,20 +126,27 @@ async function clearTtsCacheOnDisk(): Promise<void> {
 }
 
 // Evicts the least-recently-used cached audio files until the index is back
-// under the size cap. Runs after every new download; never blocks playback.
-async function evictTtsCacheIfNeeded(idx: TtsCacheIndex): Promise<TtsCacheIndex> {
+// under the size cap. Runs after every new download (and whenever the cap is
+// lowered); never blocks playback. Returns how many bytes were reclaimed so
+// callers can surface a notice to the user instead of evicting silently.
+async function evictTtsCacheIfNeeded(
+  idx: TtsCacheIndex,
+  maxBytes: number,
+): Promise<{ idx: TtsCacheIndex; evictedBytes: number }> {
   let total = Object.values(idx).reduce((sum, e) => sum + e.size, 0);
-  if (total <= TTS_CACHE_MAX_BYTES) return idx;
+  if (total <= maxBytes) return { idx, evictedBytes: 0 };
 
   const byOldest = Object.entries(idx).sort((a, b) => a[1].lastAccess - b[1].lastAccess);
   const next = { ...idx };
+  let evictedBytes = 0;
   for (const [key, entry] of byOldest) {
-    if (total <= TTS_CACHE_MAX_BYTES) break;
+    if (total <= maxBytes) break;
     delete next[key];
     total -= entry.size;
+    evictedBytes += entry.size;
     await FileSystem.deleteAsync(ttsCachePathFor(key), { idempotent: true }).catch(() => {});
   }
-  return next;
+  return { idx: next, evictedBytes };
 }
 
 // Returns a local file:// uri if this voice+text was already cached on
@@ -112,7 +168,13 @@ async function getCachedTtsUri(voice: string, text: string): Promise<string | nu
 // Downloads the remote TTS stream straight to a cache file (avoids buffering
 // the whole clip in memory) and records it in the index, evicting older
 // entries if the cap is exceeded. Returns the local uri to play from.
-async function downloadAndCacheTts(remoteUri: string, voice: string, text: string): Promise<string> {
+async function downloadAndCacheTts(
+  remoteUri: string,
+  voice: string,
+  text: string,
+  maxBytes: number,
+  onEvicted?: (bytes: number) => void,
+): Promise<string> {
   await ensureTtsCacheDir();
   const key = await ttsCacheKeyFor(voice, text);
   const path = ttsCachePathFor(key);
@@ -125,8 +187,9 @@ async function downloadAndCacheTts(remoteUri: string, voice: string, text: strin
 
   let idx = await loadTtsCacheIndex();
   idx[key] = { size, lastAccess: Date.now() };
-  idx = await evictTtsCacheIfNeeded(idx);
-  await saveTtsCacheIndex(idx);
+  const { idx: nextIdx, evictedBytes } = await evictTtsCacheIfNeeded(idx, maxBytes);
+  await saveTtsCacheIndex(nextIdx);
+  if (evictedBytes > 0) onEvicted?.(evictedBytes);
   return path;
 }
 export const MIN_RATE = 0.5;
@@ -192,6 +255,10 @@ interface AudioContextValue {
   offlineCacheBytes: number;
   refreshOfflineCacheSize: () => Promise<void>;
   clearOfflineCache: () => Promise<void>;
+  cacheMaxBytes: number;
+  setCacheMaxBytes: (bytes: number) => void;
+  evictionNotice: { bytes: number; at: number } | null;
+  dismissEvictionNotice: () => void;
 }
 
 const AudioCtx = createContext<AudioContextValue | null>(null);
@@ -218,6 +285,9 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [readingLanguage, setReadingLanguageState] = useState<ReadingLanguage>(DEFAULT_READING_LANGUAGE);
   const [usingFallback, setUsingFallback] = useState(false);
   const [offlineCacheBytes, setOfflineCacheBytes] = useState(0);
+  const [cacheMaxBytes, setCacheMaxBytesState] = useState(DEFAULT_TTS_CACHE_MAX_BYTES);
+  const [evictionNotice, setEvictionNotice] = useState<{ bytes: number; at: number } | null>(null);
+  const cacheMaxBytesRef = useRef(DEFAULT_TTS_CACHE_MAX_BYTES);
 
   const soundRef      = useRef<Audio.Sound | null>(null);
   const queueRef       = useRef<AudioQueueItem[]>([]);
@@ -271,6 +341,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }).catch(() => {});
 
     getTtsCacheTotalBytes().then(setOfflineCacheBytes).catch(() => {});
+    loadTtsCacheCap().then(bytes => {
+      cacheMaxBytesRef.current = bytes;
+      setCacheMaxBytesState(bytes);
+    }).catch(() => {});
+    loadEvictionNotice().then(setEvictionNotice).catch(() => {});
 
     return () => {
       Speech.stop();
@@ -287,6 +362,37 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     await clearTtsCacheOnDisk();
     setOfflineCacheBytes(0);
   }, []);
+
+  // Called by downloadAndCacheTts whenever LRU eviction actually reclaims
+  // space — persists the notice (so it survives an app restart) and updates
+  // the in-memory total so the Settings screen reflects both immediately.
+  const handleEviction = useCallback((evictedBytes: number) => {
+    recordEvictionNotice(evictedBytes).then(setEvictionNotice).catch(() => {});
+    getTtsCacheTotalBytes().then(setOfflineCacheBytes).catch(() => {});
+  }, []);
+
+  const dismissEvictionNotice = useCallback(() => {
+    clearEvictionNotice().catch(() => {});
+    setEvictionNotice(null);
+  }, []);
+
+  // Lets the user trade offline coverage for device storage. Shrinking the
+  // cap evicts down to the new size immediately (surfacing a notice if
+  // anything was actually removed); raising it just relaxes future eviction.
+  const setCacheMaxBytes = useCallback((bytes: number) => {
+    cacheMaxBytesRef.current = bytes;
+    setCacheMaxBytesState(bytes);
+    AsyncStorage.setItem(TTS_CACHE_CAP_KEY, String(bytes)).catch(() => {});
+
+    (async () => {
+      const idx = await loadTtsCacheIndex();
+      const { idx: nextIdx, evictedBytes } = await evictTtsCacheIfNeeded(idx, bytes);
+      if (evictedBytes > 0) {
+        await saveTtsCacheIndex(nextIdx);
+        handleEviction(evictedBytes);
+      }
+    })().catch(() => {});
+  }, [handleEviction]);
 
   const cleanupSound = useCallback(async () => {
     if (soundRef.current) {
@@ -352,7 +458,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       prefetchInFlightRef.current.add(key);
       try {
         const remoteUri = `${TTS_BASE}?text=${encodeURIComponent(cleanText)}&voice=${activeVoice}`;
-        await downloadAndCacheTts(remoteUri, activeVoice, cleanText);
+        await downloadAndCacheTts(remoteUri, activeVoice, cleanText, cacheMaxBytesRef.current, handleEviction);
       } catch {
         // Offline or server error — skip silently, try again next time this
         // item is the lookahead target (e.g. after the user goes back online).
@@ -457,7 +563,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         const remoteUri = `${TTS_BASE}?text=${encodeURIComponent(cleanText)}&voice=${activeVoice}`;
         let playUri = remoteUri;
         try {
-          playUri = await downloadAndCacheTts(remoteUri, activeVoice, cleanText);
+          playUri = await downloadAndCacheTts(remoteUri, activeVoice, cleanText, cacheMaxBytesRef.current, handleEviction);
         } catch {
           // Network flaky mid-download — still try to stream directly so
           // the user isn't dropped straight to the fallback voice.
@@ -609,6 +715,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     readingLanguage,
     playQueue, playSingle, togglePlayPause, pause, resume, stop, next, previous, seekToRatio, setRate, setVoice, setReadingLanguage,
     offlineCacheBytes, refreshOfflineCacheSize, clearOfflineCache,
+    cacheMaxBytes, setCacheMaxBytes, evictionNotice, dismissEvictionNotice,
   };
 
   return <AudioCtx.Provider value={value}>{children}</AudioCtx.Provider>;

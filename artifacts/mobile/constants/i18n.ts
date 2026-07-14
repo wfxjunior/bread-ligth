@@ -144,6 +144,15 @@ const strings = {
     pt: 'Isso apaga todos os áudios salvos no dispositivo. Eles serão baixados novamente da próxima vez que você ouvir.',
     en: 'This deletes all audio saved on your device. It will be downloaded again the next time you listen.',
   },
+  offline_audio_evicted: {
+    pt: '{size} de áudios mais antigos foram removidos automaticamente para liberar espaço.',
+    en: '{size} of older audio was automatically removed to free up space.',
+  },
+  offline_audio_cap: { pt: 'Limite de armazenamento', en: 'Storage limit' },
+  offline_audio_cap_sub: {
+    pt: 'Quanto espaço reservar no dispositivo para áudio offline',
+    en: 'How much device space to reserve for offline audio',
+  },
   cancel: { pt: 'Cancelar', en: 'Cancel' },
 
   // ── Daily devotional completion

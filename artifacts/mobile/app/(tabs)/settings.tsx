@@ -29,7 +29,7 @@ import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useBible } from '@/context/BibleContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { useAudio, AUDIO_VOICES } from '@/context/AudioContext';
+import { useAudio, AUDIO_VOICES, TTS_CACHE_CAP_OPTIONS_MB } from '@/context/AudioContext';
 import type { AudioVoice } from '@/context/AudioContext';
 import { usePremium } from '@/context/PremiumContext';
 import { APP_SHARE_URL } from '@/utils/shareLink';
@@ -808,6 +808,16 @@ export default function SettingsScreen() {
     return mb < 0.1 ? '< 0.1 MB' : `${mb.toFixed(1)} MB`;
   };
 
+  const handleDismissEvictionNotice = () => {
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    audio.dismissEvictionNotice();
+  };
+
+  const handleCacheCapChange = (mb: number) => {
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    audio.setCacheMaxBytes(mb * 1024 * 1024);
+  };
+
   const handleClearOfflineAudio = () => {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
     Alert.alert(
@@ -1263,13 +1273,54 @@ export default function SettingsScreen() {
             icon="download"
             label={tl('offline_audio')}
             sub={tl('offline_audio_sub')}
-            border={false}
             right={
               <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>
                 {formatCacheSize(audio.offlineCacheBytes)}
               </Text>
             }
           />
+          {audio.evictionNotice ? (
+            <View style={[styles.evictionNotice, { backgroundColor: colors.primary + '10', borderBottomColor: colors.border, borderBottomWidth: StyleSheet.hairlineWidth }]}>
+              <Feather name="info" size={14} color={colors.primary} style={{ marginTop: 1 }} />
+              <Text style={[styles.evictionNoticeText, { color: colors.foreground }]}>
+                {tl('offline_audio_evicted').replace('{size}', formatCacheSize(audio.evictionNotice.bytes))}
+              </Text>
+              <TouchableOpacity onPress={handleDismissEvictionNotice} hitSlop={8}>
+                <Feather name="x" size={14} color={colors.mutedForeground} />
+              </TouchableOpacity>
+            </View>
+          ) : null}
+          <View style={[styles.innerSection, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
+            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>{tl('offline_audio_cap')}</Text>
+            <Text style={[styles.innerSubLabel, { color: colors.mutedForeground }]}>{tl('offline_audio_cap_sub')}</Text>
+            <View style={{ height: 10 }} />
+            <View style={styles.pillRow}>
+              {TTS_CACHE_CAP_OPTIONS_MB.map(mb => {
+                const active = audio.cacheMaxBytes === mb * 1024 * 1024;
+                return (
+                  <TouchableOpacity
+                    key={mb}
+                    onPress={() => handleCacheCapChange(mb)}
+                    style={[
+                      styles.pill,
+                      {
+                        backgroundColor: active ? colors.primary : colors.background,
+                        borderColor:     active ? colors.primary : colors.border,
+                        borderRadius:    colors.radius / 2,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.pillText, {
+                      color:      active ? colors.primaryForeground : colors.foreground,
+                      fontFamily: active ? 'Inter_600SemiBold' : 'Inter_400Regular',
+                    }]}>
+                      {mb} MB
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
           <SettingsRow
             icon="trash-2"
             label={tl('offline_audio_clear')}
@@ -1435,6 +1486,19 @@ const styles = StyleSheet.create({
   rowText:  { flex: 1 },
   rowLabel: { fontSize: 15, fontFamily: 'Inter_500Medium' },
   rowSub:   { fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 1 },
+  evictionNotice: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  evictionNoticeText: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    lineHeight: 16,
+  },
 
   // Custom toggle
   toggleTrack: {
