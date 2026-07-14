@@ -230,6 +230,10 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   // fetched/loaded (status 'loading') — createAsync's shouldPlay:true would
   // otherwise start playback regardless of the pause tap that raced it.
   const pausePendingRef    = useRef(false);
+  // Dedupes concurrent prefetch downloads for the same voice+text so rapid
+  // track advances (or a slow prefetch overlapping the next one) never fire
+  // two downloads for the same clip.
+  const prefetchInFlightRef = useRef<Set<string>>(new Set());
 
   useEffect(() => { queueRef.current = queue; }, [queue]);
   useEffect(() => { indexRef.current = currentIndex; }, [currentIndex]);
@@ -322,6 +326,42 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  // Proactively downloads and caches the next 1-2 unplayed queue items while
+  // the current one is playing, so a brief connectivity drop mid-chapter
+  // never forces those verses onto the lower-quality expo-speech fallback.
+  // Fire-and-forget from loadAndPlay: never awaited, never blocks or delays
+  // current playback, and every failure (offline, server error) is swallowed
+  // silently — loadAndPlay will simply fall back for that item if it's still
+  // uncached when its turn comes.
+  const prefetchQueueAhead = useCallback(async (fromIndex: number, gen: number) => {
+    if (!TTS_BASE) return; // no server TTS configured — nothing to prefetch
+    const activeVoice = voiceRef.current;
+    for (let i = fromIndex + 1; i <= fromIndex + 2; i++) {
+      if (generationRef.current !== gen) return; // playback moved on/stopped; abandon
+      const item = queueRef.current[i];
+      if (!item) break;
+
+      const cleanText = sanitizeForSpeech(item.text);
+      const key = await ttsCacheKeyFor(activeVoice, cleanText).catch(() => null);
+      if (!key || prefetchInFlightRef.current.has(key)) continue;
+
+      const cachedUri = await getCachedTtsUri(activeVoice, cleanText).catch(() => null);
+      if (cachedUri) continue; // already cached, nothing to do
+
+      if (generationRef.current !== gen) return;
+      prefetchInFlightRef.current.add(key);
+      try {
+        const remoteUri = `${TTS_BASE}?text=${encodeURIComponent(cleanText)}&voice=${activeVoice}`;
+        await downloadAndCacheTts(remoteUri, activeVoice, cleanText);
+      } catch {
+        // Offline or server error — skip silently, try again next time this
+        // item is the lookahead target (e.g. after the user goes back online).
+      } finally {
+        prefetchInFlightRef.current.delete(key);
+      }
+    }
+  }, []);
+
   const loadAndPlay = useCallback(async (index: number) => {
     const items = queueRef.current;
     const item  = items[index];
@@ -394,6 +434,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             setStatus(st.isPlaying ? 'playing' : 'paused');
           }
         });
+        prefetchQueueAhead(index, gen);
         return;
       } catch {
         soundRef.current = null;
@@ -451,6 +492,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
             setStatus(st.isPlaying ? 'playing' : 'paused');
           }
         });
+        prefetchQueueAhead(index, gen);
         return;
       } catch {
         soundRef.current = null;
@@ -458,7 +500,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }
 
     speakFallback(item, gen, advance);
-  }, [cleanupSound, speakFallback]);
+  }, [cleanupSound, speakFallback, prefetchQueueAhead]);
 
   const playQueue = useCallback((items: AudioQueueItem[], startIndex = 0, key?: string) => {
     if (!items.length) return;
