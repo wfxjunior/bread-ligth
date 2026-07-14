@@ -10,6 +10,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Line, Path, Polygon, Circle } from 'react-native-svg';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -17,29 +18,31 @@ import { BIBLE_DATA } from '@/constants/bibleData';
 import { useLanguage } from '@/context/LanguageContext';
 
 // ── Leather category palette ────────────────────────────────────────────────
-// Each biblical category owns one leather tone — a real bookshelf groups
-// volumes by kind, not by cover art. Colours stay muted/desaturated so the
-// shelf reads as premium leather, never a rainbow of stickers.
+// Each biblical category owns one deep leather tone — a real bookshelf groups
+// volumes by kind, not by cover art. Tones stay dark and desaturated so the
+// photographed grain reads through the tint instead of washing out into a
+// flat, candy-colored sticker.
 export type BookCategory =
   | 'pentateuch' | 'history' | 'poetry' | 'majorProphets' | 'minorProphets'
   | 'gospels' | 'acts' | 'paulineLetters' | 'generalLetters' | 'revelation';
 
 export const CATEGORY_INFO: Record<BookCategory, { base: string; deep: string; labelPt: string }> = {
-  pentateuch:      { base: '#6B4A2C', deep: '#33200F', labelPt: 'Pentateuco'        },
-  history:         { base: '#33513F', deep: '#152219', labelPt: 'Históricos'        },
-  poetry:          { base: '#6E2438', deep: '#33101A', labelPt: 'Poesia'            },
-  majorProphets:   { base: '#1E3358', deep: '#0C1830', labelPt: 'Profetas Maiores' },
-  minorProphets:   { base: '#2A4F38', deep: '#12241A', labelPt: 'Profetas Menores'  },
-  gospels:         { base: '#631E2A', deep: '#2E0D14', labelPt: 'Evangelhos'        },
-  acts:            { base: '#5E3D20', deep: '#2C1C0E', labelPt: 'Atos'              },
-  paulineLetters:  { base: '#20395E', deep: '#0E1C30', labelPt: 'Cartas de Paulo'   },
-  generalLetters:  { base: '#4C3159', deep: '#241729', labelPt: 'Cartas Gerais'     },
-  revelation:      { base: '#221D18', deep: '#0A0807', labelPt: 'Apocalipse'        },
+  pentateuch:      { base: '#5C3E22', deep: '#22140A', labelPt: 'Pentateuco'        },
+  history:         { base: '#2C4636', deep: '#0F1B14', labelPt: 'Históricos'        },
+  poetry:          { base: '#601D2E', deep: '#280C15', labelPt: 'Poesia'            },
+  majorProphets:   { base: '#1B2C4C', deep: '#0A1224', labelPt: 'Profetas Maiores' },
+  minorProphets:   { base: '#254631', deep: '#0E1C14', labelPt: 'Profetas Menores'  },
+  gospels:         { base: '#571A25', deep: '#240A0F', labelPt: 'Evangelhos'        },
+  acts:            { base: '#513519', deep: '#22150A', labelPt: 'Atos'              },
+  paulineLetters:  { base: '#1C3151', deep: '#0A1526', labelPt: 'Cartas de Paulo'   },
+  generalLetters:  { base: '#432B4C', deep: '#1C1122', labelPt: 'Cartas Gerais'     },
+  revelation:      { base: '#1C1814', deep: '#080605', labelPt: 'Apocalipse'        },
 };
 
 const GOLD        = '#D9B562';
-const GOLD_SOFT   = 'rgba(217,181,98,0.4)';
-const GOLD_FAINT  = 'rgba(217,181,98,0.16)';
+const GOLD_BRIGHT = '#EFD79C';
+const GOLD_SOFT   = 'rgba(217,181,98,0.55)';
+const GOLD_FAINT  = 'rgba(217,181,98,0.22)';
 const RIBBON_RED  = '#7A1626';
 
 // ── Per-book flavour text: a short tagline (PT) evoking the book's theme,
@@ -83,6 +86,48 @@ export type ShelfBookMeta = {
   category: BookCategory;
   roman: string;
 };
+
+// ── Small gold engraving ornaments ──────────────────────────────────────────
+// A hand-drawn corner flourish and a divider-with-diamond, reused at every
+// size via SVG rather than a raster asset — this is what reads as "foil
+// stamped onto leather" instead of "app card border".
+function CornerFlourish({ size = 16, rotate = 0 }: { size?: number; rotate?: number }) {
+  return (
+    <View style={{ width: size, height: size, transform: [{ rotate: `${rotate}deg` }] }}>
+      <Svg width={size} height={size} viewBox="0 0 20 20">
+        <Path
+          d="M2 17 V7 Q2 2 7 2 H17"
+          stroke={GOLD_SOFT}
+          strokeWidth={1.2}
+          fill="none"
+          strokeLinecap="round"
+        />
+        <Path
+          d="M2 10.5 Q7.5 10.5 7.5 5"
+          stroke={GOLD_SOFT}
+          strokeWidth={1}
+          fill="none"
+          strokeLinecap="round"
+        />
+        <Circle cx={7.5} cy={5} r={1.15} fill={GOLD_SOFT} />
+      </Svg>
+    </View>
+  );
+}
+
+function OrnateDivider({ width }: { width: number }) {
+  const cx = width / 2;
+  return (
+    <Svg width={width} height={9} viewBox={`0 0 ${width} 9`}>
+      <Line x1={0} y1={4.5} x2={cx - 7} y2={4.5} stroke={GOLD_SOFT} strokeWidth={1} />
+      <Polygon
+        points={`${cx},0.5 ${cx + 4},4.5 ${cx},8.5 ${cx - 4},4.5`}
+        fill={GOLD_SOFT}
+      />
+      <Line x1={cx + 7} y1={4.5} x2={width} y2={4.5} stroke={GOLD_SOFT} strokeWidth={1} />
+    </Svg>
+  );
+}
 
 // ── Single leather-bound volume ─────────────────────────────────────────────
 function LeatherBook({
@@ -150,10 +195,11 @@ function LeatherBook({
     ]).start(navigateToChapter);
   };
 
-  const titleSize = width < 140 ? 12.5 : 14;
-  const ribbonLen = 14 + Math.max(0, Math.min(1, progressRatio)) * (height * 0.42);
-  const rotateDeg = rotate.interpolate({ inputRange: [-1, 0], outputRange: ['-6deg', '0deg'] });
-  const icon = THEME_ICON[meta.bookId];
+  const titleSize   = width < 140 ? 15 : 17;
+  const dividerW    = Math.round(width * 0.34);
+  const ribbonLen   = 14 + Math.max(0, Math.min(1, progressRatio)) * (height * 0.42);
+  const rotateDeg   = rotate.interpolate({ inputRange: [-1, 0], outputRange: ['-6deg', '0deg'] });
+  const icon        = THEME_ICON[meta.bookId];
 
   return (
     <Pressable
@@ -167,10 +213,10 @@ function LeatherBook({
           opacity,
           transform: [{ scale }, { translateY: lift }, { rotate: rotateDeg }],
           shadowColor: isCurrent ? GOLD : '#000',
-          shadowOpacity: isCurrent ? 0.55 : 0.35,
-          shadowRadius: isCurrent ? 14 : 7,
-          shadowOffset: { width: 0, height: isCurrent ? 8 : 5 },
-          elevation: isCurrent ? 10 : 5,
+          shadowOpacity: isCurrent ? 0.55 : 0.4,
+          shadowRadius: isCurrent ? 14 : 8,
+          shadowOffset: { width: 0, height: isCurrent ? 8 : 6 },
+          elevation: isCurrent ? 10 : 6,
         }}
       >
         <View style={[styles.bookOuter, { borderRadius: 9 }]}>
@@ -183,62 +229,99 @@ function LeatherBook({
             resizeMode="cover"
           />
           <LinearGradient
-            colors={[leather.base + 'E6', leather.deep + 'F2']}
-            start={{ x: 0.15, y: 0 }}
-            end={{ x: 0.9, y: 1 }}
+            colors={[leather.base + 'C8', leather.deep + 'EC']}
+            start={{ x: 0.1, y: 0 }}
+            end={{ x: 0.95, y: 1 }}
             style={StyleSheet.absoluteFill}
           />
-          {/* soft sheen */}
+          {/* gentle overhead shelf light grazing only the top of the cover —
+              a real hide catches light along its curve, it doesn't gloss like
+              glass across the whole face */}
           <LinearGradient
-            colors={['rgba(255,255,255,0.16)', 'rgba(255,255,255,0)']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0.55, y: 0.5 }}
-            style={StyleSheet.absoluteFill}
-            pointerEvents="none"
-          />
-          {/* gentle overhead shelf light grazing the top of the cover */}
-          <LinearGradient
-            colors={['rgba(255,224,170,0.22)', 'rgba(255,224,170,0)']}
+            colors={['rgba(255,224,170,0.20)', 'rgba(255,224,170,0)']}
             start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 0.38 }}
+            end={{ x: 0.5, y: 0.3 }}
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+          />
+          {/* soft vignette pooling toward the base, grounding the volume */}
+          <LinearGradient
+            colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.28)']}
+            start={{ x: 0.5, y: 0.55 }}
+            end={{ x: 0.5, y: 1 }}
             style={StyleSheet.absoluteFill}
             pointerEvents="none"
           />
 
-          {/* gold ornamental border */}
-          <View style={styles.ornamentBorder} pointerEvents="none" />
-
-          {/* era header */}
-          <View style={styles.eraBlock} pointerEvents="none">
-            <Text style={styles.eraLabel} numberOfLines={1}>
-              {book.testament === 'old' ? tl('testament_old_caps') : tl('testament_new_caps')}
-            </Text>
-            <Text style={styles.eraYear} numberOfLines={1}>— {ERA[meta.bookId] ?? ''} —</Text>
+          {/* foil-stamped double frame + engraved corner flourishes */}
+          <View style={styles.frameOuter} pointerEvents="none" />
+          <View style={styles.frameInner} pointerEvents="none" />
+          <View style={[styles.cornerWrap, { top: 8, left: 6 }]} pointerEvents="none">
+            <CornerFlourish size={16} rotate={0} />
+          </View>
+          <View style={[styles.cornerWrap, { top: 8, right: 6 }]} pointerEvents="none">
+            <CornerFlourish size={16} rotate={90} />
+          </View>
+          <View style={[styles.cornerWrap, { bottom: 8, right: 6 }]} pointerEvents="none">
+            <CornerFlourish size={16} rotate={180} />
+          </View>
+          <View style={[styles.cornerWrap, { bottom: 8, left: 6 }]} pointerEvents="none">
+            <CornerFlourish size={16} rotate={270} />
           </View>
 
-          {/* embossed roman numeral watermark + thematic glyph, lit like a
-              museum spotlight from directly above */}
-          <View style={styles.numeralZone} pointerEvents="none">
-            <View style={[styles.spotlightOuter, { width: width * 0.85, height: width * 0.85, borderRadius: width * 0.425 }]} />
-            <View style={[styles.spotlightInner, { width: width * 0.55, height: width * 0.55, borderRadius: width * 0.275 }]} />
-            <Text style={[styles.roman, { fontSize: height * 0.3 }]}>{meta.roman}</Text>
-            {icon && (
-              <MaterialCommunityIcons
-                name={icon}
-                size={height * 0.22}
-                color="rgba(217,181,98,0.24)"
-                style={styles.themeIcon}
-              />
-            )}
-          </View>
+          {/* main content column */}
+          <View style={styles.contentCol}>
+            {/* eyebrow: testament + era */}
+            <View style={styles.eyebrow} pointerEvents="none">
+              <Text style={styles.eraLabel} numberOfLines={1}>
+                {book.testament === 'old' ? tl('testament_old_caps') : tl('testament_new_caps')}
+              </Text>
+              <Text style={styles.eraYear} numberOfLines={1}>{ERA[meta.bookId] ?? ''}</Text>
+            </View>
 
-          {/* decorative bookmark glyph — every volume on the shelf gets one */}
-          <MaterialCommunityIcons
-            name="bookmark-outline"
-            size={14}
-            color={GOLD_SOFT}
-            style={styles.bookmarkGlyph}
-          />
+            {/* hero: engraved gold title, flanked by ornamental dividers,
+                with the book's thematic emblem beneath it — the cover reads
+                by its name first, the way a real bound volume does */}
+            <View style={styles.hero}>
+              <OrnateDivider width={dividerW} />
+              <Text
+                style={[styles.titleEn, { fontSize: titleSize }]}
+                numberOfLines={2}
+                adjustsFontSizeToFit
+                minimumFontScale={0.62}
+              >
+                {book.englishName.toUpperCase()}
+              </Text>
+              <OrnateDivider width={dividerW} />
+              {icon && (
+                <View style={styles.emblemWrap}>
+                  <MaterialCommunityIcons name={icon} size={height * 0.1} color={GOLD_SOFT} />
+                </View>
+              )}
+              <Text style={styles.titlePt} numberOfLines={2}>{TAGLINE[meta.bookId] ?? book.name}</Text>
+            </View>
+
+            {/* footer */}
+            <View style={styles.footer}>
+              <View style={styles.footerHairline} />
+              {isCurrent ? (
+                <>
+                  <View style={styles.progressTrack}>
+                    <View style={[styles.progressFill, { width: `${Math.round(Math.min(1, progressRatio) * 100)}%` }]} />
+                    <View style={[styles.progressDot, { left: `${Math.round(Math.min(1, progressRatio) * 100)}%` }]} />
+                  </View>
+                  <View style={styles.footerRow}>
+                    <Text style={styles.footerText}>{tl('chapter_abbr')} {resumeChapter ?? 1} {tl('of_word')} {totalChapters}</Text>
+                    <Text style={styles.footerText}>{Math.round(Math.min(1, progressRatio) * 100)}%</Text>
+                  </View>
+                </>
+              ) : (
+                <Text style={styles.footerTextCenter}>
+                  {totalChapters} {tl(totalChapters !== 1 ? 'chapter_count_plural' : 'chapter_count_singular')}
+                </Text>
+              )}
+            </View>
+          </View>
 
           {/* decorative ribbon-marker tab, colour-matched to the volume */}
           <View style={styles.sideTabRow} pointerEvents="none">
@@ -254,40 +337,6 @@ function LeatherBook({
           <View style={styles.ageMarkA} pointerEvents="none" />
           <View style={styles.ageMarkB} pointerEvents="none" />
 
-          {/* title block */}
-          <View style={styles.titleBlock}>
-            <Text
-              style={[styles.titleEn, { fontSize: titleSize }]}
-              numberOfLines={2}
-              adjustsFontSizeToFit
-              minimumFontScale={0.6}
-            >
-              {book.englishName.toUpperCase()}
-            </Text>
-            <View style={styles.titleDash} />
-            <Text style={styles.titlePt} numberOfLines={2}>{TAGLINE[meta.bookId] ?? book.name}</Text>
-          </View>
-
-          {/* progress footer */}
-          <View style={styles.footer}>
-            {isCurrent ? (
-              <>
-                <View style={styles.progressTrack}>
-                  <View style={[styles.progressFill, { width: `${Math.round(Math.min(1, progressRatio) * 100)}%` }]} />
-                  <View style={[styles.progressDot, { left: `${Math.round(Math.min(1, progressRatio) * 100)}%` }]} />
-                </View>
-                <View style={styles.footerRow}>
-                  <Text style={styles.footerText}>{tl('chapter_abbr')} {resumeChapter ?? 1} {tl('of_word')} {totalChapters}</Text>
-                  <Text style={styles.footerText}>{Math.round(Math.min(1, progressRatio) * 100)}%</Text>
-                </View>
-              </>
-            ) : (
-              <Text style={styles.footerTextCenter}>
-                {totalChapters} {tl(totalChapters !== 1 ? 'chapter_count_plural' : 'chapter_count_singular')}
-              </Text>
-            )}
-          </View>
-
           {/* bookmark ribbon — only for the book currently being studied */}
           {isCurrent && (
             <View style={[styles.ribbon, { height: ribbonLen, backgroundColor: RIBBON_RED }]}>
@@ -301,29 +350,34 @@ function LeatherBook({
   );
 }
 
-// ── Shelf plank beneath a row of books ──────────────────────────────────────
+// ── Shelf plank beneath a row of books — real photographed oak, not a flat
+// gradient fill, so the shelf itself reads as furniture rather than UI chrome ─
 function ShelfPlank() {
   return (
     <View style={styles.plankWrap}>
       <LinearGradient
-        colors={['rgba(255,196,120,0.10)', 'rgba(255,196,120,0)']}
+        colors={['rgba(255,196,120,0.14)', 'rgba(255,196,120,0)']}
         style={styles.plankGlow}
         pointerEvents="none"
       />
+      <View style={styles.plank}>
+        <Image
+          source={require('../assets/images/wood-shelf-texture.jpg')}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+        />
+        <LinearGradient
+          colors={['rgba(20,10,4,0.10)', 'rgba(10,5,2,0.45)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      </View>
       <LinearGradient
-        colors={['rgba(0,0,0,0.32)', 'rgba(0,0,0,0)']}
+        colors={['rgba(0,0,0,0.38)', 'rgba(0,0,0,0)']}
         style={styles.plankShadow}
         pointerEvents="none"
       />
-      <LinearGradient
-        colors={['#4A2F1B', '#2A1A0E']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0.3 }}
-        style={styles.plank}
-      >
-        <View style={styles.plankGrainLight} />
-        <View style={styles.plankGrainDark} />
-      </LinearGradient>
     </View>
   );
 }
@@ -348,29 +402,37 @@ export function BookshelfLibrary({
 
   return (
     <View style={styles.cabinet}>
-      <LinearGradient
-        colors={['#2A1A0F', '#150C07']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0.7, y: 1 }}
+      {/* real oak wall panelling behind the volumes, warmly lit from a
+          recessed strip along the top — a lit wooden library nook, not a
+          flat brown gradient card background */}
+      <Image
+        source={require('../assets/images/wood-wall-texture.jpg')}
         style={StyleSheet.absoluteFill}
+        resizeMode="cover"
       />
-      {/* warm light from above — a soft glow washing over the shelf, as if
-          a single reading lamp sits just out of frame */}
       <LinearGradient
-        colors={['rgba(255,214,158,0.22)', 'rgba(255,205,140,0)']}
+        colors={['rgba(8,5,3,0.30)', 'rgba(8,5,3,0.62)']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
+      {/* warm recessed light washing the top of the nook */}
+      <LinearGradient
+        colors={['rgba(255,200,130,0.30)', 'rgba(255,190,120,0)']}
         style={styles.cabinetLight}
         pointerEvents="none"
       />
       {/* soft edge vignette for depth */}
       <LinearGradient
-        colors={['rgba(0,0,0,0.4)', 'rgba(0,0,0,0)']}
+        colors={['rgba(0,0,0,0.45)', 'rgba(0,0,0,0)']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={[styles.vignette, { left: 0 }]}
         pointerEvents="none"
       />
       <LinearGradient
-        colors={['rgba(0,0,0,0.4)', 'rgba(0,0,0,0)']}
+        colors={['rgba(0,0,0,0.45)', 'rgba(0,0,0,0)']}
         start={{ x: 1, y: 0 }}
         end={{ x: 0, y: 0 }}
         style={[styles.vignette, { right: 0 }]}
@@ -417,7 +479,7 @@ const styles = StyleSheet.create({
   cabinetLight: {
     position: 'absolute',
     top: 0, left: 0, right: 0,
-    height: '50%',
+    height: '38%',
   },
   vignette: {
     position: 'absolute',
@@ -441,24 +503,12 @@ const styles = StyleSheet.create({
   // Shelf plank
   plankWrap: { marginTop: -2 },
   plankGlow: { height: 16, marginBottom: -6 },
-  plankShadow: { height: 10 },
+  plankShadow: { height: 12 },
   plank: {
-    height: 15,
+    height: 17,
     borderRadius: 2,
     overflow: 'hidden',
     justifyContent: 'center',
-  },
-  plankGrainLight: {
-    position: 'absolute',
-    top: 2, left: 0, right: 0,
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.10)',
-  },
-  plankGrainDark: {
-    position: 'absolute',
-    bottom: 3, left: 0, right: 0,
-    height: 1,
-    backgroundColor: 'rgba(0,0,0,0.25)',
   },
 
   // Book cover
@@ -470,64 +520,113 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
     borderBottomRightRadius: 4,
   },
-  ornamentBorder: {
+  frameOuter: {
     position: 'absolute',
-    top: 9, left: 7, right: 7, bottom: 9,
-    borderWidth: 1,
+    top: 7, left: 6, right: 6, bottom: 7,
+    borderWidth: 1.2,
     borderColor: GOLD_SOFT,
-    borderRadius: 5,
+    borderRadius: 6,
   },
-  eraBlock: {
+  frameInner: {
     position: 'absolute',
-    top: 16, left: 8, right: 8,
+    top: 10, left: 9, right: 9, bottom: 10,
+    borderWidth: 0.75,
+    borderColor: GOLD_FAINT,
+    borderRadius: 4,
+  },
+  cornerWrap: {
+    position: 'absolute',
+  },
+  contentCol: {
+    ...StyleSheet.absoluteFillObject,
+    paddingHorizontal: 14,
+    paddingVertical: 18,
     alignItems: 'center',
+  },
+  eyebrow: {
+    alignItems: 'center',
+    gap: 3,
   },
   eraLabel: {
     fontFamily: 'Inter_600SemiBold',
     fontSize: 8,
     letterSpacing: 1,
-    color: 'rgba(233,214,168,0.6)',
+    color: 'rgba(233,214,168,0.55)',
   },
   eraYear: {
     fontFamily: 'Inter_400Regular',
     fontSize: 7.5,
     letterSpacing: 0.4,
-    color: 'rgba(233,214,168,0.4)',
-    marginTop: 2,
+    color: 'rgba(233,214,168,0.36)',
   },
-  numeralZone: {
-    position: 'absolute',
-    top: '20%',
-    left: 0, right: 0,
+  hero: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 4,
   },
-  roman: {
-    fontFamily: 'Inter_700Bold',
-    fontWeight: '700' as const,
-    color: 'rgba(255,244,222,0.16)',
-    letterSpacing: -2,
-    textShadowColor: 'rgba(0,0,0,0.45)',
+  titleEn: {
+    fontFamily: 'Lora_700Bold',
+    color: GOLD_BRIGHT,
+    letterSpacing: 0.6,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.7)',
     textShadowOffset: { width: 0, height: 1.5 },
-    textShadowRadius: 2,
+    textShadowRadius: 1.5,
   },
-  themeIcon: {
-    position: 'absolute',
-    right: '12%',
-    top: '42%',
+  emblemWrap: {
+    marginTop: 1,
   },
-  spotlightOuter: {
-    position: 'absolute',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+  titlePt: {
+    fontFamily: 'Lora_400Regular_Italic',
+    fontSize: 10,
+    lineHeight: 13,
+    color: 'rgba(233,214,168,0.55)',
+    textAlign: 'center',
+    marginTop: 2,
   },
-  spotlightInner: {
-    position: 'absolute',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+  footer: {
+    width: '100%',
+    gap: 6,
   },
-  bookmarkGlyph: {
+  footerHairline: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: GOLD_FAINT,
+    marginBottom: 2,
+  },
+  progressTrack: {
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+  },
+  progressFill: {
     position: 'absolute',
-    top: 10, right: 9,
-    opacity: 0.65,
+    left: 0, top: 0, bottom: 0,
+    backgroundColor: GOLD,
+    borderRadius: 1,
+  },
+  progressDot: {
+    position: 'absolute',
+    top: -2, width: 6, height: 6, borderRadius: 3,
+    marginLeft: -3,
+    backgroundColor: GOLD,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  footerText: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 9,
+    color: 'rgba(233,214,168,0.7)',
+  },
+  footerTextCenter: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 9,
+    color: 'rgba(233,214,168,0.45)',
+    textAlign: 'center',
+    letterSpacing: 0.3,
   },
   sideTabRow: {
     position: 'absolute',
@@ -572,70 +671,6 @@ const styles = StyleSheet.create({
     width: 28, height: 28, borderRadius: 14,
     bottom: -4, right: 6,
     backgroundColor: 'rgba(0,0,0,0.06)',
-  },
-  titleBlock: {
-    position: 'absolute',
-    left: 10, right: 10, bottom: 46,
-    alignItems: 'center',
-    gap: 5,
-  },
-  titleEn: {
-    fontFamily: 'Lora_700Bold',
-    color: GOLD,
-    letterSpacing: 0.4,
-    textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,0.55)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 1,
-  },
-  titleDash: {
-    width: 18, height: 1,
-    backgroundColor: GOLD_SOFT,
-  },
-  titlePt: {
-    fontFamily: 'Lora_400Regular_Italic',
-    fontSize: 10,
-    lineHeight: 13,
-    color: 'rgba(233,214,168,0.65)',
-    textAlign: 'center',
-  },
-  footer: {
-    position: 'absolute',
-    left: 12, right: 12, bottom: 12,
-    gap: 5,
-  },
-  progressTrack: {
-    height: 2,
-    borderRadius: 1,
-    backgroundColor: 'rgba(255,255,255,0.14)',
-  },
-  progressFill: {
-    position: 'absolute',
-    left: 0, top: 0, bottom: 0,
-    backgroundColor: GOLD,
-    borderRadius: 1,
-  },
-  progressDot: {
-    position: 'absolute',
-    top: -2, width: 6, height: 6, borderRadius: 3,
-    marginLeft: -3,
-    backgroundColor: GOLD,
-  },
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  footerText: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 9,
-    color: 'rgba(233,214,168,0.7)',
-  },
-  footerTextCenter: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 9,
-    color: 'rgba(233,214,168,0.4)',
-    textAlign: 'center',
-    letterSpacing: 0.3,
   },
   ribbon: {
     position: 'absolute',
