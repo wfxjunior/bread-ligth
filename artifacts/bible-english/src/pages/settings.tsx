@@ -9,6 +9,8 @@ import { useReadingSpace } from '../context/reading-space-context';
 import { READING_SPACES, READING_SPACE_ORDER, gradientCss } from '../lib/reading-spaces';
 import { useAtmosphere } from '../context/atmosphere-context';
 import { ATMOSPHERES, ATMOSPHERE_ORDER, ACCENTS, ACCENT_ORDER } from '../lib/atmospheres';
+import { useLanguage } from '../context/language-context';
+import type { I18nKey } from '../lib/i18n';
 
 // ── Reusable Toggle ─────────────────────────────────────────────────────────
 function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
@@ -46,14 +48,14 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 // ── Tabs config ──────────────────────────────────────────────────────────────
-const TABS = [
-  { id: 'profile',      label: 'Profile',        icon: User },
-  { id: 'appearance',   label: 'Appearance',      icon: Palette },
-  { id: 'reading',      label: 'Reading',         icon: BookOpen },
-  { id: 'language',     label: 'Language',        icon: Globe },
-  { id: 'share',        label: 'Share & Invite',  icon: Share2 },
-  { id: 'devotionals',  label: 'Devotionals',     icon: BookHeart },
-  { id: 'plan',         label: 'Plan & Billing',  icon: Crown },
+const TABS: { id: string; labelKey: I18nKey; icon: typeof User }[] = [
+  { id: 'profile',      labelKey: 'settings_tab_profile',     icon: User },
+  { id: 'appearance',   labelKey: 'settings_tab_appearance',  icon: Palette },
+  { id: 'reading',      labelKey: 'settings_tab_reading',     icon: BookOpen },
+  { id: 'language',     labelKey: 'settings_tab_language',    icon: Globe },
+  { id: 'share',        labelKey: 'settings_tab_share',       icon: Share2 },
+  { id: 'devotionals',  labelKey: 'settings_tab_devotionals', icon: BookHeart },
+  { id: 'plan',         labelKey: 'settings_tab_plan',        icon: Crown },
 ];
 
 const MOCK_DEVOTIONALS_SETTINGS = [
@@ -65,6 +67,7 @@ const MOCK_DEVOTIONALS_SETTINGS = [
 // ── Main component ───────────────────────────────────────────────────────────
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile');
+  const { lang, setLang, t: tl } = useLanguage();
 
   // Profile
   const [name, setName]   = useState('Wilson');
@@ -321,6 +324,24 @@ export default function SettingsPage() {
     // ── Language ──────────────────────────────────────────────────────────────
     language: (
       <div className="space-y-8">
+        <div>
+          <SectionTitle>{tl('settings_app_language_title')}</SectionTitle>
+          <div className="bg-card border border-border rounded-2xl p-6">
+            <div className="flex gap-2 mb-3">
+              {(['pt', 'en'] as const).map(l => (
+                <button
+                  key={l}
+                  onClick={() => setLang(l)}
+                  className={`flex-1 py-2.5 rounded-lg border text-sm font-medium transition-all ${lang === l ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-foreground border-border hover:bg-muted'}`}
+                >
+                  {tl(l === 'pt' ? 'app_language_pt' : 'app_language_en')}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">{tl('settings_app_language_desc')}</p>
+          </div>
+        </div>
+
         <div>
           <SectionTitle>English Level</SectionTitle>
           <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
@@ -633,7 +654,7 @@ export default function SettingsPage() {
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left ${active ? 'bg-primary/8 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
                   >
                     <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-primary' : 'opacity-60'}`} />
-                    {tab.label}
+                    {tl(tab.labelKey)}
                   </button>
                 );
               })}
@@ -646,7 +667,7 @@ export default function SettingsPage() {
           <div className="max-w-2xl mx-auto p-8 md:p-12">
             <header className="mb-10">
               <h1 className="font-serif text-4xl text-primary mb-1">
-                {TABS.find(t => t.id === activeTab)?.label}
+                {tl(TABS.find(tab => tab.id === activeTab)!.labelKey)}
               </h1>
             </header>
             <AnimatePresence mode="wait">

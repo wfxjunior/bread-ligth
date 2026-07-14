@@ -14,25 +14,28 @@ import {
 } from 'lucide-react';
 import { useReadingSpace } from '../context/reading-space-context';
 import { useAtmosphere } from '../context/atmosphere-context';
+import { useLanguage } from '../context/language-context';
 import { SpaceBackground } from './space-background';
+import type { I18nKey } from '../lib/i18n';
 
-const NAV_ITEMS = [
-  { name: 'Home', path: '/home', icon: LayoutDashboard },
-  { name: 'Reader', path: '/', icon: BookOpen },
-  { name: 'Library', path: '/library', icon: Library },
-  { name: 'Search', path: '/search', icon: Search },
-  { name: 'Vocabulary', path: '/vocabulary', icon: BookText },
-  { name: 'Notes', path: '/notes', icon: Feather },
-  { name: 'Favorites', path: '/favorites', icon: Bookmark },
-  { name: 'Devotionals', path: '/devotionals', icon: BookHeart },
-  { name: 'Journey', path: '/journey', icon: Flag },
-  { name: 'Settings', path: '/settings', icon: Settings },
+const NAV_ITEMS: { key: I18nKey; path: string; icon: typeof LayoutDashboard }[] = [
+  { key: 'nav_home',        path: '/home',        icon: LayoutDashboard },
+  { key: 'nav_reader',      path: '/',            icon: BookOpen },
+  { key: 'nav_library',     path: '/library',     icon: Library },
+  { key: 'nav_search',      path: '/search',      icon: Search },
+  { key: 'nav_vocabulary',  path: '/vocabulary',  icon: BookText },
+  { key: 'nav_notes',       path: '/notes',       icon: Feather },
+  { key: 'nav_favorites',   path: '/favorites',   icon: Bookmark },
+  { key: 'nav_devotionals', path: '/devotionals', icon: BookHeart },
+  { key: 'nav_journey',     path: '/journey',     icon: Flag },
+  { key: 'nav_settings',    path: '/settings',    icon: Settings },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { space } = useReadingSpace();
   const { isDark: atmosphereIsDark } = useAtmosphere();
+  const { t } = useLanguage();
 
   // The Reading Space gradient is a calm *mood wash*, but the Atmosphere owns
   // the base background/foreground contrast. When a Reading Space's own
@@ -49,10 +52,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="p-6">
           <Link href="/" className="flex flex-col gap-1 no-underline group">
             <h1 className="font-serif text-2xl text-primary font-medium tracking-tight group-hover:text-primary/80 transition-colors">
-              Bible English
+              {t('app_name')}
             </h1>
             <span className="text-xs text-muted-foreground uppercase tracking-widest">
-              Learn English Through The Bible
+              {t('app_tagline')}
             </span>
           </Link>
         </div>
@@ -62,7 +65,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             const isActive = location === item.path || (item.path !== '/' && location.startsWith(item.path));
             return (
               <Link
-                key={item.name}
+                key={item.key}
                 href={item.path}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
                   isActive
@@ -71,7 +74,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 }`}
               >
                 <item.icon className={`w-4 h-4 ${isActive ? 'text-primary' : 'opacity-70'}`} />
-                {item.name}
+                {t(item.key)}
               </Link>
             );
           })}
@@ -84,7 +87,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-medium text-foreground">Wilson</span>
-              <span className="text-xs text-muted-foreground">Free Plan</span>
+              <span className="text-xs text-muted-foreground">{t('plan_free_badge')}</span>
             </div>
           </div>
         </div>
