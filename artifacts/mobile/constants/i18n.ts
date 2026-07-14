@@ -175,8 +175,6 @@ const strings = {
   // ── Support labels
   donate:            { pt: 'Fazer uma doação',              en: 'Make a donation'       },
   donate_sub:        { pt: 'Apoie o desenvolvimento',       en: 'Support development'   },
-  ambassador:        { pt: 'Ser Embaixador',                en: 'Become Ambassador'     },
-  ambassador_sub:    { pt: 'Plano mensal com benefícios',   en: 'Monthly plan w/ perks' },
 
   // ── Data labels
   clear_vocab:       { pt: 'Limpar vocabulário',      en: 'Clear vocabulary'    },
@@ -193,6 +191,47 @@ const strings = {
   // ── Plan badges
   plan_free:         { pt: 'Grátis', en: 'Free'   },
   plan_member:       { pt: 'Membro', en: 'Member' },
+
+  // ── Premium (Settings card + paywall) ──────────────────────────────────────
+  premium_card_sub:        { pt: 'Desbloqueie todas as atmosferas e cores de destaque', en: 'Unlock every reading atmosphere and accent color' },
+  premium_card_cta:        { pt: 'Ver planos',          en: 'See plans'          },
+  premium_active_sub:      { pt: 'Obrigado por apoiar o Bread&Light! 🙏', en: 'Thank you for supporting Bread&Light! 🙏' },
+  premium_active_badge:    { pt: 'Premium ativo',       en: 'Premium active'     },
+  premium_unlock_row_text: { pt: 'Desbloqueie todas as cores com o Premium', en: 'Unlock every color with Premium' },
+  premium_unlock_cta:      { pt: 'Ver planos',          en: 'See plans'          },
+
+  premium_back:             { pt: 'Configurações',       en: 'Settings'           },
+  premium_eyebrow:          { pt: 'Upgrade',             en: 'Upgrade'            },
+  premium_title:            { pt: 'Bread&Light Premium', en: 'Bread&Light Premium' },
+  premium_subtitle:         { pt: 'Cancele quando quiser. Teste grátis de 7 dias.', en: 'Cancel anytime. 7-day free trial.' },
+  premium_billed_monthly:   { pt: 'Mensal',              en: 'Monthly'            },
+  premium_billed_yearly:    { pt: 'Anual',               en: 'Yearly'             },
+  premium_per_month:        { pt: '/mês',                en: '/month'             },
+  premium_per_year:         { pt: '/ano',                en: '/year'              },
+  premium_yearly_save_badge:{ pt: '-33%',                en: '-33%'               },
+  premium_loading:          { pt: 'Carregando preços…',  en: 'Loading prices…'    },
+  premium_price_error:      { pt: 'Não foi possível carregar os preços agora.', en: 'Unable to load pricing right now.' },
+
+  premium_feature_atmospheres:    { pt: 'Todas as 10 atmosferas de leitura', en: 'All 10 reading atmospheres' },
+  premium_feature_accents:        { pt: 'Todas as 5 cores de destaque',      en: 'All 5 accent colors' },
+  premium_feature_mission:        { pt: 'Ajude a manter o Bread&Light gratuito para outros', en: 'Help keep Bread&Light free for others' },
+  premium_feature_early_access:   { pt: 'Acesso antecipado a novos recursos', en: 'Early access to new features' },
+  premium_feature_priority_support:{ pt: 'Suporte prioritário',      en: 'Priority support' },
+
+  premium_trial_cta:        { pt: 'Iniciar teste grátis de 7 dias', en: 'Start your 7-day free trial' },
+  premium_trial_disclaimer: { pt: 'Sem cobrança por 7 dias. Cancele quando quiser.', en: "You won't be charged for 7 days. Cancel anytime." },
+  premium_restore:          { pt: 'Restaurar compras',   en: 'Restore purchases'  },
+
+  premium_already_title:    { pt: 'Plano Premium',       en: 'Premium Plan'       },
+  premium_already_sub:      { pt: 'Você já é Premium! Obrigado por apoiar o Bread&Light.', en: "You're already Premium! Thank you for supporting Bread&Light." },
+
+  premium_always_free_title:{ pt: 'Sempre Gratuito',     en: 'Always Free, Forever' },
+  premium_always_free_desc: { pt: 'Toda a leitura da Bíblia, tradução de palavras, anotações, favoritos e vocabulário — sempre gratuitos.', en: 'All Bible reading, word translations, notes, favorites, and vocabulary — always free.' },
+  premium_no_card_required: { pt: 'Nenhum cartão necessário para começar', en: 'No credit card required to start' },
+
+  premium_coming_soon_title:         { pt: 'Em breve! 🌟', en: 'Coming soon! 🌟' },
+  premium_coming_soon_purchase_body: { pt: 'As assinaturas Premium ainda estão sendo configuradas na loja do app. Fique ligado nas novidades!', en: 'Premium subscriptions are still being set up in the app store. Stay tuned for updates!' },
+  premium_coming_soon_restore_body:  { pt: 'A restauração de compras ainda não está disponível — volte em breve.', en: 'Restoring purchases isn\u2019t available yet — check back soon.' },
 
   // ── Home screen
   home_brand:        { pt: 'Bread&Light', en: 'Bread&Light' },

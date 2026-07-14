@@ -31,8 +31,9 @@ import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAudio, AUDIO_VOICES } from '@/context/AudioContext';
 import type { AudioVoice } from '@/context/AudioContext';
+import { usePremium } from '@/context/PremiumContext';
 import { APP_SHARE_URL } from '@/utils/shareLink';
-import { ATMOSPHERE_IDS, getAtmospherePreview, READING_SPACES } from '@/constants/colors';
+import { ATMOSPHERE_IDS, getAtmospherePreview, READING_SPACES, isAtmospherePremium, isAccentPremium } from '@/constants/colors';
 import type { Atmosphere, AccentColor, ReadingSpace } from '@/constants/colors';
 import { LinearGradient } from 'expo-linear-gradient';
 import SettingsDrawer from '@/components/SettingsDrawer';
@@ -217,107 +218,6 @@ function DonationModal({ visible, onClose }: { visible: boolean; onClose: () => 
             </Text>
           </Pressable>
         </KeyboardAvoidingView>
-      </Pressable>
-    </Modal>
-  );
-}
-
-// ── Ambassador modal ──────────────────────────────────────────────────────────
-const AMBASSADOR_FEATURES: { icon: string; pt: string; en: string }[] = [
-  { icon: 'zap',       pt: 'Acesso antecipado a novos livros e recursos', en: 'Early access to new books and features' },
-  { icon: 'award',     pt: 'Selo de Embaixador no seu perfil', en: 'Ambassador badge on your profile' },
-  { icon: 'book-open', pt: 'Suporte direto ao desenvolvimento do app', en: 'Direct support for app development' },
-  { icon: 'heart',     pt: 'Missão: inglês gratuito para todos', en: 'Mission: free English for everyone' },
-];
-
-function AmbassadorModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
-  const colors = useColors();
-  const insets = useSafeAreaInsets();
-  const { lang } = useLanguage();
-  const t = (pt: string, en: string) => lang === 'en' ? en : pt;
-
-  const handleSubscribe = () => {
-    if (Platform.OS !== 'web') Haptics.selectionAsync();
-    Alert.alert(
-      t('Em breve! 🌟', 'Coming soon! 🌟'),
-      t('As assinaturas de Embaixador estarão disponíveis em breve.\nFique ligado nas novidades!', 'Ambassador subscriptions will be available soon.\nStay tuned for updates!'),
-    );
-  };
-
-  const handleShare = async () => {
-    try {
-      if (Platform.OS !== 'web') Haptics.selectionAsync();
-      await Share.share({
-        message: t(
-          `📖 Estou aprendendo inglês com o Bread&Light — gratuito e incrível! Confira: ${APP_SHARE_URL}`,
-          `📖 I'm learning English with Bread&Light — free and amazing! Check it out: ${APP_SHARE_URL}`,
-        ),
-        url: APP_SHARE_URL,
-      });
-    } catch {}
-    onClose();
-  };
-
-  return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.donateBackdrop} onPress={onClose}>
-        <Pressable
-          style={[styles.ambassadorSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 20 }]}
-          onPress={e => e.stopPropagation()}
-        >
-          <View style={[styles.donateHandle, { backgroundColor: colors.border }]} />
-
-          {/* Crown header */}
-          <View style={styles.ambassadorHeader}>
-            <View style={[styles.ambassadorCrown, { backgroundColor: colors.accent + '18' }]}>
-              <Feather name="award" size={28} color={colors.accent} />
-            </View>
-            <Text style={[styles.ambassadorTitle, { color: colors.foreground }]}>Bread{'&'}Light Ambassador</Text>
-            <View style={styles.ambassadorPriceRow}>
-              <Text style={[styles.ambassadorPrice, { color: colors.primary }]}>R$9,90</Text>
-              <Text style={[styles.ambassadorPer,   { color: colors.mutedForeground }]}>{t('/mês', '/month')}</Text>
-            </View>
-            <Text style={[styles.ambassadorDesc, { color: colors.mutedForeground }]}>
-              {t('Ajude a missão e ganhe vantagens exclusivas', 'Help the mission and earn exclusive perks')}
-            </Text>
-          </View>
-
-          <View style={[styles.ambassadorDivider, { backgroundColor: colors.border }]} />
-
-          {/* Feature list */}
-          <View style={styles.ambassadorFeatures}>
-            {AMBASSADOR_FEATURES.map(f => (
-              <View key={f.icon} style={styles.ambassadorFeatureRow}>
-                <View style={[styles.ambassadorFeatureIcon, { backgroundColor: colors.accent + '14', borderRadius: colors.radius }]}>
-                  <Feather name={f.icon as any} size={14} color={colors.accent} />
-                </View>
-                <Text style={[styles.ambassadorFeatureText, { color: colors.foreground }]}>{t(f.pt, f.en)}</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Buttons */}
-          <TouchableOpacity
-            onPress={handleSubscribe}
-            activeOpacity={0.82}
-            style={[styles.ambassadorBtn, { backgroundColor: colors.primary, borderRadius: colors.radius }]}
-          >
-            <Text style={[styles.ambassadorBtnText, { color: colors.primaryForeground }]}>
-              {t('Assinar — R$9,90/mês', 'Subscribe — R$9.90/month')}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={handleShare}
-            activeOpacity={0.8}
-            style={[styles.ambassadorShareBtn, { borderColor: colors.border, borderRadius: colors.radius }]}
-          >
-            <Feather name="share-2" size={15} color={colors.mutedForeground} />
-            <Text style={[styles.ambassadorShareText, { color: colors.mutedForeground }]}>
-              {t('Compartilhar sem assinar', 'Share without subscribing')}
-            </Text>
-          </TouchableOpacity>
-        </Pressable>
       </Pressable>
     </Modal>
   );
@@ -834,10 +734,16 @@ export default function SettingsScreen() {
   const { atmosphere, setAtmosphere, accentColor, setAccentColor, readingSpace, setReadingSpace } = useTheme();
   const { lang, setLang, t: tl } = useLanguage();
   const audio = useAudio();
+  const { isPremium: userIsPremium } = usePremium();
   const { user, isSignedIn } = useUser();
   const { signOut } = useAuth();
   const userName  = user?.fullName || user?.firstName || '';
   const userEmail = user?.primaryEmailAddress?.emailAddress || '';
+
+  const goToPremium = () => {
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    router.push('/premium');
+  };
 
   const handleSignOut = () => {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
@@ -970,7 +876,6 @@ export default function SettingsScreen() {
 
   const [drawerVisible,     setDrawerVisible]     = useState(false);
   const [donateVisible,     setDonateVisible]     = useState(false);
-  const [ambassadorVisible, setAmbassadorVisible] = useState(false);
   const [donateKey,         setDonateKey]         = useState(0); // bumped on open to reset modal state
 
   // Reading Space is an independent, calm background mood — it does not
@@ -1069,6 +974,37 @@ export default function SettingsScreen() {
           </View>
         </SettingsCard>
 
+        {/* ── Premium ── */}
+        <SettingsCard>
+          <View style={styles.premiumCard}>
+            <View style={[styles.premiumIconCircle, { backgroundColor: colors.accent + '18' }]}>
+              <Feather name="award" size={20} color={colors.accent} />
+            </View>
+            <View style={styles.premiumCardInfo}>
+              <Text style={[styles.premiumCardTitle, { color: colors.foreground }]}>
+                Bread{'&'}Light Premium
+              </Text>
+              <Text style={[styles.premiumCardSub, { color: colors.mutedForeground }]} numberOfLines={2}>
+                {userIsPremium ? tl('premium_active_sub') : tl('premium_card_sub')}
+              </Text>
+            </View>
+            {userIsPremium ? (
+              <View style={[styles.premiumBadgeActive, { backgroundColor: colors.primary + '14' }]}>
+                <Feather name="check-circle" size={12} color={colors.primary} />
+                <Text style={[styles.premiumBadgeActiveText, { color: colors.primary }]}>{tl('premium_active_badge')}</Text>
+              </View>
+            ) : (
+              <TouchableOpacity
+                onPress={goToPremium}
+                activeOpacity={0.8}
+                style={[styles.premiumCardCta, { borderColor: colors.primary + '40', borderRadius: colors.radius / 1.5, backgroundColor: colors.primary + '10' }]}
+              >
+                <Text style={[styles.premiumCardCtaText, { color: colors.primary }]}>{tl('premium_card_cta')}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </SettingsCard>
+
         {/* ── Idioma ── */}
         <SectionLabel
           title={tl('section_language')}
@@ -1121,10 +1057,15 @@ export default function SettingsScreen() {
               {ATMOSPHERE_IDS.map(id => {
                 const active  = atmosphere === id;
                 const preview = getAtmospherePreview(id);
+                const locked  = preview.premium && !userIsPremium;
                 return (
                   <TouchableOpacity
                     key={id}
-                    onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); setAtmosphere(id); }}
+                    onPress={() => {
+                      if (Platform.OS !== 'web') Haptics.selectionAsync();
+                      if (locked) { goToPremium(); return; }
+                      setAtmosphere(id);
+                    }}
                     activeOpacity={0.8}
                     style={[
                       styles.themeCard,
@@ -1134,6 +1075,7 @@ export default function SettingsScreen() {
                         borderColor:     active ? colors.primary : colors.border,
                         borderWidth:     active ? 1.5 : StyleSheet.hairlineWidth,
                         borderRadius:    colors.radius / 1.5,
+                        opacity:         locked ? 0.72 : 1,
                       },
                     ]}
                   >
@@ -1163,6 +1105,11 @@ export default function SettingsScreen() {
                           <Feather name="check" size={8} color={colors.primaryForeground} />
                         </View>
                       )}
+                      {locked && (
+                        <View style={[styles.lockOverlay, { backgroundColor: 'rgba(0,0,0,0.45)' }]}>
+                          <Feather name="lock" size={10} color="#fff" />
+                        </View>
+                      )}
                     </View>
                     <View style={styles.themeCardBody}>
                       <Text style={[styles.themeCardName, { color: colors.foreground }]} numberOfLines={1}>
@@ -1184,23 +1131,44 @@ export default function SettingsScreen() {
             <View style={styles.accentRow}>
               {ACCENT_COLORS.map(c => {
                 const active = accentColor === c.id;
+                const locked = isAccentPremium(c.id) && !userIsPremium;
                 return (
                   <TouchableOpacity
                     key={c.id}
-                    onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); setAccentColor(c.id); }}
+                    onPress={() => {
+                      if (Platform.OS !== 'web') Haptics.selectionAsync();
+                      if (locked) { goToPremium(); return; }
+                      setAccentColor(c.id);
+                    }}
                     activeOpacity={0.8}
                     style={[
                       styles.accentCircleOuter,
                       active && { borderColor: c.hex, borderWidth: 2.5 },
                     ]}
                   >
-                    <View style={[styles.accentCircle, { backgroundColor: c.hex }]}>
+                    <View style={[styles.accentCircle, { backgroundColor: c.hex, opacity: locked ? 0.55 : 1 }]}>
                       {active && <Feather name="check" size={13} color="#fff" />}
                     </View>
+                    {locked && (
+                      <View style={[styles.accentLockOverlay, { backgroundColor: colors.foreground }]}>
+                        <Feather name="lock" size={8} color={colors.background} />
+                      </View>
+                    )}
                   </TouchableOpacity>
                 );
               })}
             </View>
+            {!userIsPremium && (
+              <View style={styles.upsellRow}>
+                <Feather name="award" size={12} color={colors.accent} />
+                <Text style={[styles.upsellText, { color: colors.mutedForeground }]}>
+                  {tl('premium_unlock_row_text')}
+                </Text>
+                <TouchableOpacity onPress={goToPremium} activeOpacity={0.7}>
+                  <Text style={[styles.upsellLink, { color: colors.primary }]}>{tl('premium_unlock_cta')}</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
           {/* Reading Spaces — calm atmosphere presets */}
@@ -1379,12 +1347,6 @@ export default function SettingsScreen() {
             label={tl('donate')}
             sub={tl('donate_sub')}
             onPress={handleDonate}
-          />
-          <SettingsRow
-            icon="star"
-            label={tl('ambassador')}
-            sub={tl('ambassador_sub')}
-            onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); setAmbassadorVisible(true); }}
             border={false}
           />
         </SettingsCard>
@@ -1422,7 +1384,6 @@ export default function SettingsScreen() {
 
         <SupportModal    visible={supportVisible}    onClose={() => setSupportVisible(false)} />
         <DonationModal   key={donateKey} visible={donateVisible} onClose={() => setDonateVisible(false)} />
-        <AmbassadorModal visible={ambassadorVisible} onClose={() => setAmbassadorVisible(false)} />
 
       </ScrollView>
 
@@ -1583,24 +1544,21 @@ const styles = StyleSheet.create({
   donateBtnText:   { fontSize: 16, fontFamily: 'Inter_600SemiBold' },
   donateLegal:     { fontSize: 11, fontFamily: 'Inter_400Regular', textAlign: 'center', paddingHorizontal: 24, marginBottom: 8, lineHeight: 17 },
 
-  // Ambassador modal
-  ambassadorSheet:       { borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 10, maxHeight: '90%' },
-  ambassadorHeader:      { alignItems: 'center', paddingHorizontal: 24, paddingTop: 12, paddingBottom: 16, gap: 8 },
-  ambassadorCrown:       { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center' },
-  ambassadorTitle:       { fontSize: 20, fontFamily: 'Lora_700Bold', textAlign: 'center' },
-  ambassadorPriceRow:    { flexDirection: 'row', alignItems: 'flex-end', gap: 2 },
-  ambassadorPrice:       { fontSize: 32, fontFamily: 'Inter_700Bold', lineHeight: 36 },
-  ambassadorPer:         { fontSize: 14, fontFamily: 'Inter_400Regular', paddingBottom: 4 },
-  ambassadorDesc:        { fontSize: 13, fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 20 },
-  ambassadorDivider:     { height: StyleSheet.hairlineWidth, marginHorizontal: 20, marginBottom: 16 },
-  ambassadorFeatures:    { paddingHorizontal: 20, gap: 12, marginBottom: 20 },
-  ambassadorFeatureRow:  { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  ambassadorFeatureIcon: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-  ambassadorFeatureText: { flex: 1, fontSize: 14, fontFamily: 'Inter_400Regular', lineHeight: 21 },
-  ambassadorBtn:         { marginHorizontal: 20, paddingVertical: 15, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
-  ambassadorBtnText:     { fontSize: 16, fontFamily: 'Inter_600SemiBold' },
-  ambassadorShareBtn:    { marginHorizontal: 20, paddingVertical: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: StyleSheet.hairlineWidth, marginBottom: 6 },
-  ambassadorShareText:   { fontSize: 14, fontFamily: 'Inter_400Regular' },
+  // Premium status card + gating overlays
+  premiumCard:           { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
+  premiumIconCircle:     { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  premiumCardInfo:       { flex: 1, gap: 2 },
+  premiumCardTitle:      { fontSize: 15, fontFamily: 'Inter_600SemiBold' },
+  premiumCardSub:        { fontSize: 12.5, fontFamily: 'Inter_400Regular', lineHeight: 17 },
+  premiumCardCta:        { paddingHorizontal: 12, paddingVertical: 8, borderWidth: StyleSheet.hairlineWidth },
+  premiumCardCtaText:    { fontSize: 12.5, fontFamily: 'Inter_600SemiBold' },
+  premiumBadgeActive:    { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 100 },
+  premiumBadgeActiveText:{ fontSize: 11.5, fontFamily: 'Inter_600SemiBold' },
+  lockOverlay:           { position: 'absolute', top: 6, right: 6, width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  accentLockOverlay:     { position: 'absolute', top: -2, right: -2, width: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  upsellRow:             { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
+  upsellText:            { fontSize: 12, fontFamily: 'Inter_400Regular', flex: 1, lineHeight: 16 },
+  upsellLink:            { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
 
   // Reading atmosphere grid — 2-column, fills width
   innerSubLabel:{ fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: -6, opacity: 0.85 },

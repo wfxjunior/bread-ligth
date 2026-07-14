@@ -24,6 +24,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { BibleProvider } from '@/context/BibleContext';
 import { ThemeProvider, useTheme } from '@/context/ThemeContext';
 import { LanguageProvider } from '@/context/LanguageContext';
+import { PremiumProvider } from '@/context/PremiumContext';
 import { AudioProvider } from '@/context/AudioContext';
 
 SplashScreen.preventAutoHideAsync();
@@ -63,6 +64,10 @@ function RootLayoutNav() {
         />
         <Stack.Screen
           name="auth"
+          options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom' }}
+        />
+        <Stack.Screen
+          name="premium"
           options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom' }}
         />
       </Stack>
@@ -117,11 +122,13 @@ export default function RootLayout() {
                 <KeyboardProvider>
                   <LanguageProvider>
                     <ThemeProvider>
-                      <BibleProvider>
-                        <AudioProvider>
-                          <RootLayoutNav />
-                        </AudioProvider>
-                      </BibleProvider>
+                      <PremiumProvider>
+                        <BibleProvider>
+                          <AudioProvider>
+                            <RootLayoutNav />
+                          </AudioProvider>
+                        </BibleProvider>
+                      </PremiumProvider>
                     </ThemeProvider>
                   </LanguageProvider>
                 </KeyboardProvider>

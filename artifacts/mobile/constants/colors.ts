@@ -14,6 +14,8 @@ interface AtmosphereBase {
   mutedForeground: string; divider: string;
   secondaryAccent: string; selection: string;
   portugueseText: string; isDark: boolean;
+  /** Free forever (`classic`, the app default) vs. Premium-gated (everything else). */
+  premium: boolean;
 }
 
 const ATMOSPHERES: Record<Atmosphere, AtmosphereBase> = {
@@ -29,6 +31,7 @@ const ATMOSPHERES: Record<Atmosphere, AtmosphereBase> = {
     selection:       'rgba(139,94,52,0.16)',
     portugueseText:  '#6B5636',
     isDark: false,
+    premium: true,
   },
   // Warm beige, soft ambient tones — comfortable for long sessions
   cozy: {
@@ -42,6 +45,7 @@ const ATMOSPHERES: Record<Atmosphere, AtmosphereBase> = {
     selection:       'rgba(166,105,59,0.15)',
     portugueseText:  '#75603F',
     isDark: false,
+    premium: true,
   },
   // Traditional Bible paper with subtle texture — the app's default
   classic: {
@@ -55,6 +59,7 @@ const ATMOSPHERES: Record<Atmosphere, AtmosphereBase> = {
     selection:       'rgba(107,30,42,0.12)',
     portugueseText:  '#5C4A40',
     isDark: false,
+    premium: false,
   },
   // Elegant dark mode — charcoal, deep burgundy and antique gold
   dark: {
@@ -68,6 +73,7 @@ const ATMOSPHERES: Record<Atmosphere, AtmosphereBase> = {
     selection:       'rgba(201,161,90,0.18)',
     portugueseText:  '#D8B98A',
     isDark: true,
+    premium: true,
   },
   // Deep blue-black, optimized for reading at night
   night: {
@@ -81,6 +87,7 @@ const ATMOSPHERES: Record<Atmosphere, AtmosphereBase> = {
     selection:       'rgba(110,143,196,0.16)',
     portugueseText:  '#A9B6CC',
     isDark: true,
+    premium: true,
   },
   // Old wooden libraries — warm walnut tones and soft shadows
   library: {
@@ -94,6 +101,7 @@ const ATMOSPHERES: Record<Atmosphere, AtmosphereBase> = {
     selection:       'rgba(180,129,63,0.20)',
     portugueseText:  '#CBA876',
     isDark: true,
+    premium: true,
   },
   // Soft cream with warm natural light
   morning: {
@@ -107,6 +115,7 @@ const ATMOSPHERES: Record<Atmosphere, AtmosphereBase> = {
     selection:       'rgba(217,138,61,0.14)',
     portugueseText:  '#7A6440',
     isDark: false,
+    premium: true,
   },
   // Pure off-white background with maximum whitespace
   minimal: {
@@ -120,6 +129,7 @@ const ATMOSPHERES: Record<Atmosphere, AtmosphereBase> = {
     selection:       'rgba(0,0,0,0.06)',
     portugueseText:  '#4A4A4A',
     isDark: false,
+    premium: true,
   },
   // Classic reading experience inspired by old books — golden aged-paper tone
   sepia: {
@@ -133,6 +143,7 @@ const ATMOSPHERES: Record<Atmosphere, AtmosphereBase> = {
     selection:       'rgba(122,74,34,0.18)',
     portugueseText:  '#5C4322',
     isDark: false,
+    premium: true,
   },
   // Low-contrast neutral gray — designed to reduce distractions
   focus: {
@@ -146,6 +157,7 @@ const ATMOSPHERES: Record<Atmosphere, AtmosphereBase> = {
     selection:       'rgba(0,0,0,0.08)',
     portugueseText:  '#5A5A5A',
     isDark: false,
+    premium: true,
   },
 };
 
@@ -153,16 +165,18 @@ const ATMOSPHERES: Record<Atmosphere, AtmosphereBase> = {
 interface AccentBase {
   primary: string; primaryForeground: string;
   englishTextLight: string; englishTextDark: string;
+  /** Free forever (`burgundy`, the app default) vs. Premium-gated (everything else). */
+  premium: boolean;
 }
 
 const ACCENTS: Record<AccentColor, AccentBase> = {
-  'royal-blue': { primary: '#1B3A6B', primaryForeground: '#FFFFFF',  englishTextLight: '#1B3A6B', englishTextDark: '#8BBFDD' },
+  'royal-blue': { primary: '#1B3A6B', primaryForeground: '#FFFFFF',  englishTextLight: '#1B3A6B', englishTextDark: '#8BBFDD', premium: true },
   // Burgundy matches the web app's primary: hsl(353, 43%, 30%) = #6B1E2A
   // primaryForeground matches web app's primary-foreground: hsl(36, 33%, 97%) = #FAF8F4
-  burgundy:     { primary: '#6B1E2A', primaryForeground: '#FAF8F4',  englishTextLight: '#6B1E2A', englishTextDark: '#C87A8A' },
-  forest:       { primary: '#1E4D2B', primaryForeground: '#FFFFFF',  englishTextLight: '#1E4D2B', englishTextDark: '#7BBF8B' },
-  slate:        { primary: '#3D4A5C', primaryForeground: '#FFFFFF',  englishTextLight: '#3D4A5C', englishTextDark: '#8FA0B8' },
-  violet:       { primary: '#3B1E6B', primaryForeground: '#FFFFFF',  englishTextLight: '#3B1E6B', englishTextDark: '#9A7BD5' },
+  burgundy:     { primary: '#6B1E2A', primaryForeground: '#FAF8F4',  englishTextLight: '#6B1E2A', englishTextDark: '#C87A8A', premium: false },
+  forest:       { primary: '#1E4D2B', primaryForeground: '#FFFFFF',  englishTextLight: '#1E4D2B', englishTextDark: '#7BBF8B', premium: true },
+  slate:        { primary: '#3D4A5C', primaryForeground: '#FFFFFF',  englishTextLight: '#3D4A5C', englishTextDark: '#8FA0B8', premium: true },
+  violet:       { primary: '#3B1E6B', primaryForeground: '#FFFFFF',  englishTextLight: '#3B1E6B', englishTextDark: '#9A7BD5', premium: true },
 };
 
 // ── Palette builder ───────────────────────────────────────────────────────────
@@ -242,7 +256,22 @@ export function getAtmospherePreview(id: Atmosphere) {
     foreground: t.foreground,
     secondaryAccent: t.secondaryAccent,
     isDark:     t.isDark,
+    premium:    t.premium,
   };
+}
+
+// ── Premium gating — default atmosphere/accent stay free forever ──────────────
+// Mirrors the web app's gating boundary (see `lib/atmospheres.ts` there): only
+// the app default (`classic` atmosphere, `burgundy` accent) is free; every
+// other atmosphere/accent requires BreadLight Premium.
+export const ACCENT_IDS: AccentColor[] = ['royal-blue', 'burgundy', 'forest', 'slate', 'violet'];
+
+export function isAtmospherePremium(id: Atmosphere): boolean {
+  return ATMOSPHERES[id].premium;
+}
+
+export function isAccentPremium(id: AccentColor): boolean {
+  return ACCENTS[id].premium;
 }
 
 // ── Reading Spaces — calm, atmosphere-based reading modes ──────────────────────
