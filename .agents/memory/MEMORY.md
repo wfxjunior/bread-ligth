@@ -15,3 +15,4 @@
 - [Background audio & lock-screen limits](background-audio-limits.md) — staysActiveInBackground works in Expo Go; real lock-screen play/pause/next controls need react-native-track-player + a dev client build, not achievable JS-only.
 - [Stripe connector credential fetch + migration bundling](stripe-connector-credential-fetch.md) — connectors API needs `connector_name` (singular) + `settings.secret`, not the plural/`_key` names; bundling stripe-replit-sync breaks its migrations path.
 - [Premium feature gating boundary](premium-feature-gating.md) — default atmosphere/accent free forever, rest Premium; gating lives in UI call sites + a downgrade-reset guard, never inside the theme context itself.
+- [Prefetch cellular gating](prefetch-cellular-gating.md) — Wi-Fi-only setting gates only the background lookahead prefetch, never the active verse's own download; live-queries expo-network each pass.

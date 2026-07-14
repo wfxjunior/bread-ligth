@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Crypto from 'expo-crypto';
+import * as Network from 'expo-network';
 
 const _domain  = process.env.EXPO_PUBLIC_DOMAIN;
 const TTS_BASE = _domain ? `https://${_domain}/api/tts` : null;
@@ -13,6 +14,7 @@ const TTS_BASE = _domain ? `https://${_domain}/api/tts` : null;
 const RATE_KEY  = '@bibliaeN:audioRate';
 const VOICE_KEY = '@bibliaeN:audioVoice';
 const READING_LANG_KEY = '@bibliaeN:readingLanguage';
+const PREFETCH_WIFI_ONLY_KEY = '@bibliaeN:prefetchWifiOnly';
 
 // ── On-device TTS audio cache ────────────────────────────────────────────
 // Bible reading is often done in low-connectivity moments (commuting,
@@ -240,6 +242,8 @@ interface AudioContextValue {
   usingFallback: boolean;
   voice: AudioVoice;
   readingLanguage: ReadingLanguage;
+  prefetchWifiOnly: boolean;
+  setPrefetchWifiOnly: (value: boolean) => void;
   playQueue: (items: AudioQueueItem[], startIndex?: number, queueKey?: string) => void;
   playSingle: (text: string, id?: string) => void;
   togglePlayPause: () => void;
@@ -283,6 +287,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [rate, setRateState]          = useState(DEFAULT_RATE);
   const [voice, setVoiceState]        = useState<AudioVoice>(DEFAULT_VOICE);
   const [readingLanguage, setReadingLanguageState] = useState<ReadingLanguage>(DEFAULT_READING_LANGUAGE);
+  const [prefetchWifiOnly, setPrefetchWifiOnlyState] = useState(false);
+  const prefetchWifiOnlyRef = useRef(false);
   const [usingFallback, setUsingFallback] = useState(false);
   const [offlineCacheBytes, setOfflineCacheBytes] = useState(0);
   const [cacheMaxBytes, setCacheMaxBytesState] = useState(DEFAULT_TTS_CACHE_MAX_BYTES);
@@ -324,6 +330,14 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
     AsyncStorage.getItem(READING_LANG_KEY)
       .then(v => { if (v === 'en' || v === 'pt') setReadingLanguageState(v); })
+      .catch(() => {});
+
+    AsyncStorage.getItem(PREFETCH_WIFI_ONLY_KEY)
+      .then(v => {
+        const enabled = v === 'true';
+        prefetchWifiOnlyRef.current = enabled;
+        setPrefetchWifiOnlyState(enabled);
+      })
       .catch(() => {});
 
     // staysActiveInBackground keeps chapter/book auto-advance going when the
@@ -374,6 +388,15 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const dismissEvictionNotice = useCallback(() => {
     clearEvictionNotice().catch(() => {});
     setEvictionNotice(null);
+  }, []);
+
+  // Lets the user opt out of background verse prefetch on cellular data —
+  // current-verse playback and normal cache-on-play behavior are unaffected;
+  // this only gates the lookahead prefetch in prefetchQueueAhead.
+  const setPrefetchWifiOnly = useCallback((value: boolean) => {
+    prefetchWifiOnlyRef.current = value;
+    setPrefetchWifiOnlyState(value);
+    AsyncStorage.setItem(PREFETCH_WIFI_ONLY_KEY, value ? 'true' : 'false').catch(() => {});
   }, []);
 
   // Lets the user trade offline coverage for device storage. Shrinking the
@@ -441,6 +464,16 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   // uncached when its turn comes.
   const prefetchQueueAhead = useCallback(async (fromIndex: number, gen: number) => {
     if (!TTS_BASE) return; // no server TTS configured — nothing to prefetch
+
+    if (prefetchWifiOnlyRef.current) {
+      // Query the current connection each prefetch pass (not just once at
+      // playback start) so a mid-chapter Wi-Fi→cellular handoff stops
+      // spending cellular data, without touching current-verse playback or
+      // the normal cache-on-play fallback for the item actually being read.
+      const state = await Network.getNetworkStateAsync().catch(() => null);
+      if (state?.type === Network.NetworkStateType.CELLULAR) return;
+    }
+
     const activeVoice = voiceRef.current;
     for (let i = fromIndex + 1; i <= fromIndex + 2; i++) {
       if (generationRef.current !== gen) return; // playback moved on/stopped; abandon
@@ -713,6 +746,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     hasPrevious: currentIndex > 0,
     usingFallback,
     readingLanguage,
+    prefetchWifiOnly, setPrefetchWifiOnly,
     playQueue, playSingle, togglePlayPause, pause, resume, stop, next, previous, seekToRatio, setRate, setVoice, setReadingLanguage,
     offlineCacheBytes, refreshOfflineCacheSize, clearOfflineCache,
     cacheMaxBytes, setCacheMaxBytes, evictionNotice, dismissEvictionNotice,

@@ -153,6 +153,11 @@ const strings = {
     pt: 'Quanto espaço reservar no dispositivo para áudio offline',
     en: 'How much device space to reserve for offline audio',
   },
+  prefetch_wifi_only:     { pt: 'Pré-carregar apenas no Wi-Fi', en: 'Prefetch on Wi-Fi only' },
+  prefetch_wifi_only_sub: {
+    pt: 'Não usar dados móveis para baixar os próximos versículos com antecedência',
+    en: "Don't use cellular data to download upcoming verses ahead of time",
+  },
   cancel: { pt: 'Cancelar', en: 'Cancel' },
 
   // ── Daily devotional completion

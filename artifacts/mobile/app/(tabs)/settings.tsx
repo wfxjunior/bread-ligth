@@ -1269,6 +1269,17 @@ export default function SettingsScreen() {
         </SettingsCard>
 
         <SettingsCard>
+          <ToggleRow
+            icon="wifi"
+            label={tl('prefetch_wifi_only')}
+            sub={tl('prefetch_wifi_only_sub')}
+            value={audio.prefetchWifiOnly}
+            onChange={audio.setPrefetchWifiOnly}
+            border={false}
+          />
+        </SettingsCard>
+
+        <SettingsCard>
           <SettingsRow
             icon="download"
             label={tl('offline_audio')}
