@@ -1,5 +1,6 @@
 // Export your models here. Add one export per file
 export * from "./billing";
+export * from "./admins";
 // export * from "./posts";
 //
 // Each model/table should ideally be split into different files.
@@ -18,4 +19,3 @@ export * from "./billing";
 //   export type InsertPost = z.infer<typeof insertPostSchema>;
 //   export type Post = typeof postsTable.$inferSelect;
 
-export {}
