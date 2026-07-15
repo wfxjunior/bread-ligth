@@ -56,6 +56,17 @@ export default function PremiumScreen() {
     t('premium_feature_priority_support'),
   ];
 
+  const compareRows: Array<{ labelKey: Parameters<typeof t>[0]; free: boolean }> = [
+    { labelKey: 'premium_compare_reading',     free: true },
+    { labelKey: 'premium_compare_translation', free: true },
+    { labelKey: 'premium_compare_notes',       free: true },
+    { labelKey: 'premium_compare_vocab',       free: true },
+    { labelKey: 'premium_compare_atmospheres', free: false },
+    { labelKey: 'premium_compare_accents',     free: false },
+    { labelKey: 'premium_compare_early',       free: false },
+    { labelKey: 'premium_compare_support',     free: false },
+  ];
+
   const handleClose = () => {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
     router.back();
@@ -89,9 +100,6 @@ export default function PremiumScreen() {
         </TouchableOpacity>
 
         <View style={styles.header}>
-          <View style={[styles.iconCircle, { backgroundColor: colors.primary + '14' }]}>
-            <Feather name="award" size={26} color={colors.primary} />
-          </View>
           <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>{t('premium_eyebrow').toUpperCase()}</Text>
           <Text style={[styles.title, { color: colors.foreground }]}>{t('premium_title')}</Text>
         </View>
@@ -197,6 +205,38 @@ export default function PremiumScreen() {
           <Text style={[styles.freeDesc, { color: colors.foreground }]}>{t('premium_always_free_desc')}</Text>
           <Text style={[styles.freeNote, { color: colors.mutedForeground }]}>{t('premium_no_card_required')}</Text>
         </View>
+
+        <View style={styles.compareSection}>
+          <Text style={[styles.compareTitle, { color: colors.foreground }]}>{t('premium_compare_title')}</Text>
+          <View style={[styles.compareTable, { borderColor: colors.border, backgroundColor: colors.card }]}>
+            <View style={[styles.compareHeaderRow, { borderColor: colors.border }]}>
+              <View style={{ flex: 1 }} />
+              <Text style={[styles.compareColHeader, { color: colors.mutedForeground }]}>{t('premium_compare_free')}</Text>
+              <Text style={[styles.compareColHeader, { color: colors.primary }]}>{t('premium_compare_premium')}</Text>
+            </View>
+            {compareRows.map((row, i) => (
+              <View
+                key={row.labelKey}
+                style={[
+                  styles.compareRow,
+                  i < compareRows.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+                ]}
+              >
+                <Text style={[styles.compareFeature, { color: colors.foreground }]}>{t(row.labelKey)}</Text>
+                <View style={styles.compareCell}>
+                  {row.free ? (
+                    <Feather name="check" size={15} color={colors.mutedForeground} />
+                  ) : (
+                    <Text style={[styles.compareDash, { color: colors.mutedForeground }]}>—</Text>
+                  )}
+                </View>
+                <View style={styles.compareCell}>
+                  <Feather name="check" size={15} color={colors.primary} />
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
       </ScrollView>
     </View>
   );
@@ -247,4 +287,14 @@ const styles = StyleSheet.create({
   freeTitle:       { fontSize: 10.5, fontFamily: 'Inter_700Bold', letterSpacing: 1.1 },
   freeDesc:        { fontSize: 13, fontFamily: 'Inter_400Regular', lineHeight: 19 },
   freeNote:        { fontSize: 11.5, fontFamily: 'Inter_400Regular' },
+
+  compareSection:  { marginTop: 28 },
+  compareTitle:    { fontSize: 15.5, fontFamily: 'Lora_700Bold', marginBottom: 12, textAlign: 'center' },
+  compareTable:    { borderWidth: StyleSheet.hairlineWidth, borderRadius: 16, overflow: 'hidden' },
+  compareHeaderRow:{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth },
+  compareColHeader:{ width: 64, fontSize: 11, fontFamily: 'Inter_700Bold', textAlign: 'center', letterSpacing: 0.4 },
+  compareRow:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 12 },
+  compareFeature:  { flex: 1, fontSize: 12.5, fontFamily: 'Inter_400Regular', paddingRight: 8 },
+  compareCell:     { width: 64, alignItems: 'center', justifyContent: 'center' },
+  compareDash:     { fontSize: 13, fontFamily: 'Inter_400Regular' },
 });

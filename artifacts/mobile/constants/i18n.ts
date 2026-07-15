@@ -243,6 +243,18 @@ const strings = {
   premium_always_free_desc: { pt: 'Toda a leitura da Bíblia, tradução de palavras, anotações, favoritos e vocabulário — sempre gratuitos.', en: 'All Bible reading, word translations, notes, favorites, and vocabulary — always free.' },
   premium_no_card_required: { pt: 'Nenhum cartão necessário para começar', en: 'No credit card required to start' },
 
+  premium_compare_title:      { pt: 'Compare os planos',   en: 'Compare plans'      },
+  premium_compare_free:       { pt: 'Grátis',              en: 'Free'               },
+  premium_compare_premium:    { pt: 'Premium',             en: 'Premium'            },
+  premium_compare_reading:    { pt: 'Leitura completa da Bíblia', en: 'Full Bible reading' },
+  premium_compare_translation:{ pt: 'Tradução palavra por palavra', en: 'Word-by-word translation' },
+  premium_compare_notes:      { pt: 'Anotações e favoritos', en: 'Notes and favorites' },
+  premium_compare_vocab:      { pt: 'Vocabulário salvo',    en: 'Saved vocabulary'   },
+  premium_compare_atmospheres:{ pt: '10 atmosferas de leitura', en: '10 reading atmospheres' },
+  premium_compare_accents:    { pt: '5 cores de destaque',  en: '5 accent colors'    },
+  premium_compare_early:      { pt: 'Acesso antecipado a novos recursos', en: 'Early access to new features' },
+  premium_compare_support:    { pt: 'Suporte prioritário', en: 'Priority support'    },
+
   premium_coming_soon_title:         { pt: 'Em breve! 🌟', en: 'Coming soon! 🌟' },
   premium_coming_soon_purchase_body: { pt: 'As assinaturas Premium ainda estão sendo configuradas na loja do app. Fique ligado nas novidades!', en: 'Premium subscriptions are still being set up in the app store. Stay tuned for updates!' },
   premium_coming_soon_restore_body:  { pt: 'A restauração de compras ainda não está disponível — volte em breve.', en: 'Restoring purchases isn\u2019t available yet — check back soon.' },
