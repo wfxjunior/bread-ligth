@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
-import { ClerkProvider, SignIn, SignUp, useAuth, useClerk } from '@clerk/react';
+import { ClerkProvider, SignIn, SignUp, useClerk } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { Toaster } from '@/components/ui/toaster';
@@ -8,23 +8,19 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 import { useLanguage } from './context/language-context';
-import { useAtmosphere } from './context/atmosphere-context';
-import { useBillingStatus } from './hooks/use-billing';
-import { isPremium } from './lib/billing';
-import { ATMOSPHERES, ACCENTS, DEFAULT_ATMOSPHERE, DEFAULT_ACCENT } from './lib/atmospheres';
 
-import ReaderPage from './pages/reader';
-import HomePage from './pages/home';
-import LibraryPage from './pages/library';
-import BookPage from './pages/book';
-import SearchPage from './pages/search';
-import VocabularyPage from './pages/vocabulary';
-import NotesPage from './pages/notes';
-import FavoritesPage from './pages/favorites';
-import JourneyPage from './pages/journey';
-import SettingsPage from './pages/settings';
-import DevotionalsPage from './pages/devotionals';
+/** Immediately navigate to `to` when rendered. */
+function Redirect({ to }: { to: string }) {
+  const [, setLocation] = useLocation();
+  useEffect(() => { setLocation(to, { replace: true }); }, [to, setLocation]);
+  return null;
+}
+
+import LandingPage from './pages/landing';
 import PricingPage from './pages/pricing';
+import PrivacyPage from './pages/privacy';
+import TermsPage from './pages/terms';
+import SupportPage from './pages/support';
 
 const queryClient = new QueryClient();
 
@@ -144,51 +140,33 @@ function ClerkQueryClientCacheInvalidator() {
   return null;
 }
 
-// Enforces the free/premium boundary from the *data* side, independent of
-// whatever UI is clicked: if a signed-in user's Premium status lapses (trial
-// ends, subscription canceled) while a Premium atmosphere/accent is still
-// selected from localStorage, fall back to the free defaults instead of
-// silently letting a lapsed user keep a paid look. Waits for both Clerk and
-// the billing status query to settle before deciding, so it never flashes a
-// false "not premium" reset while either is still loading.
-function PremiumThemeGuard() {
-  const { isLoaded: authLoaded, isSignedIn } = useAuth();
-  const { data: status, isLoading: statusLoading } = useBillingStatus();
-  const { atmosphere, accentColor, setAtmosphere, setAccentColor } = useAtmosphere();
-
-  useEffect(() => {
-    if (!authLoaded) return;
-    if (isSignedIn && statusLoading) return;
-
-    if (!isPremium(status)) {
-      if (ATMOSPHERES[atmosphere].premium) setAtmosphere(DEFAULT_ATMOSPHERE);
-      if (ACCENTS[accentColor].premium) setAccentColor(DEFAULT_ACCENT);
-    }
-  }, [authLoaded, isSignedIn, statusLoading, status, atmosphere, accentColor, setAtmosphere, setAccentColor]);
-
-  return null;
-}
-
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={ReaderPage} />
-      <Route path="/home" component={HomePage} />
-      <Route path="/library" component={LibraryPage} />
-      <Route path="/book/:name" component={BookPage} />
-      <Route path="/search" component={SearchPage} />
-      <Route path="/vocabulary" component={VocabularyPage} />
-      <Route path="/notes" component={NotesPage} />
-      <Route path="/favorites" component={FavoritesPage} />
-      <Route path="/journey" component={JourneyPage} />
-      <Route path="/settings" component={SettingsPage} />
-      <Route path="/devotionals" component={DevotionalsPage} />
+      {/* ── Marketing & purchase pages ─────────────────────────────────────────── */}
+      <Route path="/" component={LandingPage} />
       <Route path="/pricing" component={PricingPage} />
-      {/* REQUIRED — copy "/sign-in/*?" and "/sign-up/*?" verbatim. The /*? optional
-          wildcard is the only wouter syntax that matches both the bare URL and Clerk's
-          OAuth sub-paths. Not /sign-in, not /sign-in/*, not /sign-in/:rest*. */}
+      <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/terms" component={TermsPage} />
+      <Route path="/support" component={SupportPage} />
+
+      {/* ── Auth — REQUIRED: keep /*? wildcard verbatim for Clerk OAuth sub-paths ─ */}
       <Route path="/sign-in/*?" component={SignInPage} />
       <Route path="/sign-up/*?" component={SignUpPage} />
+
+      {/* ── Legacy learning-app routes — redirect to landing page ──────────────── */}
+      <Route path="/home"><Redirect to="/" /></Route>
+      <Route path="/reader"><Redirect to="/" /></Route>
+      <Route path="/library"><Redirect to="/" /></Route>
+      <Route path="/book/:name"><Redirect to="/" /></Route>
+      <Route path="/search"><Redirect to="/" /></Route>
+      <Route path="/vocabulary"><Redirect to="/" /></Route>
+      <Route path="/notes"><Redirect to="/" /></Route>
+      <Route path="/favorites"><Redirect to="/" /></Route>
+      <Route path="/journey"><Redirect to="/" /></Route>
+      <Route path="/settings"><Redirect to="/" /></Route>
+      <Route path="/devotionals"><Redirect to="/" /></Route>
+
       <Route component={NotFound} />
     </Switch>
   );
@@ -224,7 +202,6 @@ function ClerkProviderWithRoutes() {
     >
       <QueryClientProvider client={queryClient}>
         <ClerkQueryClientCacheInvalidator />
-        <PremiumThemeGuard />
         <TooltipProvider>
           <Router />
           <Toaster />

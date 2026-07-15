@@ -3,7 +3,7 @@ import { useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Crown, ArrowLeft, Loader2 } from 'lucide-react';
 import { Show } from '@clerk/react';
-import { Layout } from '../components/layout';
+import { MarketingLayout } from '../components/marketing-layout';
 import { useLanguage } from '../context/language-context';
 import { useBillingPlan, useBillingStatus, useBillingActions } from '../hooks/use-billing';
 import { isPremium, type BillingPrice } from '../lib/billing';
@@ -74,15 +74,14 @@ export default function PricingPage() {
   ];
 
   return (
-    <Layout>
-      <div className="h-full overflow-y-auto">
-        <div className="max-w-2xl mx-auto p-8 md:p-14">
-          <button
-            onClick={() => navigate('/settings')}
-            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
-          >
-            <ArrowLeft className="w-4 h-4" /> {t('pricing_back_to_app')}
-          </button>
+    <MarketingLayout>
+      <div className="max-w-2xl mx-auto px-6 py-10 md:py-16">
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
+        >
+          <ArrowLeft className="w-4 h-4" /> {t('pricing_back_to_app')}
+        </button>
 
           <header className="mb-10 text-center">
             <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-5">
@@ -247,7 +246,6 @@ export default function PricingPage() {
             <p className="text-xs text-muted-foreground mt-2">{t('plan_no_card_required')}</p>
           </div>
         </div>
-      </div>
-    </Layout>
+    </MarketingLayout>
   );
 }
