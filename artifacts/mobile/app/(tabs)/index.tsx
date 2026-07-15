@@ -778,6 +778,8 @@ export default function HomeScreen() {
   const [progressModalVisible, setProgressModalVisible] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const [librarySearch, setLibrarySearch] = useState('');
+  const [libraryTestamentFilter, setLibraryTestamentFilter] = useState<'all' | 'old' | 'new'>('all');
+  const [libraryAlphabetical, setLibraryAlphabetical] = useState(false);
 
   useEffect(() => {
     AsyncStorage.getItem('@bibliaeN:userName').then(n => setUserName(n ?? '')).catch(() => setUserName(''));
@@ -798,7 +800,7 @@ export default function HomeScreen() {
   // accent-insensitive, so the 66-book shelf is never more than a few
   // keystrokes away from the one book someone actually wants.
   const librarySearchNorm = normalizeSearch(librarySearch);
-  const filteredCatalogue = librarySearchNorm.length === 0
+  let filteredCatalogue = librarySearchNorm.length === 0
     ? BOOK_CATALOGUE
     : BOOK_CATALOGUE.filter(meta => {
         const book = BIBLE_DATA[meta.bookId];
@@ -806,6 +808,23 @@ export default function HomeScreen() {
         return normalizeSearch(book.name).includes(librarySearchNorm)
           || normalizeSearch(book.englishName).includes(librarySearchNorm);
       });
+
+  // Testament filter — narrows to just the Old or New Testament.
+  if (libraryTestamentFilter !== 'all') {
+    filteredCatalogue = filteredCatalogue.filter(meta => meta.testament === libraryTestamentFilter);
+  }
+
+  // Alphabetical sort — by whichever name is on screen in the current
+  // language, instead of canonical Bible order.
+  if (libraryAlphabetical) {
+    filteredCatalogue = [...filteredCatalogue].sort((a, b) => {
+      const bookA = BIBLE_DATA[a.bookId];
+      const bookB = BIBLE_DATA[b.bookId];
+      const nameA = lang === 'pt' ? bookA?.name : bookA?.englishName;
+      const nameB = lang === 'pt' ? bookB?.name : bookB?.englishName;
+      return normalizeSearch(nameA ?? '').localeCompare(normalizeSearch(nameB ?? ''));
+    });
+  }
 
   // Favorited books, in canonical order — surfaced as a quick-access strip
   // above the shelf (only while not searching) so a handful of go-to books
@@ -983,6 +1002,64 @@ export default function HomeScreen() {
             </TouchableOpacity>
           )}
         </View>
+
+        {/* Filters — narrow by testament, or re-sort alphabetically instead
+            of canonical Bible order. Independent controls: the testament
+            pills are single-select, A-Z is its own toggle. */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.libraryFilterRow}>
+          {([
+            { key: 'all', label: t('library_filter_all') },
+            { key: 'old', label: t('testament_old') },
+            { key: 'new', label: t('testament_new') },
+          ] as const).map(opt => {
+            const selected = libraryTestamentFilter === opt.key;
+            return (
+              <TouchableOpacity
+                key={opt.key}
+                onPress={() => {
+                  if (Platform.OS !== 'web') Haptics.selectionAsync();
+                  setLibraryTestamentFilter(opt.key);
+                }}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                style={[
+                  styles.libraryFilterChip,
+                  {
+                    backgroundColor: selected ? colors.primary + '18' : colors.card,
+                    borderColor:     selected ? colors.primary + '55' : colors.border,
+                  },
+                ]}
+              >
+                <Text style={[styles.libraryFilterChipText, { color: selected ? colors.primary : colors.mutedForeground }]}>
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+          <View style={[styles.libraryFilterDivider, { backgroundColor: colors.border }]} />
+          <TouchableOpacity
+            onPress={() => {
+              if (Platform.OS !== 'web') Haptics.selectionAsync();
+              setLibraryAlphabetical(v => !v);
+            }}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityState={{ selected: libraryAlphabetical }}
+            style={[
+              styles.libraryFilterChip,
+              {
+                backgroundColor: libraryAlphabetical ? colors.primary + '18' : colors.card,
+                borderColor:     libraryAlphabetical ? colors.primary + '55' : colors.border,
+              },
+            ]}
+          >
+            <Feather name="arrow-down" size={11} color={libraryAlphabetical ? colors.primary : colors.mutedForeground} />
+            <Text style={[styles.libraryFilterChipText, { color: libraryAlphabetical ? colors.primary : colors.mutedForeground }]}>
+              {t('library_filter_az')}
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
 
         {/* Favorites quick strip — a handful of go-to books, one tap away,
             regardless of where they sit among the other 66 on the shelf. */}
@@ -1355,11 +1432,12 @@ const styles = StyleSheet.create({
   librarySearchBox: {
     flexDirection:     'row',
     alignItems:        'center',
-    gap:               8,
+    gap:               10,
     borderWidth:        StyleSheet.hairlineWidth,
-    paddingHorizontal:  12,
-    height:             40,
-    marginTop:          12,
+    paddingHorizontal:  14,
+    paddingVertical:    12,
+    height:             48,
+    marginTop:          14,
   },
   librarySearchInput: {
     flex:       1,
@@ -1367,8 +1445,33 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     height:     '100%',
   },
+  libraryFilterRow: {
+    flexDirection: 'row',
+    alignItems:    'center',
+    gap:           8,
+    marginTop:     12,
+    paddingRight:  4,
+  },
+  libraryFilterChip: {
+    flexDirection:     'row',
+    alignItems:        'center',
+    gap:               5,
+    borderWidth:        StyleSheet.hairlineWidth,
+    borderRadius:       20,
+    paddingHorizontal:  13,
+    paddingVertical:    8,
+  },
+  libraryFilterChipText: {
+    fontSize:   12,
+    fontFamily: 'Inter_500Medium',
+  },
+  libraryFilterDivider: {
+    width:  StyleSheet.hairlineWidth,
+    height: 18,
+    marginHorizontal: 2,
+  },
   libraryFavoritesWrap: {
-    marginTop: 14,
+    marginTop: 16,
   },
   libraryFavoritesLabelRow: {
     flexDirection: 'row',

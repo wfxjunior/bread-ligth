@@ -446,6 +446,8 @@ const strings = {
   library_favorites_title:    { pt: 'Favoritos', en: 'Favorites' },
   library_favorite_add_a11y:  { pt: 'Adicionar aos favoritos', en: 'Add to favorites' },
   library_favorite_remove_a11y: { pt: 'Remover dos favoritos', en: 'Remove from favorites' },
+  library_filter_all:         { pt: 'Todos', en: 'All' },
+  library_filter_az:          { pt: 'A-Z', en: 'A-Z' },
   study_section_title:      { pt: 'ESTUDO', en: 'STUDY' },
   progress_section_title:   { pt: 'PROGRESSO', en: 'PROGRESS' },
   vocab_section_title:      { pt: 'VOCABULÁRIO', en: 'VOCABULARY' },
