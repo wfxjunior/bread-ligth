@@ -399,6 +399,30 @@ function ShelfPlank() {
   );
 }
 
+// ── Shelf back panel — one identical wood-panel "cubby" per row. Each row
+// gets its own same-size crop of the texture and the same fixed lighting, so
+// every shelf in a long, scrolling case reads as the same piece of furniture
+// instead of drifting lighter/darker (or showing a different slice of grain)
+// the further down the list it sits. ─────────────────────────────────────────
+function ShelfBackPanel({ isFirst }: { isFirst: boolean }) {
+  return (
+    <View style={[styles.shelfPanel, isFirst && styles.shelfPanelFirst]}>
+      <Image
+        source={require('../assets/images/wood-wall-texture.jpg')}
+        style={StyleSheet.absoluteFill}
+        resizeMode="cover"
+      />
+      <View style={[StyleSheet.absoluteFill, styles.shelfPanelTint]} />
+      {/* same soft warm wash on every panel, not just the topmost one */}
+      <LinearGradient
+        colors={['rgba(255,200,130,0.22)', 'rgba(255,190,120,0)']}
+        style={styles.shelfPanelLight}
+        pointerEvents="none"
+      />
+    </View>
+  );
+}
+
 // ── Full bookshelf ───────────────────────────────────────────────────────────
 export function BookshelfLibrary({
   books, currentBookId, currentChapter, favoriteBookIds, onToggleFavorite,
@@ -421,28 +445,8 @@ export function BookshelfLibrary({
 
   return (
     <View style={styles.cabinet}>
-      {/* real oak wall panelling behind the volumes, warmly lit from a
-          recessed strip along the top — a lit wooden library nook, not a
-          flat brown gradient card background */}
-      <Image
-        source={require('../assets/images/wood-wall-texture.jpg')}
-        style={StyleSheet.absoluteFill}
-        resizeMode="cover"
-      />
-      <LinearGradient
-        colors={['rgba(8,5,3,0.30)', 'rgba(8,5,3,0.62)']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
-      />
-      {/* warm recessed light washing the top of the nook */}
-      <LinearGradient
-        colors={['rgba(255,200,130,0.30)', 'rgba(255,190,120,0)']}
-        style={styles.cabinetLight}
-        pointerEvents="none"
-      />
-      {/* soft edge vignette for depth */}
+      {/* soft edge vignette for depth — a constant left/right fade, so it
+          doesn't vary shelf to shelf like a top-to-bottom gradient would */}
       <LinearGradient
         colors={['rgba(0,0,0,0.45)', 'rgba(0,0,0,0)']}
         start={{ x: 0, y: 0 }}
@@ -463,26 +467,29 @@ export function BookshelfLibrary({
       <View style={styles.cabinetInner}>
         {rows.map((row, ri) => (
           <View key={ri} style={{ marginTop: ri === 0 ? 0 : 26 }}>
-            <View style={[styles.row, { gap: GAP }]}>
-              {row.map(meta => {
-                const isCurrent = !!currentBookId && currentBookId === meta.bookId;
-                const bookData  = BIBLE_DATA[meta.bookId];
-                const tc        = bookData ? Object.keys(bookData.chapters).length : 1;
-                const ratio     = isCurrent && currentChapter ? currentChapter / tc : 0;
-                return (
-                  <LeatherBook
-                    key={meta.bookId}
-                    meta={meta}
-                    width={bookW}
-                    height={bookH}
-                    isCurrent={isCurrent}
-                    progressRatio={ratio}
-                    resumeChapter={isCurrent ? currentChapter : undefined}
-                    isFavorite={favoriteBookIds.includes(meta.bookId)}
-                    onToggleFavorite={onToggleFavorite}
-                  />
-                );
-              })}
+            <View style={styles.shelfPanelWrap}>
+              <ShelfBackPanel isFirst={ri === 0} />
+              <View style={[styles.row, { gap: GAP }]}>
+                {row.map(meta => {
+                  const isCurrent = !!currentBookId && currentBookId === meta.bookId;
+                  const bookData  = BIBLE_DATA[meta.bookId];
+                  const tc        = bookData ? Object.keys(bookData.chapters).length : 1;
+                  const ratio     = isCurrent && currentChapter ? currentChapter / tc : 0;
+                  return (
+                    <LeatherBook
+                      key={meta.bookId}
+                      meta={meta}
+                      width={bookW}
+                      height={bookH}
+                      isCurrent={isCurrent}
+                      progressRatio={ratio}
+                      resumeChapter={isCurrent ? currentChapter : undefined}
+                      isFavorite={favoriteBookIds.includes(meta.bookId)}
+                      onToggleFavorite={onToggleFavorite}
+                    />
+                  );
+                })}
+              </View>
             </View>
             <ShelfPlank />
           </View>
@@ -497,11 +504,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     overflow: 'hidden',
   },
-  cabinetLight: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0,
-    height: '38%',
-  },
   vignette: {
     position: 'absolute',
     top: 0, bottom: 0,
@@ -515,6 +517,28 @@ const styles = StyleSheet.create({
     top: 0, bottom: 0,
     width: StyleSheet.hairlineWidth,
     backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  // Per-row shelf "cubby": a fixed-size wrap so every row's back panel is
+  // cropped and lit identically, however far down the list it sits.
+  shelfPanelWrap: {
+    position: 'relative',
+    overflow: 'hidden',
+    borderRadius: 8,
+    paddingTop: 12,
+    paddingHorizontal: 6,
+    paddingBottom: 8,
+  },
+  shelfPanel: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  shelfPanelFirst: {},
+  shelfPanelTint: {
+    backgroundColor: 'rgba(8,5,3,0.42)',
+  },
+  shelfPanelLight: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0,
+    height: '55%',
   },
   row: {
     flexDirection: 'row',
