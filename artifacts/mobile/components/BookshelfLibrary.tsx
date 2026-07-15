@@ -199,7 +199,6 @@ function LeatherBook({
 
   const titleSize   = width < 140 ? 15 : 17;
   const dividerW    = Math.round(width * 0.34);
-  const ribbonLen   = 14 + Math.max(0, Math.min(1, progressRatio)) * (height * 0.42);
   const rotateDeg   = rotate.interpolate({ inputRange: [-1, 0], outputRange: ['-6deg', '0deg'] });
   const icon        = THEME_ICON[meta.bookId];
 
@@ -351,9 +350,13 @@ function LeatherBook({
           <View style={styles.ageMarkA} pointerEvents="none" />
           <View style={styles.ageMarkB} pointerEvents="none" />
 
-          {/* bookmark ribbon — only for the book currently being studied */}
+          {/* bookmark ribbon — a short tab peeking above the top edge marks
+              the volume currently being studied, the way a real ribbon
+              marker pokes out of a closed book. Its length is fixed (the
+              footer progress bar already shows how far along you are), so
+              it never grows tall enough to drape over the title. */}
           {isCurrent && (
-            <View style={[styles.ribbon, { height: ribbonLen, backgroundColor: RIBBON_RED }]}>
+            <View style={[styles.ribbon, { backgroundColor: RIBBON_RED }]}>
               <View style={styles.ribbonNotchL} />
               <View style={styles.ribbonNotchR} />
             </View>
@@ -696,9 +699,10 @@ const styles = StyleSheet.create({
   },
   ribbon: {
     position: 'absolute',
-    top: -3,
+    top: -14,
     left: '38%',
     width: 10,
+    height: 26,
     borderBottomLeftRadius: 1,
     borderBottomRightRadius: 1,
     shadowColor: '#000',
