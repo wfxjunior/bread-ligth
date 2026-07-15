@@ -367,31 +367,13 @@ function LeatherBook({
   );
 }
 
-// ── Shelf plank beneath a row of books — real photographed oak, not a flat
-// gradient fill, so the shelf itself reads as furniture rather than UI chrome ─
+// ── Shelf divider — thin dark strip that blends with the wood-wall background ─
 function ShelfPlank() {
   return (
     <View style={styles.plankWrap}>
+      <View style={styles.plank} />
       <LinearGradient
-        colors={['rgba(255,196,120,0.14)', 'rgba(255,196,120,0)']}
-        style={styles.plankGlow}
-        pointerEvents="none"
-      />
-      <View style={styles.plank}>
-        <Image
-          source={require('../assets/images/wood-shelf-texture.jpg')}
-          style={StyleSheet.absoluteFill}
-          resizeMode="cover"
-        />
-        <LinearGradient
-          colors={['rgba(20,10,4,0.10)', 'rgba(10,5,2,0.45)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-      </View>
-      <LinearGradient
-        colors={['rgba(0,0,0,0.38)', 'rgba(0,0,0,0)']}
+        colors={['rgba(0,0,0,0.22)', 'rgba(0,0,0,0)']}
         style={styles.plankShadow}
         pointerEvents="none"
       />
@@ -550,17 +532,16 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'flex-end',
+    justifyContent: 'center',
   },
 
-  // Shelf plank
-  plankWrap: { marginTop: -2 },
-  plankGlow: { height: 16, marginBottom: -6 },
-  plankShadow: { height: 12 },
+  // Shelf divider
+  plankWrap: { marginTop: 2 },
+  plankShadow: { height: 7 },
   plank: {
-    height: 17,
-    borderRadius: 2,
-    overflow: 'hidden',
-    justifyContent: 'center',
+    height: 6,
+    borderRadius: 1,
+    backgroundColor: 'rgba(12,6,2,0.82)',
   },
 
   // Book cover
