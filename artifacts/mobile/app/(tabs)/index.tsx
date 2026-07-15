@@ -1005,7 +1005,9 @@ export default function HomeScreen() {
 
         {/* Filters — narrow by testament, or re-sort alphabetically instead
             of canonical Bible order. Independent controls: the testament
-            pills are single-select, A-Z is its own toggle. */}
+            pills are single-select, A-Z is its own toggle. Flat, borderless
+            pills (solid fill only when active) read cleaner than outlined
+            chips, with generous gaps so the row doesn't feel cramped. */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.libraryFilterRow}>
           {([
             { key: 'all', label: t('library_filter_all') },
@@ -1020,42 +1022,36 @@ export default function HomeScreen() {
                   if (Platform.OS !== 'web') Haptics.selectionAsync();
                   setLibraryTestamentFilter(opt.key);
                 }}
-                activeOpacity={0.8}
+                activeOpacity={0.75}
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
                 style={[
                   styles.libraryFilterChip,
-                  {
-                    backgroundColor: selected ? colors.primary + '18' : colors.card,
-                    borderColor:     selected ? colors.primary + '55' : colors.border,
-                  },
+                  { backgroundColor: selected ? colors.primary : colors.muted },
                 ]}
               >
-                <Text style={[styles.libraryFilterChipText, { color: selected ? colors.primary : colors.mutedForeground }]}>
+                <Text style={[styles.libraryFilterChipText, { color: selected ? colors.primaryForeground : colors.mutedForeground }]}>
                   {opt.label}
                 </Text>
               </TouchableOpacity>
             );
           })}
-          <View style={[styles.libraryFilterDivider, { backgroundColor: colors.border }]} />
           <TouchableOpacity
             onPress={() => {
               if (Platform.OS !== 'web') Haptics.selectionAsync();
               setLibraryAlphabetical(v => !v);
             }}
-            activeOpacity={0.8}
+            activeOpacity={0.75}
             accessibilityRole="button"
             accessibilityState={{ selected: libraryAlphabetical }}
             style={[
               styles.libraryFilterChip,
-              {
-                backgroundColor: libraryAlphabetical ? colors.primary + '18' : colors.card,
-                borderColor:     libraryAlphabetical ? colors.primary + '55' : colors.border,
-              },
+              styles.libraryFilterChipAz,
+              { backgroundColor: libraryAlphabetical ? colors.primary : colors.muted },
             ]}
           >
-            <Feather name="arrow-down" size={11} color={libraryAlphabetical ? colors.primary : colors.mutedForeground} />
-            <Text style={[styles.libraryFilterChipText, { color: libraryAlphabetical ? colors.primary : colors.mutedForeground }]}>
+            <Feather name="arrow-down" size={11} color={libraryAlphabetical ? colors.primaryForeground : colors.mutedForeground} />
+            <Text style={[styles.libraryFilterChipText, { color: libraryAlphabetical ? colors.primaryForeground : colors.mutedForeground }]}>
               {t('library_filter_az')}
             </Text>
           </TouchableOpacity>
@@ -1448,30 +1444,28 @@ const styles = StyleSheet.create({
   libraryFilterRow: {
     flexDirection: 'row',
     alignItems:    'center',
-    gap:           8,
-    marginTop:     12,
-    paddingRight:  4,
+    gap:           10,
+    marginTop:     16,
+    marginBottom:  2,
+    paddingRight:  6,
   },
   libraryFilterChip: {
     flexDirection:     'row',
     alignItems:        'center',
-    gap:               5,
-    borderWidth:        StyleSheet.hairlineWidth,
-    borderRadius:       20,
-    paddingHorizontal:  13,
-    paddingVertical:    8,
+    gap:               6,
+    borderRadius:       22,
+    paddingHorizontal:  15,
+    paddingVertical:    10,
+  },
+  libraryFilterChipAz: {
+    marginLeft: 6,
   },
   libraryFilterChipText: {
-    fontSize:   12,
+    fontSize:   12.5,
     fontFamily: 'Inter_500Medium',
   },
-  libraryFilterDivider: {
-    width:  StyleSheet.hairlineWidth,
-    height: 18,
-    marginHorizontal: 2,
-  },
   libraryFavoritesWrap: {
-    marginTop: 16,
+    marginTop: 18,
   },
   libraryFavoritesLabelRow: {
     flexDirection: 'row',
