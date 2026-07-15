@@ -70,6 +70,9 @@ function RootLayoutNav() {
           name="premium"
           options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom' }}
         />
+        <Stack.Screen name="journey" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="notes" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="devotional-plans" options={{ headerShown: false, presentation: 'card' }} />
       </Stack>
       <AtmosphereTransitionOverlay />
     </View>

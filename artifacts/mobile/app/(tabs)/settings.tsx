@@ -1248,6 +1248,31 @@ export default function SettingsScreen() {
           <ToggleRow icon="bell"  label={tl('vocab_reminder')} sub={tl('vocab_rem_sub')}    value={vocabRemind} onChange={setVocabRemind} border={false} />
         </SettingsCard>
 
+        <SettingsCard>
+          <SettingsRow
+            icon="trending-up"
+            label={tl('settings_journey_label')}
+            sub={tl('settings_journey_sub')}
+            onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); router.push('/journey' as any); }}
+            right={<Feather name="chevron-right" size={16} color={colors.mutedForeground} />}
+          />
+          <SettingsRow
+            icon="edit-3"
+            label={tl('settings_notes_label')}
+            sub={tl('settings_notes_sub')}
+            onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); router.push('/notes' as any); }}
+            right={<Feather name="chevron-right" size={16} color={colors.mutedForeground} />}
+          />
+          <SettingsRow
+            icon="calendar"
+            label={tl('settings_devotionals_label')}
+            sub={tl('settings_devotionals_sub')}
+            onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); router.push('/devotional-plans' as any); }}
+            right={<Feather name="chevron-right" size={16} color={colors.mutedForeground} />}
+            border={false}
+          />
+        </SettingsCard>
+
         {/* ── Áudio ── */}
         <SectionLabel
           title={tl('section_audio')}

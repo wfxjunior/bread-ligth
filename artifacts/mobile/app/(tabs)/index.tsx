@@ -31,6 +31,7 @@ import AudioPlayer from '@/components/AudioPlayer';
 import WordModal from '@/components/WordModal';
 import { BookshelfLibrary, CATEGORY_INFO, type BookCategory } from '@/components/BookshelfLibrary';
 import ProgressModal, { type ProgressStat } from '@/components/ProgressModal';
+import { FEATURED_PASSAGES, type FeaturedPassage } from '@/constants/featuredPassages';
 
 const PAD    = 16;
 const GAP    = 10;
@@ -749,6 +750,80 @@ function StudyCard() {
   );
 }
 
+// ── Featured Passages carousel ──────────────────────────────────────────────
+// Horizontally snap-scrolling highlight cards, styled with the same
+// card/border/leather-adjacent language as the rest of Home (colors.card,
+// colors.border, colors.secondaryAccent) rather than web's own look. Each
+// card opens a real chapter via /chapter — no mock destinations.
+const FEATURED_CARD_WIDTH = 240;
+const FEATURED_CARD_GAP = 12;
+
+function FeaturedPassageCard({ passage }: { passage: FeaturedPassage }) {
+  const colors = useColors();
+  const { t, lang } = useLanguage();
+  const tints = [colors.primary, colors.accent, colors.secondaryAccent];
+  const tint = tints[passage.accentIndex % tints.length];
+
+  const handlePress = () => {
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    router.push({
+      pathname: '/chapter',
+      params: {
+        bookId: passage.bookId,
+        chapter: String(passage.chapter),
+        bookName: passage.bookName,
+        englishBookName: passage.englishBookName,
+      },
+    });
+  };
+
+  return (
+    <TouchableOpacity
+      onPress={handlePress}
+      activeOpacity={0.85}
+      style={[
+        styles.featuredCard,
+        { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius, width: FEATURED_CARD_WIDTH },
+      ]}
+    >
+      <View style={[styles.featuredBadge, { backgroundColor: tint + '18' }]}>
+        <Text style={[styles.featuredBadgeText, { color: tint }]}>{t(passage.badgeKey)}</Text>
+      </View>
+      <Text style={[styles.featuredRef, { color: colors.foreground }]}>{passage.refLabel}</Text>
+      <Text style={[styles.featuredSnippet, { color: colors.mutedForeground }]} numberOfLines={3}>
+        {lang === 'pt' ? passage.snippetPt : passage.snippetEn}
+      </Text>
+      <View style={styles.featuredFooter}>
+        <Text style={[styles.featuredOpen, { color: tint }]}>{t('open_action')}</Text>
+        <Feather name="arrow-right" size={12} color={tint} />
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+function FeaturedPassagesCarousel() {
+  const colors = useColors();
+  const { t } = useLanguage();
+
+  return (
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>{t('featured_section_title')}</Text>
+      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        decelerationRate="fast"
+        snapToInterval={FEATURED_CARD_WIDTH + FEATURED_CARD_GAP}
+        snapToAlignment="start"
+        contentContainerStyle={styles.featuredRow}
+      >
+        {FEATURED_PASSAGES.map(p => <FeaturedPassageCard key={p.id} passage={p} />)}
+      </ScrollView>
+    </View>
+  );
+}
+
 // ── Main Screen ───────────────────────────────────────────────────────────────
 // Accent-insensitive match so "genesis" finds "Gênesis" and "corintios"
 // finds "Coríntios" — readers typing on a phone keyboard rarely bother with
@@ -944,8 +1019,11 @@ export default function HomeScreen() {
         </View>
       )}
 
+      {/* ── Featured passages ── */}
+      <FeaturedPassagesCarousel />
+
       {/* ── Library ── */}
-      <View style={[styles.section, { marginTop: readingProgress ? 24 : 20 }]}>
+      <View style={[styles.section, { marginTop: 8 }]}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>{t('library_section_title')}</Text>
           <View style={styles.sectionRight}>
@@ -1301,6 +1379,16 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontSize: 11, fontFamily: 'Inter_600SemiBold', letterSpacing: 1.2 },
   sectionCount: { fontSize: 11, fontFamily: 'Inter_500Medium' },
+
+  // Featured passages carousel
+  featuredRow: { paddingHorizontal: PAD, gap: FEATURED_CARD_GAP },
+  featuredCard: { borderWidth: 1, padding: 14, gap: 8 },
+  featuredBadge: { alignSelf: 'flex-start', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
+  featuredBadgeText: { fontSize: 10.5, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.3 },
+  featuredRef: { fontSize: 15, fontFamily: 'Inter_700Bold', fontWeight: '700' as const },
+  featuredSnippet: { fontSize: 12.5, fontFamily: 'Inter_400Regular', lineHeight: 18 },
+  featuredFooter: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 },
+  featuredOpen: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
 
   // Daily verse card
   pill: {

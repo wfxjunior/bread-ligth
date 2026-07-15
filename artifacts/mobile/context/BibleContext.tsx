@@ -7,6 +7,10 @@ const STORAGE_KEYS = {
   PROGRESS: '@bibliaeN:progress',
   DISPLAY_MODE: '@bibliaeN:displayMode',
   FAVORITE_BOOKS: '@bibliaeN:favoriteBooks',
+  NOTES: '@bibliaeN:notes',
+  DEVOTIONAL_PLANS: '@bibliaeN:devotionalPlans',
+  PLAN_VERSES: '@bibliaeN:planVerses',
+  PLAN_VERSE_DONE: '@bibliaeN:planVerseDone',
 };
 
 export type DisplayMode = 'both' | 'english' | 'portuguese';
@@ -38,12 +42,54 @@ export interface ReadingProgress {
   englishBookName: string;
 }
 
+// ── Personal notes — free-form study notes tied to a verse/chapter reference.
+// Distinct from the Today's Study "Reflect" journal entry (a single, fixed
+// reflection on John 1); these are user-created, multiple, and reusable
+// across any passage.
+export interface Note {
+  id: string;
+  bookId?: string;
+  chapter?: number;
+  verse?: number;
+  reference: string;
+  text: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+// ── Devotional plans — user-created collections of verses, distinct from the
+// single rotating daily devotional. Curated starter plans live in
+// constants/devotionalPlans.ts; plans created here are fully custom.
+export interface DevotionalPlan {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: number;
+}
+
+export interface PlanVerseEntry {
+  id: string;
+  planId: string;
+  bookId: string;
+  chapter: number;
+  verse: number;
+  bookName: string;
+  englishBookName: string;
+  en: string;
+  pt: string;
+  addedAt: number;
+}
+
 interface BibleContextType {
   bookmarks: Bookmark[];
   vocabulary: VocabWord[];
   displayMode: DisplayMode;
   readingProgress: ReadingProgress | null;
   favoriteBooks: string[];
+  notes: Note[];
+  devotionalPlans: DevotionalPlan[];
+  planVerses: PlanVerseEntry[];
+  planVerseDone: Record<string, boolean>;
   addBookmark: (bookmark: Bookmark) => void;
   removeBookmark: (bookId: string, chapter: number, verse: number) => void;
   isBookmarked: (bookId: string, chapter: number, verse: number) => boolean;
@@ -55,6 +101,14 @@ interface BibleContextType {
   clearVocabulary: () => void;
   toggleFavoriteBook: (bookId: string) => void;
   isFavoriteBook: (bookId: string) => boolean;
+  addNote: (note: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateNote: (id: string, changes: Partial<Pick<Note, 'reference' | 'text'>>) => void;
+  removeNote: (id: string) => void;
+  addDevotionalPlan: (title: string, description: string) => DevotionalPlan;
+  removeDevotionalPlan: (id: string) => void;
+  addPlanVerse: (entry: Omit<PlanVerseEntry, 'id' | 'addedAt'>) => void;
+  removePlanVerse: (id: string) => void;
+  toggleVerseDone: (key: string) => void;
 }
 
 const BibleContext = createContext<BibleContextType | null>(null);
@@ -65,6 +119,10 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
   const [displayMode, setDisplayModeState] = useState<DisplayMode>('both');
   const [readingProgress, setReadingProgressState] = useState<ReadingProgress | null>(null);
   const [favoriteBooks, setFavoriteBooks] = useState<string[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [devotionalPlans, setDevotionalPlans] = useState<DevotionalPlan[]>([]);
+  const [planVerses, setPlanVerses] = useState<PlanVerseEntry[]>([]);
+  const [planVerseDone, setPlanVerseDone] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const safeParse = <T,>(raw: string | null): T | null => {
@@ -73,12 +131,16 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
     };
 
     (async () => {
-      const [bmRaw, vocabRaw, modeRaw, progressRaw, favBooksRaw] = await Promise.all([
+      const [bmRaw, vocabRaw, modeRaw, progressRaw, favBooksRaw, notesRaw, plansRaw, planVersesRaw, planDoneRaw] = await Promise.all([
         AsyncStorage.getItem(STORAGE_KEYS.BOOKMARKS).catch(() => null),
         AsyncStorage.getItem(STORAGE_KEYS.VOCABULARY).catch(() => null),
         AsyncStorage.getItem(STORAGE_KEYS.DISPLAY_MODE).catch(() => null),
         AsyncStorage.getItem(STORAGE_KEYS.PROGRESS).catch(() => null),
         AsyncStorage.getItem(STORAGE_KEYS.FAVORITE_BOOKS).catch(() => null),
+        AsyncStorage.getItem(STORAGE_KEYS.NOTES).catch(() => null),
+        AsyncStorage.getItem(STORAGE_KEYS.DEVOTIONAL_PLANS).catch(() => null),
+        AsyncStorage.getItem(STORAGE_KEYS.PLAN_VERSES).catch(() => null),
+        AsyncStorage.getItem(STORAGE_KEYS.PLAN_VERSE_DONE).catch(() => null),
       ]);
       const bm = safeParse<Bookmark[]>(bmRaw);
       if (bm) setBookmarks(bm);
@@ -89,6 +151,14 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
       if (progress) setReadingProgressState(progress);
       const favBooks = safeParse<string[]>(favBooksRaw);
       if (favBooks) setFavoriteBooks(favBooks);
+      const notesParsed = safeParse<Note[]>(notesRaw);
+      if (notesParsed) setNotes(notesParsed);
+      const plansParsed = safeParse<DevotionalPlan[]>(plansRaw);
+      if (plansParsed) setDevotionalPlans(plansParsed);
+      const planVersesParsed = safeParse<PlanVerseEntry[]>(planVersesRaw);
+      if (planVersesParsed) setPlanVerses(planVersesParsed);
+      const planDoneParsed = safeParse<Record<string, boolean>>(planDoneRaw);
+      if (planDoneParsed) setPlanVerseDone(planDoneParsed);
     })();
   }, []);
 
@@ -163,6 +233,83 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
 
   const isFavoriteBook = useCallback((bookId: string) => favoriteBooks.includes(bookId), [favoriteBooks]);
 
+  // ── Personal notes ────────────────────────────────────────────────────────
+  const addNote = useCallback((note: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const now = Date.now();
+    const full: Note = { ...note, id: `note-${now}-${Math.random().toString(36).slice(2, 8)}`, createdAt: now, updatedAt: now };
+    setNotes(prev => {
+      const next = [full, ...prev];
+      AsyncStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  }, []);
+
+  const updateNote = useCallback((id: string, changes: Partial<Pick<Note, 'reference' | 'text'>>) => {
+    setNotes(prev => {
+      const next = prev.map(n => n.id === id ? { ...n, ...changes, updatedAt: Date.now() } : n);
+      AsyncStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  }, []);
+
+  const removeNote = useCallback((id: string) => {
+    setNotes(prev => {
+      const next = prev.filter(n => n.id !== id);
+      AsyncStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  }, []);
+
+  // ── Devotional plans ──────────────────────────────────────────────────────
+  const addDevotionalPlan = useCallback((title: string, description: string) => {
+    const plan: DevotionalPlan = { id: `plan-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, title, description, createdAt: Date.now() };
+    setDevotionalPlans(prev => {
+      const next = [plan, ...prev];
+      AsyncStorage.setItem(STORAGE_KEYS.DEVOTIONAL_PLANS, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+    return plan;
+  }, []);
+
+  const removeDevotionalPlan = useCallback((id: string) => {
+    setDevotionalPlans(prev => {
+      const next = prev.filter(p => p.id !== id);
+      AsyncStorage.setItem(STORAGE_KEYS.DEVOTIONAL_PLANS, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+    setPlanVerses(prev => {
+      const next = prev.filter(v => v.planId !== id);
+      AsyncStorage.setItem(STORAGE_KEYS.PLAN_VERSES, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  }, []);
+
+  const addPlanVerse = useCallback((entry: Omit<PlanVerseEntry, 'id' | 'addedAt'>) => {
+    const full: PlanVerseEntry = { ...entry, id: `pv-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, addedAt: Date.now() };
+    setPlanVerses(prev => {
+      const exists = prev.some(v => v.planId === full.planId && v.bookId === full.bookId && v.chapter === full.chapter && v.verse === full.verse);
+      const next = exists ? prev : [full, ...prev];
+      AsyncStorage.setItem(STORAGE_KEYS.PLAN_VERSES, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  }, []);
+
+  const removePlanVerse = useCallback((id: string) => {
+    setPlanVerses(prev => {
+      const next = prev.filter(v => v.id !== id);
+      AsyncStorage.setItem(STORAGE_KEYS.PLAN_VERSES, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  }, []);
+
+  const toggleVerseDone = useCallback((key: string) => {
+    setPlanVerseDone(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      AsyncStorage.setItem(STORAGE_KEYS.PLAN_VERSE_DONE, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  }, []);
+
   return (
     <BibleContext.Provider value={{
       bookmarks,
@@ -170,6 +317,10 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
       displayMode,
       readingProgress,
       favoriteBooks,
+      notes,
+      devotionalPlans,
+      planVerses,
+      planVerseDone,
       addBookmark,
       removeBookmark,
       isBookmarked,
@@ -181,6 +332,14 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
       clearVocabulary,
       toggleFavoriteBook,
       isFavoriteBook,
+      addNote,
+      updateNote,
+      removeNote,
+      addDevotionalPlan,
+      removeDevotionalPlan,
+      addPlanVerse,
+      removePlanVerse,
+      toggleVerseDone,
     }}>
       {children}
     </BibleContext.Provider>
