@@ -20,8 +20,15 @@ import { romansBook } from './bible/romans';
 import { firstCorinthiansBook } from './bible/1corinthians';
 import { matthewBook } from './bible/matthew';
 import { psalmsBook } from './bible/psalms';
+import { PLACEHOLDER_BOOKS } from './bible/placeholders';
 
+// The 8 books above have their full chapter-by-chapter text transcribed.
+// PLACEHOLDER_BOOKS fills in the remaining 58 canonical books with a "coming
+// soon" stand-in chapter so the bookshelf can show every real book while the
+// rest of the text is added over time — spread first so the fully-written
+// books below always take precedence.
 export const BIBLE_DATA: Record<string, BibleBook> = {
+  ...PLACEHOLDER_BOOKS,
   genesis: genesisBook,
   psalms: psalmsBook,
   proverbs: proverbsBook,

@@ -3,7 +3,7 @@
 - [i18n Language System](i18n-language-system.md) — PT/EN toggle: mobile (mature) + web (new, chrome-only so far, own separate LanguageContext/storage key, default 'en').
 - [Daily verse utility](daily-verse.md) — Shared util (utils/dailyVerse.ts) for DST-safe rotation + todayKey(); both home and daily screens use AppState listener to refresh at midnight. Pool is 64 entries interleaved across 8 books (round-robin).
 - [Stripe donation integration](stripe-donations.md) — API route POST /api/donations/checkout-session; success/cancel URLs must use server-side env vars only (REPLIT_DEV_DOMAIN or PUBLIC_URL) — never request headers.
-- [Bible data architecture](bible-data-arch.md) — bibleData.ts imports 8 complete book files; large books split into chunk files merged via spread in wrapper.
+- [Bible data architecture](bible-data-arch.md) — BIBLE_DATA = 8 real books + 58 placeholder books; catalogue already lists all 66; shelf columns confirmed at 2, not 3.
 - [Unified audio engine](audio-engine-architecture.md) — single global AudioProvider; UI surfaces share playback state via a content-scoped `queueKey` string, not per-screen player instances.
 - [expo-av shared audio session](expo-av-audio-session.md) — allowsRecordingIOS:true from a recording feature leaks into later playback (looks "playing", no sound) unless reset before every play.
 - [Share link domains](share-link-domains.md) — never hardcode an external placeholder domain in Share.share(); link to this repl's own live artifact path instead.

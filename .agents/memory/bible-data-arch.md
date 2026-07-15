@@ -1,28 +1,14 @@
 ---
 name: Bible data architecture
-description: How BíbliaEN mobile app stores and loads Bible content; split-file pattern for large books.
+description: How BIBLE_DATA is assembled from real book files plus placeholders, and the confirmed bookshelf column count at full 66-book scale.
 ---
 
 ## Rule
-`bibleData.ts` imports complete book objects from `constants/bible/*.ts`; no inline book data.
+`bibleData.ts` builds `BIBLE_DATA` by spreading `PLACEHOLDER_BOOKS` (`constants/bible/placeholders.ts`) first, then the real fully-transcribed book files (currently genesis, psalms, proverbs, matthew, john, romans, philippians, 1corinthians) so real books always override their placeholder. Each placeholder has the real PT/EN name and testament but only one "coming soon" chapter/verse — enough for `BookshelfLibrary`'s `LeatherBook` (which does `if (!book) return null`) to render the real cover without crashing, but explicitly not fabricated scripture. `app/(tabs)/index.tsx`'s `BOOK_CATALOGUE` already lists all 66 canonical books with correct category/testament/roman numeral (roman numbering restarts per testament: OT I–XXXIX, NT I–XXVII), ready for real text to be dropped into new book files over time with no further structural change needed.
 
-**Why:** Inline data becomes unmanageable for large books (150-chapter Psalms, 50-chapter Genesis). Split-file approach keeps each file under ~200KB and TypeScript compiles cleanly.
+**Why:** The bookshelf's cards/categories were designed for the full 66-book library from the start (10 `CATEGORY_INFO` entries already cover every category), but only 8 books had real content, so the shelf was invisible-by-default for the other 58 and no one had actually seen it at full scale.
 
-## How to apply
-For books with many chapters, use chunk files merged via spread:
-- Large book: `genesis.ts` spreads `...GENESIS_CH13_31` and `...GENESIS_CH32_50` after inline ch1-12.
-- Wrapper pattern: `matthew.ts` spreads `...MATTHEW_CH1_14` + `...MATTHEW_CH15_28`.
-- Same for psalms: 3 chunk files combined in `psalms.ts`.
+**How to apply:** When transcribing a new book's real text, add its file under `constants/bible/`, import it in `bibleData.ts`, and add it as a real entry in the `BIBLE_DATA` object (after the `PLACEHOLDER_BOOKS` spread) — remove it from `placeholders.ts` at that point since the real entry already overrides. No catalogue/roman-numeral/category change needed, that's already correct.
 
-## Current book coverage (all chapters complete)
-- Genesis: 50 ch (genesis.ts + genesis-ch13-31.ts + genesis-ch32-50.ts)
-- Psalms: 150 ch (psalms.ts → psalms-ch1-50 + psalms-ch51-100 + psalms-ch101-150)
-- Proverbs: 31 ch
-- Matthew: 28 ch (matthew.ts → matthew-ch1-14 + matthew-ch15-28)
-- John: 21 ch
-- Romans: 16 ch
-- 1 Corinthians: 16 ch (id: '1corinthians', export: firstCorinthiansBook)
-- Philippians: 4 ch
-
-## Subagent note
-Use `$kind: 'general'` (not 'build') for content-generation subagents that write files.
+## Bookshelf columns — confirmed 2, not 3
+Rendered `BookshelfLibrary` at COLUMNS=3 with the full 66-book catalogue and screenshotted it: card width shrank enough that hero titles and the "ANTIGO TESTAMENTO" eyebrow text visibly clipped/overflowed (e.g. "LEVITICUS" → ".EVITICUS"). COLUMNS=2 stays legible at all title lengths. Don't revisit 3-per-shelf without a title-truncation/line-height rework first.
