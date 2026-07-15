@@ -27,6 +27,10 @@ const strings = {
 
   // Auth screen
   auth_tagline:          { pt: 'Aprenda inglês através da Bíblia.',  en: 'Learn English through the Bible.' },
+  auth_welcome_back_title:    { pt: 'Bem-vindo de volta',        en: 'Welcome back' },
+  auth_welcome_back_subtitle: { pt: 'Entre para acessar sua conta', en: 'Sign in to access your account' },
+  auth_create_account_title:    { pt: 'Crie sua conta',          en: 'Create your account' },
+  auth_create_account_subtitle: { pt: 'Comece agora',            en: 'Get started today' },
   auth_google:           { pt: 'Continuar com Google',               en: 'Continue with Google'             },
   auth_apple:            { pt: 'Continuar com Apple',                en: 'Continue with Apple'              },
   auth_or:               { pt: 'ou entre com email',                 en: 'or sign in with email'            },
