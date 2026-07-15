@@ -143,7 +143,7 @@ function LeatherBook({
   onToggleFavorite: (bookId: string) => void;
 }) {
   const book = BIBLE_DATA[meta.bookId];
-  const { t: tl } = useLanguage();
+  const { t: tl, lang } = useLanguage();
   const scale   = useRef(new Animated.Value(1)).current;
   const lift    = useRef(new Animated.Value(isCurrent ? -6 : 0)).current;
   const rotate  = useRef(new Animated.Value(0)).current;
@@ -301,9 +301,9 @@ function LeatherBook({
                 style={[styles.titleEn, { fontSize: titleSize }]}
                 numberOfLines={2}
                 adjustsFontSizeToFit
-                minimumFontScale={0.62}
+                minimumFontScale={0.55}
               >
-                {book.englishName.toUpperCase()}
+                {lang === 'pt' ? book.name.toUpperCase() : book.englishName.toUpperCase()}
               </Text>
               <OrnateDivider width={dividerW} />
               {icon && (
@@ -311,7 +311,13 @@ function LeatherBook({
                   <MaterialCommunityIcons name={icon} size={height * 0.1} color={GOLD_SOFT} />
                 </View>
               )}
-              <Text style={styles.titlePt} numberOfLines={2}>{TAGLINE[meta.bookId] ?? book.name}</Text>
+              {/* subtitle: in PT mode show the tagline (or English name for reference);
+                  in EN mode show the tagline (or Portuguese name for reference) */}
+              <Text style={styles.titlePt} numberOfLines={2}>
+                {lang === 'pt'
+                  ? (TAGLINE[meta.bookId] ?? book.englishName)
+                  : (TAGLINE[meta.bookId] ?? book.name)}
+              </Text>
             </View>
 
             {/* footer */}
