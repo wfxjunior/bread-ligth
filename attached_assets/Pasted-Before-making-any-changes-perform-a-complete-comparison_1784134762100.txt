@@ -1,0 +1,268 @@
+Before making any changes, perform a complete comparison between the current Website and the Mobile App.
+
+Do NOT redesign the application.
+
+Do NOT change colors.
+
+Do NOT change typography.
+
+Do NOT change spacing.
+
+Do NOT change the navigation.
+
+Do NOT change the visual identity.
+
+The current mobile application is the primary product.
+
+The website is NOT the product.
+
+The website is only a marketing and informational experience.
+
+The mobile app is where users study, read, listen and learn.
+
+==================================================
+PROJECT STRATEGY
+==================================================
+
+Bread&Light will become a Mobile-First platform.
+
+The website should only serve as:
+
+• Landing Page
+• App presentation
+• Features overview
+• Screenshots
+• Download links
+• Privacy Policy
+• Terms of Service
+• Support
+• Contact
+
+The website should NOT contain exclusive learning features.
+
+All learning experiences belong inside the mobile application.
+
+==================================================
+AUDIT
+==================================================
+
+Inspect both projects.
+
+Compare:
+
+Website
+
+vs
+
+Mobile App
+
+Identify every feature that exists on the website but is missing inside the mobile application.
+
+Create a report listing:
+
+• Existing only on Website
+• Existing only on Mobile
+• Duplicated
+• Missing on Mobile
+
+==================================================
+MIGRATION
+==================================================
+
+Move every useful learning feature from the Website into the Mobile App.
+
+Do NOT remove anything already working inside the app.
+
+Only ADD missing features.
+
+Preserve the current mobile design.
+
+Preserve the current navigation.
+
+Preserve every color.
+
+Preserve typography.
+
+Preserve spacing.
+
+Preserve all interactions.
+
+==================================================
+FEATURES TO BRING INTO MOBILE
+==================================================
+
+Examples include:
+
+• Content carousels
+
+• Recently listened lessons
+
+• Continue Learning carousel
+
+• Recommended lessons
+
+• Recently opened chapters
+
+• Continue Reading
+
+• Daily recommendations
+
+• Recently studied books
+
+• Personalized suggestions
+
+• Learning history
+
+• Dynamic recommendation sections
+
+• Featured study collections
+
+• Horizontal scrolling content sections
+
+• Recently viewed content
+
+If additional useful website features exist, migrate them as well.
+
+==================================================
+CAROUSELS
+==================================================
+
+Reuse the existing carousel components if possible.
+
+Maintain consistent spacing.
+
+Maintain existing animations.
+
+Optimize for touch interaction.
+
+Smooth horizontal scrolling.
+
+Snap scrolling where appropriate.
+
+No excessive motion.
+
+==================================================
+DO NOT CHANGE
+==================================================
+
+Do NOT redesign:
+
+Home
+
+Bible Reader
+
+Study Workspace
+
+Navigation
+
+Bottom Navigation
+
+Theme
+
+Reading Atmospheres
+
+Typography
+
+Buttons
+
+Cards
+
+Icons
+
+Color Palette
+
+Design Tokens
+
+Keep the current app exactly as it is.
+
+Simply enrich it by bringing over the useful content sections from the website.
+
+==================================================
+WEBSITE
+==================================================
+
+Simplify the website.
+
+The website should become a premium landing page.
+
+Sections:
+
+Hero
+
+Features
+
+Screenshots
+
+How Bread&Light Works
+
+Testimonials (future-ready)
+
+Pricing
+
+Download App
+
+FAQ
+
+Privacy
+
+Terms
+
+Support
+
+Contact
+
+The website should encourage users to download the app.
+
+Not use the product there.
+
+==================================================
+IMPLEMENTATION
+==================================================
+
+First produce the comparison report.
+
+Then migrate only the missing features.
+
+Reuse as much code as possible.
+
+Avoid duplication.
+
+Maintain performance.
+
+Maintain responsiveness.
+
+Do not create parallel implementations.
+
+The Mobile App becomes the primary experience.
+
+The Website becomes the presentation layer.
+
+==================================================
+FINAL REPORT
+==================================================
+
+After implementation provide:
+
+• Features migrated
+
+• Components reused
+
+• Components created
+
+• Website sections simplified
+
+• Mobile sections added
+
+• Remaining differences
+
+The final result should be:
+
+One product.
+
+One design language.
+
+One feature set.
+
+Website = presentation.
+
+Mobile App = complete experience.
