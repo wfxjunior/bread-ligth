@@ -367,11 +367,22 @@ function LeatherBook({
   );
 }
 
-// ── Shelf divider — thin dark strip that blends with the wood-wall background ─
+// ── Shelf divider — thin dark strip with a soft warm glow above it so it still
+// reads as a physical shelf edge even though it blends with the wall backdrop ─
 function ShelfPlank() {
   return (
     <View style={styles.plankWrap}>
-      <View style={styles.plank} />
+      {/* warm overhead light — grazes the top edge of the plank */}
+      <LinearGradient
+        colors={['rgba(255,210,140,0.18)', 'rgba(255,200,120,0.04)']}
+        style={styles.plankGlow}
+        pointerEvents="none"
+      />
+      <View style={styles.plank}>
+        {/* top highlight stripe — simulates light catching the shelf lip */}
+        <View style={styles.plankHighlight} />
+      </View>
+      {/* drop shadow below the plank for depth */}
       <LinearGradient
         colors={['rgba(0,0,0,0.22)', 'rgba(0,0,0,0)']}
         style={styles.plankShadow}
@@ -537,11 +548,20 @@ const styles = StyleSheet.create({
 
   // Shelf divider
   plankWrap: { marginTop: 2 },
+  plankGlow: { height: 10, marginBottom: -2 },
   plankShadow: { height: 7 },
   plank: {
     height: 6,
     borderRadius: 1,
     backgroundColor: 'rgba(12,6,2,0.82)',
+    overflow: 'hidden',
+  },
+  plankHighlight: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0,
+    height: 2,
+    backgroundColor: 'rgba(255,210,150,0.22)',
+    borderRadius: 1,
   },
 
   // Book cover
