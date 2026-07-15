@@ -1005,9 +1005,9 @@ export default function HomeScreen() {
 
         {/* Filters — narrow by testament, or re-sort alphabetically instead
             of canonical Bible order. Independent controls: the testament
-            pills are single-select, A-Z is its own toggle. Flat, borderless
-            pills (solid fill only when active) read cleaner than outlined
-            chips, with generous gaps so the row doesn't feel cramped. */}
+            pills are single-select, A-Z is its own toggle. Selected state
+            is a light outline + soft tint, never a bold solid fill — reads
+            calmer next to the leather shelf than a heavy block of color. */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.libraryFilterRow}>
           {([
             { key: 'all', label: t('library_filter_all') },
@@ -1027,10 +1027,13 @@ export default function HomeScreen() {
                 accessibilityState={{ selected }}
                 style={[
                   styles.libraryFilterChip,
-                  { backgroundColor: selected ? colors.primary : colors.muted },
+                  {
+                    backgroundColor: selected ? colors.primary + '12' : 'transparent',
+                    borderColor:     selected ? colors.primary + '70' : colors.border,
+                  },
                 ]}
               >
-                <Text style={[styles.libraryFilterChipText, { color: selected ? colors.primaryForeground : colors.mutedForeground }]}>
+                <Text style={[styles.libraryFilterChipText, { color: selected ? colors.primary : colors.mutedForeground }]}>
                   {opt.label}
                 </Text>
               </TouchableOpacity>
@@ -1047,11 +1050,14 @@ export default function HomeScreen() {
             style={[
               styles.libraryFilterChip,
               styles.libraryFilterChipAz,
-              { backgroundColor: libraryAlphabetical ? colors.primary : colors.muted },
+              {
+                backgroundColor: libraryAlphabetical ? colors.primary + '12' : 'transparent',
+                borderColor:     libraryAlphabetical ? colors.primary + '70' : colors.border,
+              },
             ]}
           >
-            <Feather name="arrow-down" size={11} color={libraryAlphabetical ? colors.primaryForeground : colors.mutedForeground} />
-            <Text style={[styles.libraryFilterChipText, { color: libraryAlphabetical ? colors.primaryForeground : colors.mutedForeground }]}>
+            <Feather name="arrow-down" size={11} color={libraryAlphabetical ? colors.primary : colors.mutedForeground} />
+            <Text style={[styles.libraryFilterChipText, { color: libraryAlphabetical ? colors.primary : colors.mutedForeground }]}>
               {t('library_filter_az')}
             </Text>
           </TouchableOpacity>
@@ -1444,21 +1450,22 @@ const styles = StyleSheet.create({
   libraryFilterRow: {
     flexDirection: 'row',
     alignItems:    'center',
-    gap:           10,
-    marginTop:     16,
-    marginBottom:  2,
-    paddingRight:  6,
+    gap:           12,
+    marginTop:     18,
+    marginBottom:  6,
+    paddingRight:  8,
   },
   libraryFilterChip: {
     flexDirection:     'row',
     alignItems:        'center',
     gap:               6,
+    borderWidth:        1,
     borderRadius:       22,
-    paddingHorizontal:  15,
+    paddingHorizontal:  16,
     paddingVertical:    10,
   },
   libraryFilterChipAz: {
-    marginLeft: 6,
+    marginLeft: 8,
   },
   libraryFilterChipText: {
     fontSize:   12.5,
