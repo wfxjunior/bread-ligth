@@ -16,3 +16,4 @@
 - [Stripe connector credential fetch + migration bundling](stripe-connector-credential-fetch.md) — connectors API needs `connector_name` (singular) + `settings.secret`, not the plural/`_key` names; bundling stripe-replit-sync breaks its migrations path.
 - [Premium feature gating boundary](premium-feature-gating.md) — default atmosphere/accent free forever, rest Premium; gating lives in UI call sites + a downgrade-reset guard, never inside the theme context itself.
 - [Prefetch cellular gating](prefetch-cellular-gating.md) — Wi-Fi-only setting gates only the background lookahead prefetch, never the active verse's own download; live-queries expo-network each pass.
+- [Web library/bookshelf data source](web-library-bookshelf.md) — web's ALL_BOOKS (library.tsx) and BOOK_DATA (book.tsx) are separate hardcoded lists, not shared with mobile; keep both in sync with all 66 books.
