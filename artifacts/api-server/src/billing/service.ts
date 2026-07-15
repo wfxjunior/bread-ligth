@@ -1,6 +1,8 @@
 import { clerkClient } from "@clerk/express";
 import { getUncachableStripeClient } from "../stripeClient";
 import { billingStorage } from "./storage";
+import { db, admins } from "@workspace/db";
+import { eq } from "drizzle-orm";
 
 export type PlanStatus =
   | { plan: "free" }
@@ -37,6 +39,26 @@ export const billingService = {
   },
 
   async getPlanStatus(clerkUserId: string): Promise<PlanStatus> {
+    // Check premium override first — lets admins test Premium without Stripe.
+    const clerkUser = await clerkClient.users.getUser(clerkUserId);
+    const email = clerkUser.primaryEmailAddress?.emailAddress;
+    if (email) {
+      const [adminRow] = await db
+        .select()
+        .from(admins)
+        .where(eq(admins.email, email));
+      if (adminRow?.premiumOverride) {
+        return {
+          plan: "premium",
+          status: "active",
+          currentPeriodEnd: null,
+          cancelAtPeriodEnd: false,
+          trialEnd: null,
+          interval: null,
+        };
+      }
+    }
+
     const customerId = await billingStorage.getStripeCustomerId(clerkUserId);
     if (!customerId) return { plan: "free" };
 
