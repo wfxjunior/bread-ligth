@@ -157,6 +157,14 @@ const strings = {
     pt: 'Quanto espaço reservar no dispositivo para áudio offline',
     en: 'How much device space to reserve for offline audio',
   },
+  offline_audio_cached_items:       { pt: 'Capítulos salvos',         en: 'Saved chapters' },
+  offline_audio_no_items:           { pt: 'Nenhum áudio salvo ainda', en: 'No audio saved yet' },
+  offline_audio_remove_entry:       { pt: 'Remover',                  en: 'Remove' },
+  offline_audio_remove_confirm_title: { pt: 'Remover do offline?',    en: 'Remove from offline?' },
+  offline_audio_remove_confirm_body:  {
+    pt: 'Este áudio será removido do dispositivo. Ele poderá ser baixado novamente quando você ouvir.',
+    en: 'This audio will be removed from your device. It can be downloaded again when you listen.',
+  },
   prefetch_wifi_only:     { pt: 'Pré-carregar apenas no Wi-Fi', en: 'Prefetch on Wi-Fi only' },
   prefetch_wifi_only_sub: {
     pt: 'Não usar dados móveis para baixar os próximos versículos com antecedência',

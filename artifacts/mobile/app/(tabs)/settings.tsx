@@ -808,6 +808,12 @@ export default function SettingsScreen() {
     return mb < 0.1 ? '< 0.1 MB' : `${mb.toFixed(1)} MB`;
   };
 
+  const formatEntrySize = (bytes: number): string => {
+    if (bytes < 100 * 1024) return `${Math.round(bytes / 1024)} KB`;
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
   const handleDismissEvictionNotice = () => {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
     audio.dismissEvictionNotice();
@@ -816,6 +822,25 @@ export default function SettingsScreen() {
   const handleCacheCapChange = (mb: number) => {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
     audio.setCacheMaxBytes(mb * 1024 * 1024);
+  };
+
+  const handleDeleteCacheEntry = (key: string, label?: string) => {
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    Alert.alert(
+      tl('offline_audio_remove_confirm_title'),
+      tl('offline_audio_remove_confirm_body'),
+      [
+        { text: tl('cancel'), style: 'cancel' },
+        {
+          text: tl('offline_audio_remove_entry'),
+          style: 'destructive',
+          onPress: async () => {
+            await audio.deleteCacheEntry(key);
+            if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          },
+        },
+      ],
+    );
   };
 
   const handleClearOfflineAudio = () => {
@@ -1357,6 +1382,49 @@ export default function SettingsScreen() {
               })}
             </View>
           </View>
+          {/* ── Cached items list ── */}
+          <View style={[styles.innerSection, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
+            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>
+              {tl('offline_audio_cached_items')}
+              {Object.keys(audio.cacheEntries).length > 0
+                ? ` (${Object.keys(audio.cacheEntries).length})`
+                : ''}
+            </Text>
+            {Object.keys(audio.cacheEntries).length === 0 ? (
+              <Text style={[styles.cachedItemEmpty, { color: colors.mutedForeground }]}>
+                {tl('offline_audio_no_items')}
+              </Text>
+            ) : (
+              <View style={{ marginTop: 10 }}>
+                {Object.entries(audio.cacheEntries)
+                  .sort((a, b) => b[1].lastAccess - a[1].lastAccess)
+                  .map(([key, entry], i, arr) => (
+                    <View
+                      key={key}
+                      style={[
+                        styles.cachedItemRow,
+                        i < arr.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+                      ]}
+                    >
+                      <Feather name="headphones" size={13} color={colors.mutedForeground} />
+                      <Text style={[styles.cachedItemLabel, { color: colors.foreground }]} numberOfLines={1}>
+                        {entry.label || (lang === 'pt' ? 'Capítulo desconhecido' : 'Unknown chapter')}
+                      </Text>
+                      <Text style={[styles.cachedItemSize, { color: colors.mutedForeground }]}>
+                        {formatEntrySize(entry.size)}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => handleDeleteCacheEntry(key, entry.label)}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      >
+                        <Feather name="x" size={14} color={colors.mutedForeground} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+              </View>
+            )}
+          </View>
+
           <SettingsRow
             icon="trash-2"
             label={tl('offline_audio_clear')}
@@ -1683,4 +1751,10 @@ const styles = StyleSheet.create({
 
   // Header
   headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+
+  // Offline cached items list
+  cachedItemEmpty: { fontSize: 13, fontFamily: 'Inter_400Regular', marginTop: 8, opacity: 0.7 },
+  cachedItemRow:   { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
+  cachedItemLabel: { flex: 1, fontSize: 13, fontFamily: 'Inter_400Regular' },
+  cachedItemSize:  { fontSize: 12, fontFamily: 'Inter_400Regular', opacity: 0.75 },
 });

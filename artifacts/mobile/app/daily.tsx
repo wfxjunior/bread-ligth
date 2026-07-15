@@ -196,7 +196,7 @@ function DevotionalModal({
                   onPress={() => {
                     if (Platform.OS !== 'web') Haptics.selectionAsync();
                     if (isDevAudioActive) audio.togglePlayPause();
-                    else audio.playQueue(paragraphs.map((p, i) => ({ id: String(i), text: p })), 0, devotionalQueueKey);
+                    else audio.playQueue(paragraphs.map((p, i) => ({ id: String(i), text: p, cacheLabel: `Devotional – ${todayKey()}` })), 0, devotionalQueueKey);
                   }}
                   hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                 >

@@ -141,7 +141,7 @@ function DailyPill() {
   const handlePlayToggle = () => {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
     if (isAudioActive) audio.togglePlayPause();
-    else audio.playQueue([{ id: 'verse', text: verseAudioText }], 0, dailyQueueKey);
+    else audio.playQueue([{ id: 'verse', text: verseAudioText, cacheLabel: `${entry.bookEn} ${entry.chapter}:${entry.verse}` }], 0, dailyQueueKey);
   };
 
   return (

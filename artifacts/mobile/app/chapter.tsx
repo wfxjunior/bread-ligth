@@ -226,11 +226,15 @@ export default function ChapterScreen() {
       return;
     }
     audio.playQueue(
-      verses.map(vr => ({ id: String(vr.v), text: audio.readingLanguage === 'pt' ? vr.pt : vr.en })),
+      verses.map(vr => ({
+        id: String(vr.v),
+        text: audio.readingLanguage === 'pt' ? vr.pt : vr.en,
+        cacheLabel: `${book?.englishName ?? currentBookId} ${chapterNum}:${vr.v}`,
+      })),
       idx,
       chapterQueueKey,
     );
-  }, [verses, audio, chapterQueueKey, isChapterAudioActive, activeVerseNum]);
+  }, [verses, audio, chapterQueueKey, isChapterAudioActive, activeVerseNum, book, chapterNum, currentBookId]);
 
   // ── Continuous listening: once the reader has pressed play, keep reading
   // into the next chapter (and next book, at a book's end) automatically.
@@ -275,12 +279,16 @@ export default function ChapterScreen() {
     if (pendingChapterAutoplayRef.current && verses.length > 0) {
       pendingChapterAutoplayRef.current = false;
       audio.playQueue(
-        verses.map(vr => ({ id: String(vr.v), text: audio.readingLanguage === 'pt' ? vr.pt : vr.en })),
+        verses.map(vr => ({
+          id: String(vr.v),
+          text: audio.readingLanguage === 'pt' ? vr.pt : vr.en,
+          cacheLabel: `${book?.englishName ?? currentBookId} ${chapterNum}:${vr.v}`,
+        })),
         0,
         chapterQueueKey,
       );
     }
-  }, [verses, chapterQueueKey, audio]);
+  }, [verses, chapterQueueKey, audio, book, chapterNum, currentBookId]);
 
   // Auto-scroll to the verse currently being read aloud
   useEffect(() => {
