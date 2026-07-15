@@ -6,6 +6,7 @@ const STORAGE_KEYS = {
   VOCABULARY: '@bibliaeN:vocabulary',
   PROGRESS: '@bibliaeN:progress',
   DISPLAY_MODE: '@bibliaeN:displayMode',
+  FAVORITE_BOOKS: '@bibliaeN:favoriteBooks',
 };
 
 export type DisplayMode = 'both' | 'english' | 'portuguese';
@@ -42,6 +43,7 @@ interface BibleContextType {
   vocabulary: VocabWord[];
   displayMode: DisplayMode;
   readingProgress: ReadingProgress | null;
+  favoriteBooks: string[];
   addBookmark: (bookmark: Bookmark) => void;
   removeBookmark: (bookId: string, chapter: number, verse: number) => void;
   isBookmarked: (bookId: string, chapter: number, verse: number) => boolean;
@@ -51,6 +53,8 @@ interface BibleContextType {
   setDisplayMode: (mode: DisplayMode) => void;
   saveReadingProgress: (progress: ReadingProgress) => void;
   clearVocabulary: () => void;
+  toggleFavoriteBook: (bookId: string) => void;
+  isFavoriteBook: (bookId: string) => boolean;
 }
 
 const BibleContext = createContext<BibleContextType | null>(null);
@@ -60,6 +64,7 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
   const [vocabulary, setVocabulary] = useState<VocabWord[]>([]);
   const [displayMode, setDisplayModeState] = useState<DisplayMode>('both');
   const [readingProgress, setReadingProgressState] = useState<ReadingProgress | null>(null);
+  const [favoriteBooks, setFavoriteBooks] = useState<string[]>([]);
 
   useEffect(() => {
     const safeParse = <T,>(raw: string | null): T | null => {
@@ -68,11 +73,12 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
     };
 
     (async () => {
-      const [bmRaw, vocabRaw, modeRaw, progressRaw] = await Promise.all([
+      const [bmRaw, vocabRaw, modeRaw, progressRaw, favBooksRaw] = await Promise.all([
         AsyncStorage.getItem(STORAGE_KEYS.BOOKMARKS).catch(() => null),
         AsyncStorage.getItem(STORAGE_KEYS.VOCABULARY).catch(() => null),
         AsyncStorage.getItem(STORAGE_KEYS.DISPLAY_MODE).catch(() => null),
         AsyncStorage.getItem(STORAGE_KEYS.PROGRESS).catch(() => null),
+        AsyncStorage.getItem(STORAGE_KEYS.FAVORITE_BOOKS).catch(() => null),
       ]);
       const bm = safeParse<Bookmark[]>(bmRaw);
       if (bm) setBookmarks(bm);
@@ -81,6 +87,8 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
       if (modeRaw) setDisplayModeState(modeRaw as DisplayMode);
       const progress = safeParse<ReadingProgress>(progressRaw);
       if (progress) setReadingProgressState(progress);
+      const favBooks = safeParse<string[]>(favBooksRaw);
+      if (favBooks) setFavoriteBooks(favBooks);
     })();
   }, []);
 
@@ -145,12 +153,23 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(progress)).catch(() => {});
   }, []);
 
+  const toggleFavoriteBook = useCallback((bookId: string) => {
+    setFavoriteBooks(prev => {
+      const next = prev.includes(bookId) ? prev.filter(id => id !== bookId) : [...prev, bookId];
+      AsyncStorage.setItem(STORAGE_KEYS.FAVORITE_BOOKS, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  }, []);
+
+  const isFavoriteBook = useCallback((bookId: string) => favoriteBooks.includes(bookId), [favoriteBooks]);
+
   return (
     <BibleContext.Provider value={{
       bookmarks,
       vocabulary,
       displayMode,
       readingProgress,
+      favoriteBooks,
       addBookmark,
       removeBookmark,
       isBookmarked,
@@ -160,6 +179,8 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
       setDisplayMode,
       saveReadingProgress,
       clearVocabulary,
+      toggleFavoriteBook,
+      isFavoriteBook,
     }}>
       {children}
     </BibleContext.Provider>

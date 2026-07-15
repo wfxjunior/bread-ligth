@@ -131,7 +131,7 @@ function OrnateDivider({ width }: { width: number }) {
 
 // ── Single leather-bound volume ─────────────────────────────────────────────
 function LeatherBook({
-  meta, width, height, isCurrent, progressRatio, resumeChapter,
+  meta, width, height, isCurrent, progressRatio, resumeChapter, isFavorite, onToggleFavorite,
 }: {
   meta: ShelfBookMeta;
   width: number;
@@ -139,6 +139,8 @@ function LeatherBook({
   isCurrent: boolean;
   progressRatio: number;
   resumeChapter?: number;
+  isFavorite: boolean;
+  onToggleFavorite: (bookId: string) => void;
 }) {
   const book = BIBLE_DATA[meta.bookId];
   const { t: tl } = useLanguage();
@@ -259,9 +261,21 @@ function LeatherBook({
           <View style={[styles.cornerWrap, { top: 8, left: 6 }]} pointerEvents="none">
             <CornerFlourish size={16} rotate={0} />
           </View>
-          <View style={[styles.cornerWrap, { top: 8, right: 6 }]} pointerEvents="none">
-            <CornerFlourish size={16} rotate={90} />
-          </View>
+          {/* top-right corner doubles as the favorite toggle — a small foil
+              star instead of a purely decorative flourish, so pulling a
+              volume off the shelf isn't the only way to mark it as one to
+              come back to. */}
+          <Pressable
+            onPress={() => onToggleFavorite(meta.bookId)}
+            hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+            style={[styles.cornerWrap, styles.favoriteWrap, { top: 2, right: 1 }]}
+          >
+            <MaterialCommunityIcons
+              name={isFavorite ? 'star' : 'star-outline'}
+              size={16}
+              color={isFavorite ? GOLD_BRIGHT : GOLD_SOFT}
+            />
+          </Pressable>
           <View style={[styles.cornerWrap, { bottom: 8, right: 6 }]} pointerEvents="none">
             <CornerFlourish size={16} rotate={180} />
           </View>
@@ -384,11 +398,13 @@ function ShelfPlank() {
 
 // ── Full bookshelf ───────────────────────────────────────────────────────────
 export function BookshelfLibrary({
-  books, currentBookId, currentChapter,
+  books, currentBookId, currentChapter, favoriteBookIds, onToggleFavorite,
 }: {
   books: ShelfBookMeta[];
   currentBookId?: string;
   currentChapter?: number;
+  favoriteBookIds: string[];
+  onToggleFavorite: (bookId: string) => void;
 }) {
   const { width } = useWindowDimensions();
   const COLUMNS   = 2;
@@ -459,6 +475,8 @@ export function BookshelfLibrary({
                     isCurrent={isCurrent}
                     progressRatio={ratio}
                     resumeChapter={isCurrent ? currentChapter : undefined}
+                    isFavorite={favoriteBookIds.includes(meta.bookId)}
+                    onToggleFavorite={onToggleFavorite}
                   />
                 );
               })}
@@ -536,6 +554,10 @@ const styles = StyleSheet.create({
   },
   cornerWrap: {
     position: 'absolute',
+  },
+  favoriteWrap: {
+    zIndex: 5,
+    padding: 7,
   },
   contentCol: {
     ...StyleSheet.absoluteFillObject,

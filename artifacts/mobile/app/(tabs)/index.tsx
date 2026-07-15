@@ -404,7 +404,14 @@ const VOCAB_PREVIEW = [
 ];
 
 // ── Book list row ─────────────────────────────────────────────────────────────
-function BookListRow({ meta, isLast }: { meta: BookMeta; isLast?: boolean }) {
+function BookListRow({
+  meta, isLast, isFavorite, onToggleFavorite,
+}: {
+  meta: BookMeta;
+  isLast?: boolean;
+  isFavorite: boolean;
+  onToggleFavorite: (bookId: string) => void;
+}) {
   const colors = useColors();
   const { t: tl } = useLanguage();
   const book   = BIBLE_DATA[meta.bookId];
@@ -427,6 +434,11 @@ function BookListRow({ meta, isLast }: { meta: BookMeta; isLast?: boolean }) {
   };
 
   const leather = CATEGORY_INFO[meta.category];
+
+  const handleToggleFavorite = () => {
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onToggleFavorite(meta.bookId);
+  };
 
   return (
     <TouchableOpacity
@@ -459,11 +471,19 @@ function BookListRow({ meta, isLast }: { meta: BookMeta; isLast?: boolean }) {
         </View>
       </View>
 
-      {/* Right: chapter count + chevron */}
+      {/* Right: chapter count, favorite star, chevron */}
       <View style={styles.listRight}>
         <Text style={[styles.listChapters, { color: colors.mutedForeground }]}>
           {chapterCount} {tl('chapter_abbr_lower')}
         </Text>
+        <TouchableOpacity
+          onPress={handleToggleFavorite}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel={tl(isFavorite ? 'library_favorite_remove_a11y' : 'library_favorite_add_a11y')}
+        >
+          <Feather name="star" size={14} color={isFavorite ? colors.accent : colors.mutedForeground} style={isFavorite ? undefined : { opacity: 0.5 }} />
+        </TouchableOpacity>
         <Feather name="chevron-right" size={14} color={colors.mutedForeground} />
       </View>
     </TouchableOpacity>
@@ -730,10 +750,21 @@ function StudyCard() {
 }
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
+// Accent-insensitive match so "genesis" finds "Gênesis" and "corintios"
+// finds "Coríntios" — readers typing on a phone keyboard rarely bother with
+// diacritics.
+function normalizeSearch(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
 export default function HomeScreen() {
   const colors    = useColors();
   const insets    = useSafeAreaInsets();
-  const { readingProgress } = useBible();
+  const { readingProgress, favoriteBooks, toggleFavoriteBook } = useBible();
   const { width } = useWindowDimensions();
   const cardW     = Math.floor((width - PAD * 2 - GAP) / 2);
 
@@ -746,6 +777,7 @@ export default function HomeScreen() {
   const [viewMode,  setViewMode]  = useState<'grid' | 'list'>('grid');
   const [progressModalVisible, setProgressModalVisible] = useState(false);
   const [now, setNow] = useState(() => new Date());
+  const [librarySearch, setLibrarySearch] = useState('');
 
   useEffect(() => {
     AsyncStorage.getItem('@bibliaeN:userName').then(n => setUserName(n ?? '')).catch(() => setUserName(''));
@@ -760,6 +792,39 @@ export default function HomeScreen() {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
     setViewMode(mode);
     AsyncStorage.setItem(VIEW_MODE_KEY, mode).catch(() => {});
+  };
+
+  // Library search — matches either the English or Portuguese book name,
+  // accent-insensitive, so the 66-book shelf is never more than a few
+  // keystrokes away from the one book someone actually wants.
+  const librarySearchNorm = normalizeSearch(librarySearch);
+  const filteredCatalogue = librarySearchNorm.length === 0
+    ? BOOK_CATALOGUE
+    : BOOK_CATALOGUE.filter(meta => {
+        const book = BIBLE_DATA[meta.bookId];
+        if (!book) return false;
+        return normalizeSearch(book.name).includes(librarySearchNorm)
+          || normalizeSearch(book.englishName).includes(librarySearchNorm);
+      });
+
+  // Favorited books, in canonical order — surfaced as a quick-access strip
+  // above the shelf (only while not searching) so a handful of go-to books
+  // never get lost among the other 66.
+  const favoriteCatalogue = BOOK_CATALOGUE.filter(meta => favoriteBooks.includes(meta.bookId));
+
+  const handleOpenBook = (bookId: string) => {
+    const book = BIBLE_DATA[bookId];
+    if (!book) return;
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    router.push({
+      pathname: '/chapter',
+      params: {
+        bookId,
+        chapter: Object.keys(book.chapters)[0],
+        bookName: book.name,
+        englishBookName: book.englishName,
+      },
+    });
   };
 
   const today = now;
@@ -894,16 +959,88 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {viewMode === 'grid' ? (
+        {/* Search — find one book by name instead of scrolling the whole shelf */}
+        <View style={[styles.librarySearchBox, { backgroundColor: colors.muted, borderColor: colors.border, borderRadius: colors.radius }]}>
+          <Feather name="search" size={15} color={colors.mutedForeground} />
+          <TextInput
+            style={[styles.librarySearchInput, { color: colors.foreground }]}
+            placeholder={t('library_search_placeholder')}
+            placeholderTextColor={colors.mutedForeground}
+            value={librarySearch}
+            onChangeText={setLibrarySearch}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="search"
+          />
+          {librarySearch.length > 0 && (
+            <TouchableOpacity
+              onPress={() => setLibrarySearch('')}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel={t('library_search_clear_a11y')}
+            >
+              <Feather name="x-circle" size={15} color={colors.mutedForeground} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Favorites quick strip — a handful of go-to books, one tap away,
+            regardless of where they sit among the other 66 on the shelf. */}
+        {librarySearchNorm.length === 0 && favoriteCatalogue.length > 0 && (
+          <View style={styles.libraryFavoritesWrap}>
+            <View style={styles.libraryFavoritesLabelRow}>
+              <Feather name="star" size={11} color={colors.accent} />
+              <Text style={[styles.libraryFavoritesLabel, { color: colors.mutedForeground }]}>
+                {t('library_favorites_title')}
+              </Text>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.libraryFavoritesRow}>
+              {favoriteCatalogue.map(meta => {
+                const book = BIBLE_DATA[meta.bookId];
+                if (!book) return null;
+                const leather = CATEGORY_INFO[meta.category];
+                return (
+                  <TouchableOpacity key={meta.bookId} onPress={() => handleOpenBook(meta.bookId)} activeOpacity={0.85}>
+                    <LinearGradient
+                      colors={[leather.base, leather.deep]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={[styles.favoriteChip, { borderRadius: colors.radius - 2 }]}
+                    >
+                      <Text style={styles.favoriteChipText} numberOfLines={1}>{book.englishName}</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+
+        {filteredCatalogue.length === 0 ? (
+          <View style={styles.libraryEmptyState}>
+            <Feather name="search" size={26} color={colors.border} />
+            <Text style={[styles.libraryEmptyText, { color: colors.mutedForeground }]}>
+              {t('library_search_no_results')}
+            </Text>
+          </View>
+        ) : viewMode === 'grid' ? (
           <BookshelfLibrary
-            books={BOOK_CATALOGUE}
+            books={filteredCatalogue}
             currentBookId={readingProgress?.bookId}
             currentChapter={readingProgress?.chapter}
+            favoriteBookIds={favoriteBooks}
+            onToggleFavorite={toggleFavoriteBook}
           />
         ) : (
           <View style={[styles.listContainer, { borderColor: colors.border, backgroundColor: colors.card, borderRadius: colors.radius }]}>
-            {BOOK_CATALOGUE.map((meta, idx) => (
-              <BookListRow key={meta.bookId} meta={meta} isLast={idx === BOOK_CATALOGUE.length - 1} />
+            {filteredCatalogue.map((meta, idx) => (
+              <BookListRow
+                key={meta.bookId}
+                meta={meta}
+                isLast={idx === filteredCatalogue.length - 1}
+                isFavorite={favoriteBooks.includes(meta.bookId)}
+                onToggleFavorite={toggleFavoriteBook}
+              />
             ))}
           </View>
         )}
@@ -1213,6 +1350,58 @@ const styles = StyleSheet.create({
   },
   listChapters: {
     fontSize:   11,
+    fontFamily: 'Inter_400Regular',
+  },
+  librarySearchBox: {
+    flexDirection:     'row',
+    alignItems:        'center',
+    gap:               8,
+    borderWidth:        StyleSheet.hairlineWidth,
+    paddingHorizontal:  12,
+    height:             40,
+    marginTop:          12,
+  },
+  librarySearchInput: {
+    flex:       1,
+    fontSize:   14,
+    fontFamily: 'Inter_400Regular',
+    height:     '100%',
+  },
+  libraryFavoritesWrap: {
+    marginTop: 14,
+  },
+  libraryFavoritesLabelRow: {
+    flexDirection: 'row',
+    alignItems:    'center',
+    gap:           5,
+    marginBottom:  8,
+  },
+  libraryFavoritesLabel: {
+    fontSize:      10,
+    fontFamily:    'Inter_600SemiBold',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  libraryFavoritesRow: {
+    gap: 8,
+  },
+  favoriteChip: {
+    paddingHorizontal: 12,
+    paddingVertical:   8,
+    maxWidth:          140,
+  },
+  favoriteChipText: {
+    fontSize:   12,
+    fontFamily: 'Inter_600SemiBold',
+    color:      '#EFD79C',
+  },
+  libraryEmptyState: {
+    alignItems:  'center',
+    gap:         10,
+    paddingVertical: 40,
+  },
+  libraryEmptyText: {
+    fontSize:   13,
     fontFamily: 'Inter_400Regular',
   },
   // ── Today's Study card ─────────────────────────────────────────────────────
