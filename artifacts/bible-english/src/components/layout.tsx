@@ -20,6 +20,19 @@ import { useBillingStatus } from '../hooks/use-billing';
 import { isPremium } from '../lib/billing';
 import { SpaceBackground } from './space-background';
 import type { I18nKey } from '../lib/i18n';
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarFooter,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarTrigger,
+  SidebarInset,
+  useSidebar,
+} from './ui/sidebar';
 
 const NAV_ITEMS: { key: I18nKey; path: string; icon: typeof LayoutDashboard }[] = [
   { key: 'nav_home',        path: '/home',        icon: LayoutDashboard },
@@ -64,6 +77,24 @@ function SignedInFooter() {
   );
 }
 
+function NavLink({ href, isActive, icon: Icon, children }: {
+  href: string; isActive: boolean; icon: typeof LayoutDashboard; children: React.ReactNode;
+}) {
+  const { isMobile, setOpenMobile } = useSidebar();
+  return (
+    <SidebarMenuButton asChild isActive={isActive} className="h-auto data-[active=true]:bg-primary/5 data-[active=true]:text-primary">
+      <Link
+        href={href}
+        onClick={() => { if (isMobile) setOpenMobile(false); }}
+        className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium no-underline"
+      >
+        <Icon className={`w-4 h-4 ${isActive ? 'text-primary' : 'opacity-70'}`} />
+        {children}
+      </Link>
+    </SidebarMenuButton>
+  );
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { space } = useReadingSpace();
@@ -79,10 +110,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const spaceMismatch = atmosphereIsDark !== space.isDark;
 
   return (
-    <div className="flex h-screen w-full bg-background overflow-hidden text-foreground">
-      {/* Sidebar */}
-      <aside className="w-64 border-r border-border bg-sidebar flex flex-col shrink-0 z-10">
-        <div className="p-6">
+    <SidebarProvider className="h-screen min-h-0 overflow-hidden text-foreground">
+      {/* Sidebar — a static column on desktop, an off-canvas drawer on mobile */}
+      <Sidebar collapsible="offcanvas">
+        <SidebarHeader className="p-6">
           <Link href="/" className="flex flex-col gap-1 no-underline group">
             <h1 className="font-serif text-2xl text-primary font-medium tracking-tight group-hover:text-primary/80 transition-colors">
               {t('app_name')}
@@ -91,29 +122,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
               {t('app_tagline')}
             </span>
           </Link>
-        </div>
+        </SidebarHeader>
 
-        <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-          {NAV_ITEMS.map((item) => {
-            const isActive = location === item.path || (item.path !== '/' && location.startsWith(item.path));
-            return (
-              <Link
-                key={item.key}
-                href={item.path}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-primary/5 text-primary'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                }`}
-              >
-                <item.icon className={`w-4 h-4 ${isActive ? 'text-primary' : 'opacity-70'}`} />
-                {t(item.key)}
-              </Link>
-            );
-          })}
-        </nav>
+        <SidebarContent className="px-4 py-4 gap-1">
+          <SidebarMenu className="gap-1">
+            {NAV_ITEMS.map((item) => {
+              const isActive = location === item.path || (item.path !== '/' && location.startsWith(item.path));
+              return (
+                <SidebarMenuItem key={item.key}>
+                  <NavLink href={item.path} isActive={isActive} icon={item.icon}>
+                    {t(item.key)}
+                  </NavLink>
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        </SidebarContent>
 
-        <div className="p-4 border-t border-border/50">
+        <SidebarFooter className="p-4 border-t border-border/50">
           <Show when="signed-in">
             <SignedInFooter />
           </Show>
@@ -131,17 +157,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </div>
             </Link>
           </Show>
-        </div>
-      </aside>
+        </SidebarFooter>
+      </Sidebar>
 
       {/* Main Content — the active Reading Space's calm gradient sits behind it,
           on top of the current Atmosphere's own background. */}
-      <main className="relative flex-1 flex flex-col min-w-0 bg-background">
-        <SpaceBackground space={space} className={spaceMismatch ? 'opacity-25' : undefined} />
-        <div className="relative flex-1 flex flex-col min-w-0">
-          {children}
+      <SidebarInset className="min-w-0">
+        {/* Mobile-only top bar: hamburger opens the sidebar as a drawer */}
+        <div className="md:hidden flex items-center gap-3 h-14 px-3 border-b border-border shrink-0 bg-background z-10">
+          <SidebarTrigger />
+          <span className="font-serif text-lg text-primary font-medium tracking-tight">
+            {t('app_name')}
+          </span>
         </div>
-      </main>
-    </div>
+        <main className="relative flex-1 flex flex-col min-w-0 min-h-0 bg-background">
+          <SpaceBackground space={space} className={spaceMismatch ? 'opacity-25' : undefined} />
+          <div className="relative flex-1 flex flex-col min-w-0 min-h-0 overflow-y-auto">
+            {children}
+          </div>
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
