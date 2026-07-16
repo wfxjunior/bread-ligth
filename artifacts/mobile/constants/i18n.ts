@@ -435,6 +435,9 @@ const strings = {
   word_modal_already_saved:     { pt: 'Já salvo no vocabulário', en: 'Already saved to vocabulary' },
   word_modal_save:              { pt: 'Salvar no vocabulário', en: 'Save to vocabulary' },
   word_modal_not_found:         { pt: 'Palavra não encontrada no dicionário.', en: 'Word not found in dictionary.' },
+  word_modal_loading:           { pt: 'Traduzindo…', en: 'Translating…' },
+  word_modal_offline:           { pt: 'Sem conexão para traduzir esta palavra.', en: 'No connection to translate this word.' },
+  word_modal_ai_note:           { pt: 'Tradução automática', en: 'Auto-translated' },
 
   // ── Flash card
   flashcard_hint_en:       { pt: 'Inglês · Toque para ver', en: 'English · Tap to reveal' },
