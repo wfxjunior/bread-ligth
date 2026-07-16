@@ -7,7 +7,7 @@
  */
 import React, { useMemo } from 'react';
 import {
-  Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View,
+  Platform, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -21,7 +21,7 @@ import { MedalArtwork } from '@/components/MedalArtwork';
 import { fontSize as ts } from '@/constants/design';
 import {
   COMMUNITY_HONORS, DEFINITIONS, collectionDefs, familyView, singleView,
-  journeyTitleKey, type Collection, type FamilyDef, type SingleDef, type Tier,
+  journeyTitleKey, nextMilestone, type Collection, type FamilyDef, type SingleDef, type Tier,
 } from '@/constants/achievements';
 import type { I18nKey } from '@/constants/i18n';
 
@@ -54,28 +54,21 @@ export default function JourneyScreen() {
       .sort((a, b) => b.earnedAt - a.earnedAt),
     [state.earned]);
 
-  // ONE next milestone: the family closest to its next tier (or first single).
-  const nextMilestone = useMemo(() => {
-    let best: { label: string; detail: string; progress: number } | null = null;
-    for (const def of DEFINITIONS) {
-      if (def.kind === 'family') {
-        const v = familyView(state, def);
-        if (v.nextTier && (!best || v.progressToNext > best.progress)) {
-          best = {
-            label: `${tl(`honor_${def.id}_title` as I18nKey)} — ${tl(`tier_${v.nextTier.tier}` as I18nKey)}`,
-            detail: `${v.value}/${v.nextTier.threshold}`,
-            progress: v.progressToNext,
-          };
-        }
-      } else {
-        const v = singleView(state, def);
-        if (!v.earned && v.progress > 0 && (!best || v.progress > best.progress)) {
-          best = { label: tl(`honor_${def.id}_title` as I18nKey), detail: `${v.value}/${v.threshold}`, progress: v.progress };
-        }
-      }
-    }
-    return best;
+  // ONE next milestone (engine helper; spec: never overwhelm with locked honors).
+  const next = useMemo(() => {
+    const nm = nextMilestone(state);
+    if (!nm) return null;
+    return {
+      label: tl(`honor_${nm.defId}_title` as I18nKey) + (nm.tier ? ` — ${tl(`tier_${nm.tier}` as I18nKey)}` : ''),
+      detail: `${nm.value}/${nm.threshold}`,
+      progress: nm.progress,
+    };
   }, [state, tl]);
+
+  // Share an earned honor — calm text card, name never included without consent.
+  const shareHonor = (title: string) => {
+    Share.share({ message: tl('share_honor_prefix') + ' ' + title + ' — Bread&Light · breadlight.app' }).catch(() => {});
+  };
 
   const honorTitle = (key: string): { title: string; tier?: Tier; icon: string } => {
     const [defId, tier] = key.split(':') as [string, Tier | undefined];
@@ -143,14 +136,14 @@ export default function JourneyScreen() {
         </View>
 
         {/* ── Next milestone (only one — calm) ── */}
-        {nextMilestone && (
+        {next && (
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
             <Text style={[styles.sectionKicker, { color: colors.mutedForeground }]}>{tl('journey_next_title')}</Text>
-            <Text style={[styles.nextLabel, { color: colors.foreground }]}>{nextMilestone.label}</Text>
+            <Text style={[styles.nextLabel, { color: colors.foreground }]}>{next.label}</Text>
             <View style={[styles.barTrack, { backgroundColor: colors.muted, borderRadius: colors.radius / 2 }]}>
-              <View style={[styles.barFill, { width: `${Math.round(nextMilestone.progress * 100)}%`, backgroundColor: colors.accent, borderRadius: colors.radius / 2 }]} />
+              <View style={[styles.barFill, { width: `${Math.round(next.progress * 100)}%`, backgroundColor: colors.accent, borderRadius: colors.radius / 2 }]} />
             </View>
-            <Text style={[styles.nextDetail, { color: colors.mutedForeground }]}>{nextMilestone.detail}</Text>
+            <Text style={[styles.nextDetail, { color: colors.mutedForeground }]}>{next.detail}</Text>
           </View>
         )}
 
@@ -187,6 +180,14 @@ export default function JourneyScreen() {
                       {tl('journey_earned_on')} {fmtDate(rec.earnedAt, lang)}
                     </Text>
                   </View>
+                  <TouchableOpacity
+                    onPress={() => shareHonor(h.title)}
+                    accessibilityRole="button"
+                    accessibilityLabel={tl('a11y_share')}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Feather name="share-2" size={15} color={colors.mutedForeground} />
+                  </TouchableOpacity>
                 </View>
               );
             })}
