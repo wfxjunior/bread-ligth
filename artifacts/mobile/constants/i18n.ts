@@ -529,6 +529,7 @@ const strings = {
   progress_streak_suffix:   { pt: ' dias seguidos', en: '-day streak' },
   progress_words_word:      { pt: 'palavras', en: 'words' },
   progress_verses_word:     { pt: 'versículos', en: 'verses' },
+  progress_days_word:       { pt: 'dias', en: 'days' },
 
   // ── Chapter reader screen
   book_picker_title:        { pt: 'Escolher Livro',   en: 'Choose Book' },
