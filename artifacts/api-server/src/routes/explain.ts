@@ -47,18 +47,24 @@ setInterval(() => {
  * match whichever reading language the listener has chosen for audio.
  */
 router.get("/explain", async (req, res) => {
-  const ip = getClientIp(req);
-  if (!checkRateLimit(ip)) {
-    res.status(429).json({ error: "Muitas requisições. Tente novamente mais tarde." });
-    return;
-  }
-
   const q = req.query as Record<string, unknown>;
   const book    = typeof q.book    === "string" ? q.book.slice(0, 60)   : "";
   const chapter = typeof q.chapter === "string" ? q.chapter.slice(0, 4) : "";
   const verse   = typeof q.verse   === "string" ? q.verse.slice(0, 4)   : "";
   const en      = typeof q.en      === "string" ? q.en.slice(0, 500)    : "";
   const lang    = typeof q.lang    === "string" && q.lang === "en" ? "en" : "pt";
+
+  // Error messages follow the reader's chosen language, matching the UI.
+  const msg = (en_: string, pt_: string) => (lang === "en" ? en_ : pt_);
+
+  const ip = getClientIp(req);
+  if (!checkRateLimit(ip)) {
+    res.status(429).json({
+      error: msg("Too many requests. Please try again later.",
+                 "Muitas requisições. Tente novamente mais tarde."),
+    });
+    return;
+  }
 
   if (!en) {
     res.status(400).json({ error: "Missing required query param: en" });
@@ -87,14 +93,20 @@ router.get("/explain", async (req, res) => {
 
     const text = completion.choices[0]?.message?.content?.trim() ?? "";
     if (!text) {
-      res.status(502).json({ error: "Explicação não gerada. Tente novamente." });
+      res.status(502).json({
+        error: msg("Explanation not generated. Please try again.",
+                   "Explicação não gerada. Tente novamente."),
+      });
       return;
     }
     res.json({ text });
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error("Explain generation error:", msg);
-    res.status(500).json({ error: "Falha ao gerar explicação. Tente novamente." });
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error("Explain generation error:", detail);
+    res.status(500).json({
+      error: msg("Failed to generate explanation. Please try again.",
+                 "Falha ao gerar explicação. Tente novamente."),
+    });
   }
 });
 

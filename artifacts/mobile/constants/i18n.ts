@@ -438,6 +438,7 @@ const strings = {
   word_modal_loading:           { pt: 'Traduzindo…', en: 'Translating…' },
   word_modal_offline:           { pt: 'Sem conexão para traduzir esta palavra.', en: 'No connection to translate this word.' },
   word_modal_ai_note:           { pt: 'Tradução automática', en: 'Auto-translated' },
+  close:                        { pt: 'Fechar', en: 'Close' },
 
   // ── Flash card
   flashcard_hint_en:       { pt: 'Inglês · Toque para ver', en: 'English · Tap to reveal' },

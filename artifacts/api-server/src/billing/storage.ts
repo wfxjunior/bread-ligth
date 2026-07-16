@@ -60,6 +60,20 @@ export const billingStorage = {
     }));
   },
 
+  // True if this customer has ever had ANY subscription (any status, including
+  // canceled/incomplete). Used to withhold the 7-day free trial from customers
+  // who already used one — Stripe would otherwise grant a fresh trial on every
+  // new subscription, letting a user cancel-and-resubscribe for endless trials.
+  async hasPriorSubscription(stripeCustomerId: string): Promise<boolean> {
+    const result = await db.execute(sql`
+      SELECT 1
+      FROM stripe.subscriptions
+      WHERE customer = ${stripeCustomerId}
+      LIMIT 1
+    `);
+    return result.rows.length > 0;
+  },
+
   async getActiveSubscriptionForCustomer(
     stripeCustomerId: string,
   ): Promise<ActiveSubscriptionRow | null> {

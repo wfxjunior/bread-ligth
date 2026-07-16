@@ -87,15 +87,19 @@ export const billingService = {
     const customerId = await findOrCreateCustomer(clerkUserId);
     const stripe = await getUncachableStripeClient();
 
-    // Refuse to start a second trial for a customer who already has (or has
-    // ever had) an active/trialing subscription — Stripe would otherwise
-    // silently grant a second free trial on a new subscription.
+    // Grant the 7-day free trial only to customers who have never had a
+    // subscription before. Stripe would otherwise silently grant a fresh trial
+    // on every new subscription, so a user could cancel and resubscribe for an
+    // endless string of free trials.
+    const hadSubscriptionBefore =
+      await billingStorage.hasPriorSubscription(customerId);
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: {
-        trial_period_days: 7,
+        ...(hadSubscriptionBefore ? {} : { trial_period_days: 7 }),
         metadata: { clerkUserId },
       },
       success_url: successUrl,

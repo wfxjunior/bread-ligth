@@ -47,13 +47,6 @@ setInterval(() => {
  * Bible verse. Cached client-side (AsyncStorage) — one generation per day.
  */
 router.get("/devotional", async (req, res) => {
-  // Rate limiting
-  const ip = getClientIp(req);
-  if (!checkRateLimit(ip)) {
-    res.status(429).json({ error: "Muitas requisições. Tente novamente mais tarde." });
-    return;
-  }
-
   const q = req.query as Record<string, unknown>;
   const book    = typeof q.book    === "string" ? q.book.slice(0, 60)    : "";
   const chapter = typeof q.chapter === "string" ? q.chapter.slice(0, 4)  : "";
@@ -61,6 +54,19 @@ router.get("/devotional", async (req, res) => {
   const en      = typeof q.en      === "string" ? q.en.slice(0, 500)     : "";
   const pt      = typeof q.pt      === "string" ? q.pt.slice(0, 500)     : "";
   const lang    = typeof q.lang    === "string" && q.lang === "en" ? "en" : "pt";
+
+  // Error messages follow the reader's chosen language, matching the UI.
+  const msg = (en_: string, pt_: string) => (lang === "en" ? en_ : pt_);
+
+  // Rate limiting
+  const ip = getClientIp(req);
+  if (!checkRateLimit(ip)) {
+    res.status(429).json({
+      error: msg("Too many requests. Please try again later.",
+                 "Muitas requisições. Tente novamente mais tarde."),
+    });
+    return;
+  }
 
   if (!en || !pt) {
     res.status(400).json({ error: "Missing required query params: en, pt" });
@@ -89,13 +95,20 @@ router.get("/devotional", async (req, res) => {
 
     const text = completion.choices[0]?.message?.content?.trim() ?? "";
     if (!text) {
-      res.status(502).json({ error: "Devocional não gerado. Tente novamente." });
+      res.status(502).json({
+        error: msg("Devotional not generated. Please try again.",
+                   "Devocional não gerado. Tente novamente."),
+      });
       return;
     }
     res.json({ text });
-  } catch (err: any) {
-    console.error("Devotional generation error:", err?.message);
-    res.status(500).json({ error: "Falha ao gerar devocional. Tente novamente." });
+  } catch (err: unknown) {
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error("Devotional generation error:", detail);
+    res.status(500).json({
+      error: msg("Failed to generate devotional. Please try again.",
+                 "Falha ao gerar devocional. Tente novamente."),
+    });
   }
 });
 

@@ -762,6 +762,13 @@ export default function ChapterScreen() {
 
       {/* ── Verse action popup ── */}
       {selectedVerse && (
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={handleVerseDeselect}
+          accessibilityLabel={t(lang, 'close')}
+        />
+      )}
+      {selectedVerse && (
         <Animated.View
           style={[
             styles.versePopup,
