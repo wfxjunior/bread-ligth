@@ -33,6 +33,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { READING_SPACES } from '@/constants/colors';
 import SpaceBackground from '@/components/SpaceBackground';
 import { useLanguage } from '@/context/LanguageContext';
+import { publishAchievementEvent } from '@/context/AchievementContext';
 import { t } from '@/constants/i18n';
 
 // ── Text size selector ────────────────────────────────────────────────────────
@@ -240,6 +241,12 @@ export default function ChapterScreen() {
   // into the next chapter (and next book, at a book's end) automatically.
   // Never starts playback on its own — only continues audio already begun
   // by the user on this screen.
+  // One verse_read per chapter view — represents "read at least a verse";
+  // chapter completion (below) is a separate, stricter signal.
+  useEffect(() => {
+    if (verses.length > 0) publishAchievementEvent({ type: 'verse_read' });
+  }, [currentBookId, chapterNum, verses.length]);
+
   const pendingChapterAutoplayRef = useRef(false);
 
   const advanceToNextChapterAndKeepPlaying = useCallback(() => {
@@ -270,6 +277,10 @@ export default function ChapterScreen() {
       audio.queue.length > 0 &&
       audio.currentIndex === audio.queue.length - 1
     ) {
+      publishAchievementEvent({ type: 'audio_chapter_completed', bookId: currentBookId, chapter: chapterNum });
+      // Hearing the whole chapter also counts as completing it (see spec:
+      // Complete Audio Chapter) — the engine dedupes with scroll completion.
+      publishAchievementEvent({ type: 'chapter_completed', bookId: currentBookId, chapter: chapterNum, totalChapters: chapterKeys.length });
       advanceToNextChapterAndKeepPlaying();
     }
   }, [audio.status, audio.queueKey, audio.currentIndex, audio.queue.length, chapterQueueKey, advanceToNextChapterAndKeepPlaying]);
@@ -728,6 +739,12 @@ export default function ChapterScreen() {
 
             </View>
           }
+          onEndReached={() => {
+            // Reaching the end of the verse list = real read-through, not a
+            // chapter open. The engine ignores repeats of the same chapter.
+            publishAchievementEvent({ type: 'chapter_completed', bookId: currentBookId, chapter: chapterNum, totalChapters: chapterKeys.length });
+          }}
+          onEndReachedThreshold={0.05}
           ListFooterComponent={<View style={{ height: bottomPad + 110 }} />}
           showsVerticalScrollIndicator={false}
         />

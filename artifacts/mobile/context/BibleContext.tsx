@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { applyReview } from '@/constants/srs';
 import { EMPTY_STATS, recordStudy, currentStreak, type StudyStats } from '@/constants/stats';
+import { publishAchievementEvent } from '@/context/AchievementContext';
 
 const STORAGE_KEYS = {
   BOOKMARKS: '@bibliaeN:bookmarks',
@@ -204,6 +205,7 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
       const filtered = prev.filter(v => v.word !== word.word);
       const next = [word, ...filtered];
       AsyncStorage.setItem(STORAGE_KEYS.VOCABULARY, JSON.stringify(next)).catch(() => {});
+      publishAchievementEvent({ type: 'vocab_totals', saved: next.length, mastered: next.filter(v => v.mastered).length });
       return next;
     });
   }, []);
@@ -229,6 +231,7 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
     setVocabulary(prev => {
       const next = prev.map(v => v.word === word ? applyReview(v, remembered) : v);
       AsyncStorage.setItem(STORAGE_KEYS.VOCABULARY, JSON.stringify(next)).catch(() => {});
+      publishAchievementEvent({ type: 'vocab_totals', saved: next.length, mastered: next.filter(v => v.mastered).length });
       return next;
     });
   }, []);
@@ -251,6 +254,7 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
       const next = recordStudy(prev);
       if (next === prev) return prev;
       AsyncStorage.setItem(STORAGE_KEYS.STUDY_STATS, JSON.stringify(next)).catch(() => {});
+      publishAchievementEvent({ type: 'active_study_day', activeDays: next.daysStudied, streak: currentStreak(next) });
       return next;
     });
   }, []);
@@ -267,6 +271,7 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
 
   // ── Personal notes ────────────────────────────────────────────────────────
   const addNote = useCallback((note: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => {
+    publishAchievementEvent({ type: 'note_created' });
     const now = Date.now();
     const full: Note = { ...note, id: `note-${now}-${Math.random().toString(36).slice(2, 8)}`, createdAt: now, updatedAt: now };
     setNotes(prev => {

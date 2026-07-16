@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import * as Speech from 'expo-speech';
 import { Audio, InterruptionModeIOS, InterruptionModeAndroid } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { publishAchievementEvent } from '@/context/AchievementContext';
 import * as Haptics from 'expo-haptics';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Crypto from 'expo-crypto';
@@ -328,6 +329,23 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   // fetched/loaded (status 'loading') — createAsync's shouldPlay:true would
   // otherwise start playback regardless of the pause tap that raced it.
   const pausePendingRef    = useRef(false);
+  // Listening-time tracking: accumulate real playback deltas (≤2s each, so
+  // seeks/skips don't count) and flush to the achievement engine every 10s of
+  // actual listening — keeps engine updates rare and farming unattractive.
+  const lastPosMsRef = useRef(0);
+  const pendingListenMsRef = useRef(0);
+  const trackListening = (posMs: number) => {
+    const delta = posMs - lastPosMsRef.current;
+    lastPosMsRef.current = posMs;
+    if (delta > 0 && delta <= 2000) {
+      pendingListenMsRef.current += delta;
+      if (pendingListenMsRef.current >= 10000) {
+        const secs = Math.floor(pendingListenMsRef.current / 1000);
+        pendingListenMsRef.current -= secs * 1000;
+        publishAchievementEvent({ type: 'audio_progressed', seconds: secs });
+      }
+    }
+  };
   // Dedupes concurrent prefetch downloads for the same voice+text so rapid
   // track advances (or a slow prefetch overlapping the next one) never fire
   // two downloads for the same clip.
@@ -567,6 +585,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     setCurrentIndex(index);
     setStatus('loading');
     setPosition(0);
+    lastPosMsRef.current = 0;
     setDuration(0);
 
     const advance = () => {
@@ -620,6 +639,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         }
         sound.setOnPlaybackStatusUpdate(st => {
           if (!st.isLoaded || generationRef.current !== gen) return;
+          trackListening(st.positionMillis ?? 0);
           setPosition(st.positionMillis ?? 0);
           setDuration(st.durationMillis ?? 0);
           if (st.didJustFinish) {
@@ -683,6 +703,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         }
         sound.setOnPlaybackStatusUpdate(st => {
           if (!st.isLoaded || generationRef.current !== gen) return;
+          trackListening(st.positionMillis ?? 0);
           setPosition(st.positionMillis ?? 0);
           setDuration(st.durationMillis ?? 0);
           if (st.didJustFinish) {

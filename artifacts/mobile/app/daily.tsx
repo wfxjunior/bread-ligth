@@ -31,6 +31,7 @@ import AudioPlayer from '@/components/AudioPlayer';
 import PronunciationPractice from '@/components/PronunciationPractice';
 import { getEntryForDate, resolveVerse, todayKey } from '@/utils/dailyVerse';
 import { t } from '@/constants/i18n';
+import { publishAchievementEvent } from '@/context/AchievementContext';
 import { APP_SHARE_URL } from '@/utils/shareLink';
 
 // ── Palette — derived from the active Reading Atmosphere ──────────────────────
@@ -457,6 +458,7 @@ export default function DailyScreen() {
       if (!res.ok || data.error) throw new Error(data.error ?? 'Erro desconhecido');
       setDevText(data.text);
       await AsyncStorage.setItem(DEVOTIONAL_KEY, data.text).catch(() => {});
+      publishAchievementEvent({ type: 'devotional_completed', dayKey: todayKey() });
     } catch (err: any) {
       setDevError(err.message ?? 'Não foi possível gerar o devocional.');
     } finally {

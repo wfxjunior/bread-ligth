@@ -15,6 +15,7 @@ import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useBible, type VocabWord } from '@/context/BibleContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { dueWords } from '@/constants/srs';
+import { publishAchievementEvent } from '@/context/AchievementContext';
 import FlashCard from '@/components/FlashCard';
 import { fontSize as ts } from '@/constants/design';
 
@@ -185,7 +186,10 @@ export default function VocabScreen() {
         ) : (
           <ReviewSession
             words={session}
-            onDone={remembered => setSessionResult({ remembered, total: session.length })}
+            onDone={remembered => {
+              publishAchievementEvent({ type: 'vocabulary_review_completed' });
+              setSessionResult({ remembered, total: session.length });
+            }}
           />
         )
       ) : (
