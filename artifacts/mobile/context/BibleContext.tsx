@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { applyReview } from '@/constants/srs';
 
 const STORAGE_KEYS = {
   BOOKMARKS: '@bibliaeN:bookmarks',
@@ -33,6 +34,12 @@ export interface VocabWord {
   context: string;
   mastered: boolean;
   addedAt: number;
+  // ── Spaced repetition (Leitner; see constants/srs.ts) ──
+  // Optional so words saved before SRS existed keep working: absent fields
+  // read as box 0 / due now, which is exactly how a new word should behave.
+  srsLevel?: number;       // 0..SRS_MAX_LEVEL
+  nextReviewAt?: number;   // epoch ms when the word is due again
+  lastReviewedAt?: number; // epoch ms of the last review answer
 }
 
 export interface ReadingProgress {
@@ -96,6 +103,7 @@ interface BibleContextType {
   addToVocabulary: (word: VocabWord) => void;
   removeFromVocabulary: (word: string) => void;
   toggleMastered: (word: string) => void;
+  reviewWord: (word: string, remembered: boolean) => void;
   setDisplayMode: (mode: DisplayMode) => void;
   saveReadingProgress: (progress: ReadingProgress) => void;
   clearVocabulary: () => void;
@@ -203,6 +211,15 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
   const toggleMastered = useCallback((word: string) => {
     setVocabulary(prev => {
       const next = prev.map(v => v.word === word ? { ...v, mastered: !v.mastered } : v);
+      AsyncStorage.setItem(STORAGE_KEYS.VOCABULARY, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  }, []);
+
+  // Records one spaced-repetition review answer (see constants/srs.ts).
+  const reviewWord = useCallback((word: string, remembered: boolean) => {
+    setVocabulary(prev => {
+      const next = prev.map(v => v.word === word ? applyReview(v, remembered) : v);
       AsyncStorage.setItem(STORAGE_KEYS.VOCABULARY, JSON.stringify(next)).catch(() => {});
       return next;
     });
@@ -327,6 +344,7 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
       addToVocabulary,
       removeFromVocabulary,
       toggleMastered,
+      reviewWord,
       setDisplayMode,
       saveReadingProgress,
       clearVocabulary,

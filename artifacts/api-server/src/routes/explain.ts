@@ -53,6 +53,9 @@ router.get("/explain", async (req, res) => {
   const verse   = typeof q.verse   === "string" ? q.verse.slice(0, 4)   : "";
   const en      = typeof q.en      === "string" ? q.en.slice(0, 500)    : "";
   const lang    = typeof q.lang    === "string" && q.lang === "en" ? "en" : "pt";
+  const level   = typeof q.level   === "string" && ["beginner", "intermediate", "advanced"].includes(q.level)
+    ? (q.level as "beginner" | "intermediate" | "advanced")
+    : "intermediate";
 
   // Error messages follow the reader's chosen language, matching the UI.
   const msg = (en_: string, pt_: string) => (lang === "en" ? en_ : pt_);
@@ -73,9 +76,27 @@ router.get("/explain", async (req, res) => {
 
   const ref = [book, chapter && verse ? `${chapter}:${verse}` : chapter].filter(Boolean).join(" ");
 
+  // The reader's self-selected English level (CEFR-ish) shapes how the
+  // explanation is written — this is a language-learning app, so the
+  // explanation itself is reading practice matched to their ability.
+  const LEVEL_STYLE_EN = {
+    beginner:
+      " The reader is a BEGINNER English learner (CEFR A2): use only very common everyday words, short sentences (max ~10 words each), present tense where possible, and no idioms.",
+    intermediate:
+      " The reader is an INTERMEDIATE English learner (CEFR B1): use clear everyday vocabulary and moderately short sentences; briefly restate any harder word in simpler terms.",
+    advanced:
+      " The reader is an ADVANCED English learner (CEFR C1): natural fluent English is fine, including richer vocabulary, but stay concise and avoid archaic language.",
+  } as const;
+  const LEVEL_STYLE_PT = {
+    beginner:
+      " O leitor está aprendendo inglês no nível INICIANTE; sua explicação é em português, mas se citar palavras em inglês, escolha apenas palavras muito comuns.",
+    intermediate: "",
+    advanced: "",
+  } as const;
+
   const systemPrompt = lang === "en"
-    ? "You are a warm, clear Bible teacher. Explain Bible verses in simple, accessible American English for any reader. Be concise, practical and encouraging. Maximum 80 words. Output plain prose only — no markdown formatting."
-    : "Você é um professor de Bíblia gentil e claro. Explique versículos bíblicos em português brasileiro simples, acessível para qualquer pessoa. Seja conciso, prático e encorajador. Máximo 80 palavras. Escreva apenas em prosa simples, sem formatação markdown.";
+    ? "You are a warm, clear Bible teacher. Explain Bible verses in simple, accessible American English for any reader. Be concise, practical and encouraging. Maximum 80 words. Output plain prose only — no markdown formatting." + LEVEL_STYLE_EN[level]
+    : "Você é um professor de Bíblia gentil e claro. Explique versículos bíblicos em português brasileiro simples, acessível para qualquer pessoa. Seja conciso, prático e encorajador. Máximo 80 palavras. Escreva apenas em prosa simples, sem formatação markdown." + LEVEL_STYLE_PT[level];
 
   const userPrompt = lang === "en"
     ? `Explain the meaning of ${ref} in simple terms:\n\n"${en}"\n\nWhat does this verse mean? What is the main message?`

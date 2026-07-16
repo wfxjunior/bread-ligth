@@ -389,6 +389,15 @@ const strings = {
   vocab_empty_filtered_title:  { pt: 'Nenhuma palavra nesta categoria', en: 'No words in this category' },
   vocab_empty_sub:             { pt: 'Toque em palavras em inglês durante a leitura para salvar no vocabulário', en: 'Tap English words while reading to save them to your vocabulary' },
   vocab_empty_filtered_sub:    { pt: 'Altere o filtro para ver outras palavras', en: 'Change the filter to see other words' },
+  vocab_review_banner_one:     { pt: 'palavra para revisar hoje', en: 'word to review today' },
+  vocab_review_banner_many:    { pt: 'palavras para revisar hoje', en: 'words to review today' },
+  vocab_review_start:          { pt: 'Revisar agora', en: 'Review now' },
+  vocab_review_remembered:     { pt: 'Lembrei', en: 'I knew it' },
+  vocab_review_forgot:         { pt: 'Não lembrei', en: "Didn't know" },
+  vocab_review_reveal_hint:    { pt: 'Toque no cartão para ver a resposta', en: 'Tap the card to reveal the answer' },
+  vocab_review_done_title:     { pt: 'Revisão concluída!', en: 'Review complete!' },
+  vocab_review_done_sub:       { pt: 'palavras lembradas', en: 'words remembered' },
+  vocab_review_finish:         { pt: 'Concluir', en: 'Done' },
 
   // ── Bookmarks screen
   bookmarks_title:          { pt: 'Favoritos', en: 'Favorites' },

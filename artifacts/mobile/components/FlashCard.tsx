@@ -15,11 +15,17 @@ import { AudioPlayButton } from './AudioPlayButton';
 
 interface FlashCardProps {
   item: VocabWord;
-  onMastered: () => void;
-  onDelete: () => void;
+  onMastered?: () => void;
+  onDelete?: () => void;
+  /** Hides the mastered/delete row — used by the SRS review session, which
+   *  renders its own answer buttons below the card. */
+  hideActions?: boolean;
+  /** Called whenever the card flips; lets the review session reveal its
+   *  answer buttons only after the reader has seen the translation. */
+  onFlip?: (flipped: boolean) => void;
 }
 
-export default function FlashCard({ item, onMastered, onDelete }: FlashCardProps) {
+export default function FlashCard({ item, onMastered, onDelete, hideActions, onFlip }: FlashCardProps) {
   const colors = useColors();
   const { t } = useLanguage();
   const [flipped, setFlipped] = useState(false);
@@ -30,7 +36,8 @@ export default function FlashCard({ item, onMastered, onDelete }: FlashCardProps
     const toValue = flipped ? 0 : 1;
     rotate.value = withTiming(toValue, { duration: 350 });
     setFlipped(!flipped);
-  }, [flipped, rotate]);
+    onFlip?.(!flipped);
+  }, [flipped, rotate, onFlip]);
 
   const frontStyle = useAnimatedStyle(() => ({
     transform: [
@@ -87,6 +94,7 @@ export default function FlashCard({ item, onMastered, onDelete }: FlashCardProps
         </Animated.View>
       </Pressable>
 
+      {!hideActions && (
       <View style={styles.actions}>
         <TouchableOpacity
           style={[
@@ -113,6 +121,7 @@ export default function FlashCard({ item, onMastered, onDelete }: FlashCardProps
           <Feather name="trash-2" size={16} color={colors.mutedForeground} />
         </TouchableOpacity>
       </View>
+      )}
     </View>
   );
 }

@@ -451,12 +451,16 @@ export default function ChapterScreen() {
     const explainLang = audio.readingLanguage;
     setExplainSheet({ v, loading: true, text: '', lang: explainLang });
     try {
+      // The reader's English level (set in Settings) shapes how the AI writes
+      // the explanation — matched-difficulty text is itself reading practice.
+      const level = (await AsyncStorage.getItem('@bibliaeN:level').catch(() => null)) ?? 'intermediate';
       const params = new URLSearchParams({
         book:    book?.englishName ?? '',
         chapter: String(chapterNum),
         verse:   String(v),
         en:      vrs.en,
         lang:    explainLang,
+        level,
       });
       const res  = await fetch(`${API_BASE}/explain?${params}`);
       const data = await res.json() as { text?: string; error?: string };
