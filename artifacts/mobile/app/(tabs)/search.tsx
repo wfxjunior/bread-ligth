@@ -96,7 +96,7 @@ export default function SearchScreen() {
             autoCorrect={false}
           />
           {query.length > 0 && (
-            <TouchableOpacity onPress={() => setQuery('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity onPress={() => setQuery('')} accessibilityRole="button" accessibilityLabel={tl('a11y_clear_search')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <Feather name="x-circle" size={16} color={colors.mutedForeground} />
             </TouchableOpacity>
           )}

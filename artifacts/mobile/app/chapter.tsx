@@ -159,7 +159,7 @@ function BookPickerModal({
 
           <View style={styles.sheetHeader}>
             <Text style={[styles.sheetTitle, { color: colors.foreground }]}>{t(lang, 'book_picker_title')}</Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel={t(lang, 'a11y_close')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <Feather name="x" size={20} color={colors.mutedForeground} />
             </TouchableOpacity>
           </View>
@@ -517,6 +517,8 @@ export default function ChapterScreen() {
           {/* Back */}
           <TouchableOpacity
             onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel={t(lang, 'a11y_back')}
             style={styles.headerBtn}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
@@ -565,6 +567,8 @@ export default function ChapterScreen() {
           {/* Focus / expand button */}
           <TouchableOpacity
             onPress={toggleFocus}
+            accessibilityRole="button"
+            accessibilityLabel={t(lang, 'a11y_focus_on')}
             style={styles.focusBtn}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
@@ -609,6 +613,8 @@ export default function ChapterScreen() {
       {focusMode && (
         <TouchableOpacity
           onPress={toggleFocus}
+          accessibilityRole="button"
+          accessibilityLabel={t(lang, 'a11y_focus_off')}
           style={[styles.focusExitBtn, {
             top: topPad + 12,
             backgroundColor: colors.card,
@@ -859,7 +865,7 @@ export default function ChapterScreen() {
                       {book?.englishName} {chapterNum}:{noteSheet.v}
                     </Text>
                   </View>
-                  <TouchableOpacity onPress={closeNote} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                  <TouchableOpacity onPress={closeNote} accessibilityRole="button" accessibilityLabel={t(lang, 'a11y_close')} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
                     <Feather name="x" size={20} color={colors.mutedForeground} />
                   </TouchableOpacity>
                 </View>
@@ -883,6 +889,8 @@ export default function ChapterScreen() {
                   {!!notes[vKey(currentBookId, chapterNum, noteSheet.v)] && (
                     <TouchableOpacity
                       onPress={() => deleteNote(noteSheet.v)}
+                      accessibilityRole="button"
+                      accessibilityLabel={t(lang, 'a11y_delete_note')}
                       style={[styles.noteDeleteBtn, { borderColor: colors.border, borderRadius: colors.radius }]}
                     >
                       <Feather name="trash-2" size={16} color={colors.mutedForeground} />
@@ -937,6 +945,8 @@ export default function ChapterScreen() {
                           if (isActive) audio.togglePlayPause();
                           else audio.playQueue([{ id: 'explain', text: explainSheet.text }], 0, explainKey);
                         }}
+                        accessibilityRole="button"
+                        accessibilityLabel={t(lang, 'a11y_play_pause')}
                         hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                       >
                         {isActive && audio.isLoading ? (
@@ -951,7 +961,7 @@ export default function ChapterScreen() {
                       </TouchableOpacity>
                     );
                   })()}
-                  <TouchableOpacity onPress={closeExplain} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                  <TouchableOpacity onPress={closeExplain} accessibilityRole="button" accessibilityLabel={t(lang, 'a11y_close')} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
                     <Feather name="x" size={20} color={colors.mutedForeground} />
                   </TouchableOpacity>
                 </View>

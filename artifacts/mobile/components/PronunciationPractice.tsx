@@ -140,7 +140,9 @@ export default function PronunciationPractice({ visible, verseText, verseRef, on
               <Text style={[styles.title, { color: colors.foreground }]}>{t(lang, 'practice_title')}</Text>
               {!!verseRef && <Text style={[styles.ref, { color: colors.mutedForeground }]}>{verseRef}</Text>}
             </View>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel={t(lang, 'a11y_close')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <Feather name="x" size={20} color={colors.mutedForeground} />
             </TouchableOpacity>
           </View>

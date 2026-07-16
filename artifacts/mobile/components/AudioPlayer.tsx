@@ -3,6 +3,7 @@ import { ActivityIndicator, Platform, StyleSheet, Text, TouchableOpacity, View }
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
+import { useLanguage } from '@/context/LanguageContext';
 import { useAudio, type AudioQueueItem, MIN_RATE, MAX_RATE } from '@/context/AudioContext';
 import { GestureSlider } from './GestureSlider';
 
@@ -37,6 +38,7 @@ interface AudioPlayerProps {
  */
 export default function AudioPlayer({ items, queueKey, startIndex = 0, title, compact = false, palette }: AudioPlayerProps) {
   const colors = useColors();
+  const { t } = useLanguage();
   const audio  = useAudio();
 
   const p = {
@@ -73,6 +75,8 @@ export default function AudioPlayer({ items, queueKey, startIndex = 0, title, co
         {!compact && (
           <TouchableOpacity
             onPress={() => isActive && audio.previous()}
+            accessibilityRole="button"
+            accessibilityLabel={t('a11y_prev_verse')}
             disabled={!hasPrev}
             style={[styles.sideBtn, !hasPrev && styles.disabled]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -83,6 +87,8 @@ export default function AudioPlayer({ items, queueKey, startIndex = 0, title, co
 
         <TouchableOpacity
           onPress={handlePlayPause}
+          accessibilityRole="button"
+          accessibilityLabel={t('a11y_play_pause')}
           style={[styles.playBtn, compact && styles.playBtnCompact, { backgroundColor: p.primary }]}
           activeOpacity={0.85}
         >
@@ -101,6 +107,8 @@ export default function AudioPlayer({ items, queueKey, startIndex = 0, title, co
         {!compact && (
           <TouchableOpacity
             onPress={() => isActive && audio.next()}
+            accessibilityRole="button"
+            accessibilityLabel={t('a11y_next_verse')}
             disabled={!hasNext}
             style={[styles.sideBtn, !hasNext && styles.disabled]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}

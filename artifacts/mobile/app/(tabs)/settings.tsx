@@ -609,7 +609,7 @@ function SupportModal({ visible, onClose }: { visible: boolean; onClose: () => v
             {/* Header */}
             <View style={styles.supportModalHeader}>
               <Text style={[styles.supportModalTitle, { color: colors.foreground }]}>{t('Reportar problema', 'Report a problem')}</Text>
-              <TouchableOpacity onPress={handleClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+              <TouchableOpacity onPress={handleClose} accessibilityRole="button" accessibilityLabel={t('Fechar', 'Close')} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
                 <Feather name="x" size={20} color={colors.mutedForeground} />
               </TouchableOpacity>
             </View>
@@ -939,6 +939,8 @@ export default function SettingsScreen() {
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>{tl('settings_title')}</Text>
           <TouchableOpacity
             onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); setDrawerVisible(true); }}
+            accessibilityRole="button"
+            accessibilityLabel={tl('a11y_menu')}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
             <Feather name="menu" size={22} color={colors.foreground} />
@@ -1171,6 +1173,8 @@ export default function SettingsScreen() {
                 return (
                   <TouchableOpacity
                     key={c.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={tl('a11y_select')}
                     onPress={() => {
                       if (Platform.OS !== 'web') Haptics.selectionAsync();
                       if (locked) { goToPremium(); return; }
@@ -1347,7 +1351,7 @@ export default function SettingsScreen() {
               <Text style={[styles.evictionNoticeText, { color: colors.foreground }]}>
                 {tl('offline_audio_evicted').replace('{size}', formatCacheSize(audio.evictionNotice.bytes))}
               </Text>
-              <TouchableOpacity onPress={handleDismissEvictionNotice} hitSlop={8}>
+              <TouchableOpacity onPress={handleDismissEvictionNotice} accessibilityRole="button" accessibilityLabel={tl('a11y_close')} hitSlop={8}>
                 <Feather name="x" size={14} color={colors.mutedForeground} />
               </TouchableOpacity>
             </View>
@@ -1416,6 +1420,8 @@ export default function SettingsScreen() {
                       </Text>
                       <TouchableOpacity
                         onPress={() => handleDeleteCacheEntry(key, entry.label)}
+                        accessibilityRole="button"
+                        accessibilityLabel={tl('a11y_clear_cache_item')}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                       >
                         <Feather name="x" size={14} color={colors.mutedForeground} />

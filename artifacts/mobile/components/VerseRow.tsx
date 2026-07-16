@@ -3,6 +3,7 @@ import { Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'r
 import { Ionicons, Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
+import { useLanguage } from '@/context/LanguageContext';
 import { type DisplayMode } from '@/context/BibleContext';
 import { type BibleVerse } from '@/constants/bibleData';
 
@@ -40,6 +41,7 @@ function VerseRow({
   isPlayingHighlight = false,
 }: VerseRowProps) {
   const colors  = useColors();
+  const { t } = useLanguage();
   const rowRef  = useRef<View>(null);
 
   const handleBookmark = () => {
@@ -153,6 +155,8 @@ function VerseRow({
       {onSpeak && (
         <TouchableOpacity
           onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); onSpeak(); }}
+          accessibilityRole="button"
+          accessibilityLabel={t(isSpeakingThis ? 'a11y_stop_listening' : 'a11y_listen')}
           style={styles.speakBtn}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
@@ -168,6 +172,8 @@ function VerseRow({
       {/* Bookmark button */}
       <TouchableOpacity
         onPress={handleBookmark}
+        accessibilityRole="button"
+        accessibilityLabel={t(isBookmarked ? 'a11y_remove_saved' : 'action_save')}
         style={styles.bookmarkBtn}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >

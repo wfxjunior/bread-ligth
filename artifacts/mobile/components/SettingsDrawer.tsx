@@ -107,6 +107,8 @@ export default function SettingsDrawer({
           <Text style={[styles.brand, { color: colors.foreground }]}>Bread{'&'}Light</Text>
           <TouchableOpacity
             onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel={t('a11y_close')}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
             <Feather name="x" size={20} color={colors.mutedForeground} />

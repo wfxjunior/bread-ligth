@@ -42,7 +42,9 @@ export default function AddVerseModal({ visible, onClose, bookmarks, onPick }: P
         <Pressable onPress={() => {}} style={[styles.sheet, { backgroundColor: colors.card, borderRadius: colors.radius }]}>
           <View style={styles.sheetHeader}>
             <Text style={[styles.sheetTitle, { color: colors.foreground }]}>{tl('devotionals_add_verse_title')}</Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel={tl('a11y_close')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <Feather name="x" size={18} color={colors.mutedForeground} />
             </TouchableOpacity>
           </View>

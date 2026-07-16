@@ -106,7 +106,9 @@ export default function WordModal({ visible, word, context, onClose }: WordModal
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
+      <Pressable style={styles.backdrop} onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel={t('a11y_close')}>
         <Pressable style={[styles.sheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[styles.handle, { backgroundColor: colors.border }]} />
 
@@ -122,7 +124,9 @@ export default function WordModal({ visible, word, context, onClose }: WordModal
                 </Text>
               )}
             </View>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel={t('a11y_close')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <Feather name="x" size={22} color={colors.mutedForeground} />
             </TouchableOpacity>
           </View>

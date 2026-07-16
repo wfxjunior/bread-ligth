@@ -53,6 +53,8 @@ function BookmarkCard({ item, onRemove }: { item: Bookmark; onRemove: () => void
         </View>
         <TouchableOpacity
           onPress={handleRemove}
+          accessibilityRole="button"
+          accessibilityLabel={tl('a11y_remove_saved')}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <Feather name="x" size={16} color={colors.mutedForeground} />

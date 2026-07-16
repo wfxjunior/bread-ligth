@@ -72,7 +72,7 @@ function NewPlanModal({ visible, onClose, onCreate }: { visible: boolean; onClos
         <Pressable onPress={() => {}} style={[styles.sheet, { backgroundColor: colors.card, borderRadius: colors.radius }]}>
           <View style={styles.sheetHeader}>
             <Text style={[styles.sheetTitle, { color: colors.foreground }]}>{tl('devotionals_new_plan_title')}</Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel={tl('a11y_close')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <Feather name="x" size={18} color={colors.mutedForeground} />
             </TouchableOpacity>
           </View>
@@ -185,7 +185,7 @@ export default function DevotionalPlansScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => router.back()} accessibilityRole="button" accessibilityLabel={tl('a11y_back')} activeOpacity={0.7} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={styles.backBtn}>
           <Feather name="chevron-left" size={20} color={colors.mutedForeground} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
@@ -225,7 +225,7 @@ export default function DevotionalPlansScreen() {
                 </View>
                 <Feather name={expanded ? 'chevron-up' : 'chevron-down'} size={16} color={colors.mutedForeground} />
                 {item.custom && (
-                  <TouchableOpacity onPress={() => handleDeletePlan(item)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={{ marginLeft: 6 }}>
+                  <TouchableOpacity onPress={() => handleDeletePlan(item)} accessibilityRole="button" accessibilityLabel={tl('a11y_delete_plan')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={{ marginLeft: 6 }}>
                     <Feather name="trash-2" size={15} color={colors.mutedForeground} />
                   </TouchableOpacity>
                 )}
@@ -243,7 +243,7 @@ export default function DevotionalPlansScreen() {
                       const done = !!planVerseDone[v.key];
                       return (
                         <View key={v.key} style={[styles.verseRow, { borderColor: colors.border, borderRadius: colors.radius / 1.5 }]}>
-                          <TouchableOpacity onPress={() => toggleVerseDone(v.key)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                          <TouchableOpacity onPress={() => toggleVerseDone(v.key)} accessibilityRole="button" accessibilityLabel={tl('a11y_mark_done')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                             <Feather name={done ? 'check-circle' : 'circle'} size={18} color={done ? colors.accent : colors.mutedForeground} />
                           </TouchableOpacity>
                           <TouchableOpacity style={{ flex: 1 }} onPress={() => goToVerse(v)} activeOpacity={0.8}>
@@ -251,7 +251,7 @@ export default function DevotionalPlansScreen() {
                             <Text style={[styles.verseText, { color: colors.foreground, textDecorationLine: done ? 'line-through' : 'none' }]} numberOfLines={2}>{v.en}</Text>
                           </TouchableOpacity>
                           {v.removable && v.planVerseId && (
-                            <TouchableOpacity onPress={() => removePlanVerse(v.planVerseId!)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                            <TouchableOpacity onPress={() => removePlanVerse(v.planVerseId!)} accessibilityRole="button" accessibilityLabel={tl('a11y_remove_verse')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                               <Feather name="x" size={15} color={colors.mutedForeground} />
                             </TouchableOpacity>
                           )}

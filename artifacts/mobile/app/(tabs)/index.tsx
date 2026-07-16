@@ -234,6 +234,8 @@ function DailyPill() {
           {/* Subtle listen button — launches the shared player experience */}
           <TouchableOpacity
             onPress={handlePlayToggle}
+            accessibilityRole="button"
+            accessibilityLabel={tl('a11y_play_pause')}
             activeOpacity={0.72}
             style={styles.pillPlayBtn}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -271,7 +273,7 @@ function DailyPill() {
           </View>
 
           {/* Expand toggle */}
-          <TouchableOpacity onPress={toggle} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity onPress={toggle} accessibilityRole="button" accessibilityLabel={tl('a11y_expand')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Feather name={expanded ? 'chevron-up' : 'chevron-down'} size={16} color={colors.mutedForeground} />
           </TouchableOpacity>
 

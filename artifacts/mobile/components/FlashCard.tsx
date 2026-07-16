@@ -116,6 +116,8 @@ export default function FlashCard({ item, onMastered, onDelete, hideActions, onF
         <TouchableOpacity
           style={[styles.actionBtn, { backgroundColor: colors.muted, borderRadius: colors.radius / 1.5 }]}
           onPress={onDelete}
+          accessibilityRole="button"
+          accessibilityLabel={t('a11y_delete')}
           activeOpacity={0.8}
         >
           <Feather name="trash-2" size={16} color={colors.mutedForeground} />
