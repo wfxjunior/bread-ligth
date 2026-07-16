@@ -524,6 +524,8 @@ const strings = {
   honor_founding_premium_title: { pt: 'Premium Fundador', en: 'Founding Premium' },
   honor_founding_premium_desc:  { pt: 'Um dos primeiros assinantes Premium', en: 'One of the first Premium subscribers' },
   community_signin_hint:        { pt: 'Entre na sua conta para ver suas honras de comunidade', en: 'Sign in to see your community honors' },
+  share_honor_prefix:           { pt: 'Alcancei um marco na minha jornada:', en: 'I reached a milestone in my journey:' },
+  home_journey_next:            { pt: 'Próximo marco', en: 'Next milestone' },
 
   a11y_repeat_off:       { pt: 'Repetição desligada', en: 'Repeat off' },
   a11y_repeat_verse:     { pt: 'Repetir versículo', en: 'Repeat verse' },

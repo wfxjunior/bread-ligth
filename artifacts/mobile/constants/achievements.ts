@@ -325,3 +325,32 @@ export function journeyTitleKey(m: Metrics): string {
   if (m.versesRead >= 1) return 'journey_title_reader';
   return 'journey_title_seeker';
 }
+
+// ── Next milestone — the single most helpful upcoming honor ──────────────────
+// Picks whichever definition is closest to completion (spec: show only one or
+// two next milestones; never overwhelm with locked achievements).
+export interface NextMilestone {
+  defId: string;
+  tier?: Tier;
+  value: number;
+  threshold: number;
+  progress: number;
+}
+
+export function nextMilestone(state: EngineState): NextMilestone | null {
+  let best: NextMilestone | null = null;
+  for (const def of DEFINITIONS) {
+    if (def.kind === 'family') {
+      const v = familyView(state, def);
+      if (v.nextTier && (!best || v.progressToNext > best.progress)) {
+        best = { defId: def.id, tier: v.nextTier.tier, value: v.value, threshold: v.nextTier.threshold, progress: v.progressToNext };
+      }
+    } else {
+      const v = singleView(state, def);
+      if (!v.earned && v.progress > 0 && (!best || v.progress > best.progress)) {
+        best = { defId: def.id, value: v.value, threshold: v.threshold, progress: v.progress };
+      }
+    }
+  }
+  return best;
+}

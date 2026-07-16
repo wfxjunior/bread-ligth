@@ -31,6 +31,8 @@ import AudioPlayer from '@/components/AudioPlayer';
 import WordModal from '@/components/WordModal';
 import { BookshelfLibrary, CATEGORY_INFO, type BookCategory } from '@/components/BookshelfLibrary';
 import ProgressModal, { type ProgressStat } from '@/components/ProgressModal';
+import { useAchievements } from '@/context/AchievementContext';
+import { nextMilestone } from '@/constants/achievements';
 import { FEATURED_PASSAGES, type FeaturedPassage } from '@/constants/featuredPassages';
 
 const PAD    = 16;
@@ -856,6 +858,10 @@ export default function HomeScreen() {
     ];
     return PROGRESS_STATS_TEMPLATE.map((s, i) => ({ ...s, value: values[i] }));
   }, [vocabulary.length, bookmarks.length, studyStats.daysStudied, studyStats.streak]);
+
+  // Subtle Journey teaser — ONE next milestone; Scripture stays primary.
+  const { state: honorState } = useAchievements();
+  const nextHonor = React.useMemo(() => nextMilestone(honorState), [honorState]);
   const { width } = useWindowDimensions();
   const cardW     = Math.floor((width - PAD * 2 - GAP) / 2);
 
@@ -1265,6 +1271,32 @@ export default function HomeScreen() {
 
           <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
         </TouchableOpacity>
+
+        {nextHonor && (
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); router.push('/journey'); }}
+            accessibilityRole="button"
+            style={[styles.progressSummary, {
+              backgroundColor: colors.card,
+              borderColor:     colors.border,
+              borderRadius:    colors.radius + 2,
+              marginTop:       10,
+            }]}
+          >
+            <View style={[styles.progressHeroBadge, { backgroundColor: colors.space.accent + '18' }]}>
+              <Feather name="award" size={17} color={colors.space.accent} />
+            </View>
+            <View style={styles.progressSummaryText}>
+              <Text style={[styles.progressHeroSub, { color: colors.mutedForeground }]}>{t('home_journey_next')}</Text>
+              <Text style={[styles.progressHeroValue, { color: colors.foreground, fontSize: 15 }]} numberOfLines={1}>
+                {t(`honor_${nextHonor.defId}_title` as I18nKey)}
+                {nextHonor.tier ? ` — ${t(`tier_${nextHonor.tier}` as I18nKey)}` : ''} · {nextHonor.value}/{nextHonor.threshold}
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+          </TouchableOpacity>
+        )}
       </View>
 
       <ProgressModal
