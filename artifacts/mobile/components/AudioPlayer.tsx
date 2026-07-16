@@ -151,6 +151,30 @@ export default function AudioPlayer({ items, queueKey, startIndex = 0, title, co
             />
           </View>
           <Text style={[styles.speedLabel, { color: p.mutedForeground }]}>{audio.rate.toFixed(2)}x</Text>
+
+          {/* Repeat toggle: off → verse → chapter. Active modes tint primary;
+              verse mode shows a "1" to distinguish single-verse looping. */}
+          <TouchableOpacity
+            onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); audio.cycleRepeat(); }}
+            accessibilityRole="button"
+            accessibilityLabel={t(
+              audio.repeatMode === 'verse' ? 'a11y_repeat_verse'
+              : audio.repeatMode === 'chapter' ? 'a11y_repeat_chapter'
+              : 'a11y_repeat_off',
+            )}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={styles.repeatBtn}
+          >
+            <Feather
+              name="repeat"
+              size={13}
+              color={audio.repeatMode === 'off' ? p.mutedForeground : p.primary}
+              style={{ opacity: audio.repeatMode === 'off' ? 0.5 : 1 }}
+            />
+            {audio.repeatMode === 'verse' && (
+              <Text style={[styles.repeatBadge, { color: p.primary }]}>1</Text>
+            )}
+          </TouchableOpacity>
         </View>
       )}
     </View>
@@ -191,5 +215,15 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   speedSlider: { flex: 1 },
+  repeatBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  repeatBadge: {
+    fontSize: 8,
+    fontFamily: 'Inter_700Bold',
+    marginLeft: 1,
+  },
   speedLabel: { fontSize: 10, fontFamily: 'Inter_600SemiBold', width: 34, textAlign: 'right' },
 });

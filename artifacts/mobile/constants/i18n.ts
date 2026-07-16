@@ -423,6 +423,9 @@ const strings = {
   a11y_remove_verse:     { pt: 'Remover versículo do plano', en: 'Remove verse from plan' },
   a11y_delete_plan:      { pt: 'Excluir plano', en: 'Delete plan' },
   a11y_clear_cache_item: { pt: 'Remover voz baixada', en: 'Remove downloaded voice' },
+  a11y_repeat_off:       { pt: 'Repetição desligada', en: 'Repeat off' },
+  a11y_repeat_verse:     { pt: 'Repetir versículo', en: 'Repeat verse' },
+  a11y_repeat_chapter:   { pt: 'Repetir capítulo', en: 'Repeat chapter' },
 
   // ── Bookmarks screen
   bookmarks_title:          { pt: 'Favoritos', en: 'Favorites' },
