@@ -20,6 +20,8 @@ import { useColors } from '@/hooks/useColors';
 import { useLanguage } from '@/context/LanguageContext';
 import { useBible } from '@/context/BibleContext';
 import { fontSize as ts } from '@/constants/design';
+import { computeMedals, earnedCount, type MedalState } from '@/constants/achievements';
+import type { I18nKey } from '@/constants/i18n';
 
 type ActivityItem = {
   id: string;
@@ -42,17 +44,64 @@ function StatCard({ icon, value, label, color }: { icon: string; value: number; 
   );
 }
 
+// One medal badge: gold-tinted when earned; locked medals show a thin progress
+// ring substitute (count toward threshold) so the next goal is always visible.
+function MedalBadge({ medal, title, desc }: { medal: MedalState; title: string; desc: string }) {
+  const colors = useColors();
+  const tint = medal.earned ? colors.accent : colors.mutedForeground;
+  return (
+    <View
+      style={[
+        styles.medal,
+        {
+          backgroundColor: medal.earned ? colors.accent + '14' : colors.card,
+          borderColor: medal.earned ? colors.accent + '55' : colors.border,
+          borderRadius: colors.radius,
+          opacity: medal.earned ? 1 : 0.82,
+        },
+      ]}
+      accessibilityLabel={`${title} — ${desc}`}
+    >
+      <View style={[styles.medalIcon, { backgroundColor: medal.earned ? colors.accent + '22' : colors.muted }]}>
+        <Feather name={medal.icon as any} size={16} color={tint} />
+      </View>
+      <Text style={[styles.medalTitle, { color: colors.foreground }]} numberOfLines={1}>{title}</Text>
+      <Text style={[styles.medalDesc, { color: colors.mutedForeground }]} numberOfLines={2}>{desc}</Text>
+      {!medal.earned && (
+        <Text style={[styles.medalProgress, { color: colors.mutedForeground }]}>
+          {medal.current}/{medal.threshold}
+        </Text>
+      )}
+      {medal.earned && (
+        <View style={styles.medalCheck}>
+          <Feather name="check" size={11} color={colors.accent} />
+        </View>
+      )}
+    </View>
+  );
+}
+
 export default function JourneyScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { t: tl } = useLanguage();
-  const { vocabulary, bookmarks, notes } = useBible();
+  const { vocabulary, bookmarks, notes, studyStats } = useBible();
 
   const topPad = Platform.OS === 'web' ? 67 : insets.top;
 
   const masteredCount = vocabulary.filter(v => v.mastered).length;
   const learningCount = vocabulary.length - masteredCount;
   const masteryPct = vocabulary.length > 0 ? masteredCount / vocabulary.length : 0;
+
+  const medals = useMemo(() => computeMedals({
+    streak: studyStats.streak,
+    daysStudied: studyStats.daysStudied,
+    wordsSaved: vocabulary.length,
+    wordsMastered: masteredCount,
+    versesSaved: bookmarks.length,
+    notesCount: notes.length,
+  }), [studyStats.streak, studyStats.daysStudied, vocabulary.length, masteredCount, bookmarks.length, notes.length]);
+  const medalsEarned = earnedCount(medals);
 
   const activity: ActivityItem[] = useMemo(() => {
     const items: ActivityItem[] = [
@@ -115,6 +164,26 @@ export default function JourneyScreen() {
               )}
             </View>
 
+            {/* ── Medals ── */}
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
+              <View style={styles.medalsHeader}>
+                <Text style={[styles.cardTitle, { color: colors.foreground }]}>{tl('journey_medals_title')}</Text>
+                <Text style={[styles.medalsCount, { color: colors.mutedForeground }]}>
+                  {medalsEarned}/{medals.length} {tl('journey_medals_count')}
+                </Text>
+              </View>
+              <View style={styles.medalsGrid}>
+                {medals.map(m => (
+                  <MedalBadge
+                    key={m.id}
+                    medal={m}
+                    title={tl(`medal_${m.id}_title` as I18nKey)}
+                    desc={tl(`medal_${m.id}_desc` as I18nKey)}
+                  />
+                ))}
+              </View>
+            </View>
+
             <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>{tl('journey_activity_title')}</Text>
           </View>
         }
@@ -168,6 +237,16 @@ const styles = StyleSheet.create({
   legendDot: { width: 8, height: 8, borderRadius: 4 },
   legendText: { fontSize: 12, fontFamily: 'Inter_400Regular' },
   emptyText: { fontSize: 13, fontFamily: 'Inter_400Regular', lineHeight: 19 },
+
+  medalsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  medalsCount: { fontSize: 12, fontFamily: 'Inter_500Medium' },
+  medalsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  medal: { flexBasis: '47%', flexGrow: 1, padding: 12, borderWidth: 1, gap: 4 },
+  medalIcon: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
+  medalTitle: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
+  medalDesc: { fontSize: 11, fontFamily: 'Inter_400Regular', lineHeight: 15 },
+  medalProgress: { fontSize: 11, fontFamily: 'Inter_600SemiBold', marginTop: 2 },
+  medalCheck: { position: 'absolute', top: 10, right: 10 },
 
   sectionLabel: { fontSize: 12, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.6 },
   activityRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 13, borderWidth: 1 },
