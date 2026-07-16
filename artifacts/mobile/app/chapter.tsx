@@ -33,6 +33,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { READING_SPACES } from '@/constants/colors';
 import SpaceBackground from '@/components/SpaceBackground';
 import { useLanguage } from '@/context/LanguageContext';
+import { publishAchievementEvent } from '@/context/AchievementContext';
 import { t } from '@/constants/i18n';
 
 // ── Text size selector ────────────────────────────────────────────────────────
@@ -159,7 +160,7 @@ function BookPickerModal({
 
           <View style={styles.sheetHeader}>
             <Text style={[styles.sheetTitle, { color: colors.foreground }]}>{t(lang, 'book_picker_title')}</Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel={t(lang, 'a11y_close')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <Feather name="x" size={20} color={colors.mutedForeground} />
             </TouchableOpacity>
           </View>
@@ -240,6 +241,12 @@ export default function ChapterScreen() {
   // into the next chapter (and next book, at a book's end) automatically.
   // Never starts playback on its own — only continues audio already begun
   // by the user on this screen.
+  // One verse_read per chapter view — represents "read at least a verse";
+  // chapter completion (below) is a separate, stricter signal.
+  useEffect(() => {
+    if (verses.length > 0) publishAchievementEvent({ type: 'verse_read' });
+  }, [currentBookId, chapterNum, verses.length]);
+
   const pendingChapterAutoplayRef = useRef(false);
 
   const advanceToNextChapterAndKeepPlaying = useCallback(() => {
@@ -270,6 +277,10 @@ export default function ChapterScreen() {
       audio.queue.length > 0 &&
       audio.currentIndex === audio.queue.length - 1
     ) {
+      publishAchievementEvent({ type: 'audio_chapter_completed', bookId: currentBookId, chapter: chapterNum });
+      // Hearing the whole chapter also counts as completing it (see spec:
+      // Complete Audio Chapter) — the engine dedupes with scroll completion.
+      publishAchievementEvent({ type: 'chapter_completed', bookId: currentBookId, chapter: chapterNum, totalChapters: chapterKeys.length });
       advanceToNextChapterAndKeepPlaying();
     }
   }, [audio.status, audio.queueKey, audio.currentIndex, audio.queue.length, chapterQueueKey, advanceToNextChapterAndKeepPlaying]);
@@ -451,12 +462,16 @@ export default function ChapterScreen() {
     const explainLang = audio.readingLanguage;
     setExplainSheet({ v, loading: true, text: '', lang: explainLang });
     try {
+      // The reader's English level (set in Settings) shapes how the AI writes
+      // the explanation — matched-difficulty text is itself reading practice.
+      const level = (await AsyncStorage.getItem('@bibliaeN:level').catch(() => null)) ?? 'intermediate';
       const params = new URLSearchParams({
         book:    book?.englishName ?? '',
         chapter: String(chapterNum),
         verse:   String(v),
         en:      vrs.en,
         lang:    explainLang,
+        level,
       });
       const res  = await fetch(`${API_BASE}/explain?${params}`);
       const data = await res.json() as { text?: string; error?: string };
@@ -513,6 +528,8 @@ export default function ChapterScreen() {
           {/* Back */}
           <TouchableOpacity
             onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel={t(lang, 'a11y_back')}
             style={styles.headerBtn}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
@@ -561,6 +578,8 @@ export default function ChapterScreen() {
           {/* Focus / expand button */}
           <TouchableOpacity
             onPress={toggleFocus}
+            accessibilityRole="button"
+            accessibilityLabel={t(lang, 'a11y_focus_on')}
             style={styles.focusBtn}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
@@ -605,6 +624,8 @@ export default function ChapterScreen() {
       {focusMode && (
         <TouchableOpacity
           onPress={toggleFocus}
+          accessibilityRole="button"
+          accessibilityLabel={t(lang, 'a11y_focus_off')}
           style={[styles.focusExitBtn, {
             top: topPad + 12,
             backgroundColor: colors.card,
@@ -718,6 +739,12 @@ export default function ChapterScreen() {
 
             </View>
           }
+          onEndReached={() => {
+            // Reaching the end of the verse list = real read-through, not a
+            // chapter open. The engine ignores repeats of the same chapter.
+            publishAchievementEvent({ type: 'chapter_completed', bookId: currentBookId, chapter: chapterNum, totalChapters: chapterKeys.length });
+          }}
+          onEndReachedThreshold={0.05}
           ListFooterComponent={<View style={{ height: bottomPad + 110 }} />}
           showsVerticalScrollIndicator={false}
         />
@@ -761,6 +788,13 @@ export default function ChapterScreen() {
       )}
 
       {/* ── Verse action popup ── */}
+      {selectedVerse && (
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={handleVerseDeselect}
+          accessibilityLabel={t(lang, 'close')}
+        />
+      )}
       {selectedVerse && (
         <Animated.View
           style={[
@@ -848,7 +882,7 @@ export default function ChapterScreen() {
                       {book?.englishName} {chapterNum}:{noteSheet.v}
                     </Text>
                   </View>
-                  <TouchableOpacity onPress={closeNote} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                  <TouchableOpacity onPress={closeNote} accessibilityRole="button" accessibilityLabel={t(lang, 'a11y_close')} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
                     <Feather name="x" size={20} color={colors.mutedForeground} />
                   </TouchableOpacity>
                 </View>
@@ -872,6 +906,8 @@ export default function ChapterScreen() {
                   {!!notes[vKey(currentBookId, chapterNum, noteSheet.v)] && (
                     <TouchableOpacity
                       onPress={() => deleteNote(noteSheet.v)}
+                      accessibilityRole="button"
+                      accessibilityLabel={t(lang, 'a11y_delete_note')}
                       style={[styles.noteDeleteBtn, { borderColor: colors.border, borderRadius: colors.radius }]}
                     >
                       <Feather name="trash-2" size={16} color={colors.mutedForeground} />
@@ -926,6 +962,8 @@ export default function ChapterScreen() {
                           if (isActive) audio.togglePlayPause();
                           else audio.playQueue([{ id: 'explain', text: explainSheet.text }], 0, explainKey);
                         }}
+                        accessibilityRole="button"
+                        accessibilityLabel={t(lang, 'a11y_play_pause')}
                         hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                       >
                         {isActive && audio.isLoading ? (
@@ -940,7 +978,7 @@ export default function ChapterScreen() {
                       </TouchableOpacity>
                     );
                   })()}
-                  <TouchableOpacity onPress={closeExplain} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                  <TouchableOpacity onPress={closeExplain} accessibilityRole="button" accessibilityLabel={t(lang, 'a11y_close')} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
                     <Feather name="x" size={20} color={colors.mutedForeground} />
                   </TouchableOpacity>
                 </View>

@@ -234,6 +234,8 @@ function DailyPill() {
           {/* Subtle listen button — launches the shared player experience */}
           <TouchableOpacity
             onPress={handlePlayToggle}
+            accessibilityRole="button"
+            accessibilityLabel={tl('a11y_play_pause')}
             activeOpacity={0.72}
             style={styles.pillPlayBtn}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -271,7 +273,7 @@ function DailyPill() {
           </View>
 
           {/* Expand toggle */}
-          <TouchableOpacity onPress={toggle} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity onPress={toggle} accessibilityRole="button" accessibilityLabel={tl('a11y_expand')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Feather name={expanded ? 'chevron-up' : 'chevron-down'} size={16} color={colors.mutedForeground} />
           </TouchableOpacity>
 
@@ -391,11 +393,14 @@ const STUDY_STEPS = [
   { id: 'reflect', icon: 'compass',    labelKey: 'study_step_reflect' as const },
 ];
 
-const PROGRESS_STATS: ProgressStat[] = [
-  { icon: 'type',      value: '12', labelEn: 'Words\nlearned',  labelPt: 'Palavras\naprendidas', descEn: 'Words saved to your personal vocabulary.',        descPt: 'Palavras salvas no seu vocabulário pessoal.' },
-  { icon: 'book-open', value: '4',  labelEn: 'Verses\nstudied', labelPt: 'Versículos\nestudados', descEn: 'Verses you have already read and reflected on.', descPt: 'Versículos que você já leu e refletiu.'      },
-  { icon: 'clock',     value: '18', labelEn: 'Min\nstudy time', labelPt: 'Min de\nestudo',        descEn: 'Minutes invested in the Word this week.',        descPt: 'Minutos investidos na Palavra esta semana.'  },
-  { icon: 'zap',       value: '7',  labelEn: 'Day\nstreak',     labelPt: 'Dias\nseguidos',        descEn: 'Consecutive days of steady study.',               descPt: 'Dias seguidos de estudo constante.'          },
+// Template for the four progress stats — real values are injected at render
+// time from live data (vocabulary, bookmarks, streak), so nothing here is a
+// mock. `value` is a placeholder that HomeScreen always overwrites.
+const PROGRESS_STATS_TEMPLATE: ProgressStat[] = [
+  { icon: 'type',      value: '0', labelEn: 'Words\nlearned',  labelPt: 'Palavras\naprendidas', descEn: 'Words saved to your personal vocabulary.',        descPt: 'Palavras salvas no seu vocabulário pessoal.' },
+  { icon: 'bookmark',  value: '0', labelEn: 'Verses\nsaved',   labelPt: 'Versículos\nsalvos',   descEn: 'Verses you have bookmarked to revisit.',         descPt: 'Versículos que você marcou para revisitar.'  },
+  { icon: 'calendar',  value: '0', labelEn: 'Days\nstudied',   labelPt: 'Dias\nestudados',      descEn: 'Total days you have opened the Word.',            descPt: 'Total de dias em que você abriu a Palavra.'  },
+  { icon: 'zap',       value: '0', labelEn: 'Day\nstreak',     labelPt: 'Dias\nseguidos',        descEn: 'Consecutive days of steady study.',               descPt: 'Dias seguidos de estudo constante.'          },
 ];
 
 const VOCAB_PREVIEW = [
@@ -839,7 +844,18 @@ function normalizeSearch(text: string): string {
 export default function HomeScreen() {
   const colors    = useColors();
   const insets    = useSafeAreaInsets();
-  const { readingProgress, favoriteBooks, toggleFavoriteBook } = useBible();
+  const { readingProgress, favoriteBooks, toggleFavoriteBook, vocabulary, bookmarks, studyStats } = useBible();
+
+  // Real progress stats, injected into the display template (no mock values).
+  const progressStats = React.useMemo<ProgressStat[]>(() => {
+    const values = [
+      String(vocabulary.length),
+      String(bookmarks.length),
+      String(studyStats.daysStudied),
+      String(studyStats.streak),
+    ];
+    return PROGRESS_STATS_TEMPLATE.map((s, i) => ({ ...s, value: values[i] }));
+  }, [vocabulary.length, bookmarks.length, studyStats.daysStudied, studyStats.streak]);
   const { width } = useWindowDimensions();
   const cardW     = Math.floor((width - PAD * 2 - GAP) / 2);
 
@@ -1240,10 +1256,10 @@ export default function HomeScreen() {
 
           <View style={styles.progressSummaryText}>
             <Text style={[styles.progressHeroValue, { color: colors.foreground }]}>
-              {PROGRESS_STATS[3].value}{t('progress_streak_suffix')}
+              {progressStats[3].value}{t('progress_streak_suffix')}
             </Text>
             <Text style={[styles.progressHeroSub, { color: colors.mutedForeground }]} numberOfLines={1}>
-              {PROGRESS_STATS[0].value} {t('progress_words_word')} · {PROGRESS_STATS[1].value} {t('progress_verses_word')} · {PROGRESS_STATS[2].value} min
+              {progressStats[0].value} {t('progress_words_word')} · {progressStats[1].value} {t('progress_verses_word')} · {progressStats[2].value} {t('progress_days_word')}
             </Text>
           </View>
 
@@ -1254,7 +1270,7 @@ export default function HomeScreen() {
       <ProgressModal
         visible={progressModalVisible}
         onClose={() => setProgressModalVisible(false)}
-        stats={PROGRESS_STATS}
+        stats={progressStats}
       />
 
       {/* ═══════════════════════════════════════════════════════════════════════

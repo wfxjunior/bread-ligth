@@ -23,6 +23,7 @@ import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useLanguage } from '@/context/LanguageContext';
 import { useBible, type Note } from '@/context/BibleContext';
 import NoteEditorModal from '@/components/NoteEditorModal';
+import { fontSize as ts } from '@/constants/design';
 
 function formatDate(ts: number, lang: 'pt' | 'en') {
   return new Date(ts).toLocaleDateString(lang === 'pt' ? 'pt-BR' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -30,7 +31,7 @@ function formatDate(ts: number, lang: 'pt' | 'en') {
 
 function NoteCard({ note, onEdit, onDelete }: { note: Note; onEdit: () => void; onDelete: () => void }) {
   const colors = useColors();
-  const { lang } = useLanguage();
+  const { lang, t: tl } = useLanguage();
   return (
     <TouchableOpacity
       onPress={onEdit}
@@ -42,7 +43,7 @@ function NoteCard({ note, onEdit, onDelete }: { note: Note; onEdit: () => void; 
           <Feather name="edit-3" size={11} color={colors.accent} />
           <Text style={[styles.refText, { color: colors.accent }]}>{note.reference}</Text>
         </View>
-        <TouchableOpacity onPress={onDelete} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <TouchableOpacity onPress={onDelete} accessibilityRole="button" accessibilityLabel={tl('a11y_delete_note')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Feather name="trash-2" size={15} color={colors.mutedForeground} />
         </TouchableOpacity>
       </View>
@@ -99,7 +100,7 @@ export default function NotesScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => router.back()} accessibilityRole="button" accessibilityLabel={tl('a11y_back')} activeOpacity={0.7} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={styles.backBtn}>
           <Feather name="chevron-left" size={20} color={colors.mutedForeground} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
@@ -155,7 +156,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   backBtn: { padding: 2, marginBottom: 3 },
-  headerTitle: { fontSize: 22, fontFamily: 'Inter_700Bold', fontWeight: '700' as const },
+  headerTitle: { fontSize: ts.heading, fontFamily: 'Inter_700Bold', fontWeight: '700' as const },
   headerSub: { fontSize: 13, fontFamily: 'Inter_400Regular', marginTop: 1 },
   newBtn: {
     flexDirection: 'row',

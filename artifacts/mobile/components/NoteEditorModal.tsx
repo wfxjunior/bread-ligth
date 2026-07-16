@@ -59,7 +59,9 @@ export default function NoteEditorModal({ visible, onClose, onSave, initial, pre
               <Text style={[styles.sheetTitle, { color: colors.foreground }]}>
                 {initial ? tl('notes_editor_title_edit') : tl('notes_editor_title_new')}
               </Text>
-              <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <TouchableOpacity onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel={tl('a11y_close')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                 <Feather name="x" size={18} color={colors.mutedForeground} />
               </TouchableOpacity>
             </View>

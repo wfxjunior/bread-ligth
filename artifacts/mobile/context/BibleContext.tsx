@@ -1,5 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { applyReview } from '@/constants/srs';
+import { EMPTY_STATS, recordStudy, currentStreak, type StudyStats } from '@/constants/stats';
+import { publishAchievementEvent } from '@/context/AchievementContext';
 
 const STORAGE_KEYS = {
   BOOKMARKS: '@bibliaeN:bookmarks',
@@ -11,6 +14,7 @@ const STORAGE_KEYS = {
   DEVOTIONAL_PLANS: '@bibliaeN:devotionalPlans',
   PLAN_VERSES: '@bibliaeN:planVerses',
   PLAN_VERSE_DONE: '@bibliaeN:planVerseDone',
+  STUDY_STATS: '@bibliaeN:studyStats',
 };
 
 export type DisplayMode = 'both' | 'english' | 'portuguese';
@@ -33,6 +37,12 @@ export interface VocabWord {
   context: string;
   mastered: boolean;
   addedAt: number;
+  // ── Spaced repetition (Leitner; see constants/srs.ts) ──
+  // Optional so words saved before SRS existed keep working: absent fields
+  // read as box 0 / due now, which is exactly how a new word should behave.
+  srsLevel?: number;       // 0..SRS_MAX_LEVEL
+  nextReviewAt?: number;   // epoch ms when the word is due again
+  lastReviewedAt?: number; // epoch ms of the last review answer
 }
 
 export interface ReadingProgress {
@@ -96,8 +106,11 @@ interface BibleContextType {
   addToVocabulary: (word: VocabWord) => void;
   removeFromVocabulary: (word: string) => void;
   toggleMastered: (word: string) => void;
+  reviewWord: (word: string, remembered: boolean) => void;
   setDisplayMode: (mode: DisplayMode) => void;
   saveReadingProgress: (progress: ReadingProgress) => void;
+  /** Live study stats: real day-streak and totals (see constants/stats.ts). */
+  studyStats: { streak: number; daysStudied: number };
   clearVocabulary: () => void;
   toggleFavoriteBook: (bookId: string) => void;
   isFavoriteBook: (bookId: string) => boolean;
@@ -123,6 +136,7 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
   const [devotionalPlans, setDevotionalPlans] = useState<DevotionalPlan[]>([]);
   const [planVerses, setPlanVerses] = useState<PlanVerseEntry[]>([]);
   const [planVerseDone, setPlanVerseDone] = useState<Record<string, boolean>>({});
+  const [studyStats, setStudyStats] = useState<StudyStats>(EMPTY_STATS);
 
   useEffect(() => {
     const safeParse = <T,>(raw: string | null): T | null => {
@@ -131,7 +145,7 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
     };
 
     (async () => {
-      const [bmRaw, vocabRaw, modeRaw, progressRaw, favBooksRaw, notesRaw, plansRaw, planVersesRaw, planDoneRaw] = await Promise.all([
+      const [bmRaw, vocabRaw, modeRaw, progressRaw, favBooksRaw, notesRaw, plansRaw, planVersesRaw, planDoneRaw, statsRaw] = await Promise.all([
         AsyncStorage.getItem(STORAGE_KEYS.BOOKMARKS).catch(() => null),
         AsyncStorage.getItem(STORAGE_KEYS.VOCABULARY).catch(() => null),
         AsyncStorage.getItem(STORAGE_KEYS.DISPLAY_MODE).catch(() => null),
@@ -141,6 +155,7 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
         AsyncStorage.getItem(STORAGE_KEYS.DEVOTIONAL_PLANS).catch(() => null),
         AsyncStorage.getItem(STORAGE_KEYS.PLAN_VERSES).catch(() => null),
         AsyncStorage.getItem(STORAGE_KEYS.PLAN_VERSE_DONE).catch(() => null),
+        AsyncStorage.getItem(STORAGE_KEYS.STUDY_STATS).catch(() => null),
       ]);
       const bm = safeParse<Bookmark[]>(bmRaw);
       if (bm) setBookmarks(bm);
@@ -159,6 +174,8 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
       if (planVersesParsed) setPlanVerses(planVersesParsed);
       const planDoneParsed = safeParse<Record<string, boolean>>(planDoneRaw);
       if (planDoneParsed) setPlanVerseDone(planDoneParsed);
+      const statsParsed = safeParse<StudyStats>(statsRaw);
+      if (statsParsed) setStudyStats(statsParsed);
     })();
   }, []);
 
@@ -188,6 +205,7 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
       const filtered = prev.filter(v => v.word !== word.word);
       const next = [word, ...filtered];
       AsyncStorage.setItem(STORAGE_KEYS.VOCABULARY, JSON.stringify(next)).catch(() => {});
+      publishAchievementEvent({ type: 'vocab_totals', saved: next.length, mastered: next.filter(v => v.mastered).length });
       return next;
     });
   }, []);
@@ -208,6 +226,16 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  // Records one spaced-repetition review answer (see constants/srs.ts).
+  const reviewWord = useCallback((word: string, remembered: boolean) => {
+    setVocabulary(prev => {
+      const next = prev.map(v => v.word === word ? applyReview(v, remembered) : v);
+      AsyncStorage.setItem(STORAGE_KEYS.VOCABULARY, JSON.stringify(next)).catch(() => {});
+      publishAchievementEvent({ type: 'vocab_totals', saved: next.length, mastered: next.filter(v => v.mastered).length });
+      return next;
+    });
+  }, []);
+
   const setDisplayMode = useCallback((mode: DisplayMode) => {
     setDisplayModeState(mode);
     AsyncStorage.setItem(STORAGE_KEYS.DISPLAY_MODE, mode).catch(() => {});
@@ -221,6 +249,14 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
   const saveReadingProgress = useCallback((progress: ReadingProgress) => {
     setReadingProgressState(progress);
     AsyncStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(progress)).catch(() => {});
+    // Opening a chapter counts as studying today — updates the real streak.
+    setStudyStats(prev => {
+      const next = recordStudy(prev);
+      if (next === prev) return prev;
+      AsyncStorage.setItem(STORAGE_KEYS.STUDY_STATS, JSON.stringify(next)).catch(() => {});
+      publishAchievementEvent({ type: 'active_study_day', activeDays: next.daysStudied, streak: currentStreak(next) });
+      return next;
+    });
   }, []);
 
   const toggleFavoriteBook = useCallback((bookId: string) => {
@@ -235,6 +271,7 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
 
   // ── Personal notes ────────────────────────────────────────────────────────
   const addNote = useCallback((note: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => {
+    publishAchievementEvent({ type: 'note_created' });
     const now = Date.now();
     const full: Note = { ...note, id: `note-${now}-${Math.random().toString(36).slice(2, 8)}`, createdAt: now, updatedAt: now };
     setNotes(prev => {
@@ -327,8 +364,10 @@ export function BibleProvider({ children }: { children: React.ReactNode }) {
       addToVocabulary,
       removeFromVocabulary,
       toggleMastered,
+      reviewWord,
       setDisplayMode,
       saveReadingProgress,
+      studyStats: { streak: currentStreak(studyStats), daysStudied: studyStats.daysStudied },
       clearVocabulary,
       toggleFavoriteBook,
       isFavoriteBook,

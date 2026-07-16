@@ -15,6 +15,7 @@ import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useBible, type Bookmark } from '@/context/BibleContext';
 import { useLanguage } from '@/context/LanguageContext';
 import * as Haptics from 'expo-haptics';
+import { fontSize as ts } from '@/constants/design';
 
 function BookmarkCard({ item, onRemove }: { item: Bookmark; onRemove: () => void }) {
   const colors = useColors();
@@ -52,6 +53,8 @@ function BookmarkCard({ item, onRemove }: { item: Bookmark; onRemove: () => void
         </View>
         <TouchableOpacity
           onPress={handleRemove}
+          accessibilityRole="button"
+          accessibilityLabel={tl('a11y_remove_saved')}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <Feather name="x" size={16} color={colors.mutedForeground} />
@@ -133,7 +136,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   headerTitle: {
-    fontSize: 26,
+    fontSize: ts.heading,
     fontFamily: 'Inter_700Bold',
     fontWeight: '700' as const,
   },

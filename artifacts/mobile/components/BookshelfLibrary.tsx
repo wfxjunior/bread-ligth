@@ -266,6 +266,8 @@ function LeatherBook({
               come back to. */}
           <Pressable
             onPress={() => onToggleFavorite(meta.bookId)}
+          accessibilityRole="button"
+          accessibilityLabel={tl('a11y_favorite_book')}
             hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
             style={[styles.cornerWrap, styles.favoriteWrap, { top: 2, right: 1 }]}
           >

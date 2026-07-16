@@ -31,6 +31,7 @@ import AudioPlayer from '@/components/AudioPlayer';
 import PronunciationPractice from '@/components/PronunciationPractice';
 import { getEntryForDate, resolveVerse, todayKey } from '@/utils/dailyVerse';
 import { t } from '@/constants/i18n';
+import { publishAchievementEvent } from '@/context/AchievementContext';
 import { APP_SHARE_URL } from '@/utils/shareLink';
 
 // ── Palette — derived from the active Reading Atmosphere ──────────────────────
@@ -198,6 +199,8 @@ function DevotionalModal({
                     if (isDevAudioActive) audio.togglePlayPause();
                     else audio.playQueue(paragraphs.map((p, i) => ({ id: String(i), text: p, cacheLabel: `Devotional – ${todayKey()}` })), 0, devotionalQueueKey);
                   }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t(lang, 'a11y_play_pause')}
                   hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                 >
                   <Feather
@@ -225,12 +228,12 @@ function DevotionalModal({
               </View>
 
               {hasText && (
-                <TouchableOpacity onPress={handleShare} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                <TouchableOpacity onPress={handleShare} accessibilityRole="button" accessibilityLabel={t(lang, 'a11y_share')} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
                   <Feather name="share-2" size={18} color={colors.mutedForeground} />
                 </TouchableOpacity>
               )}
 
-              <TouchableOpacity onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+              <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel={t(lang, 'a11y_close')} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
                 <Feather name="x" size={20} color={colors.mutedForeground} />
               </TouchableOpacity>
             </View>
@@ -455,6 +458,7 @@ export default function DailyScreen() {
       if (!res.ok || data.error) throw new Error(data.error ?? 'Erro desconhecido');
       setDevText(data.text);
       await AsyncStorage.setItem(DEVOTIONAL_KEY, data.text).catch(() => {});
+      publishAchievementEvent({ type: 'devotional_completed', dayKey: todayKey() });
     } catch (err: any) {
       setDevError(err.message ?? 'Não foi possível gerar o devocional.');
     } finally {
@@ -506,6 +510,8 @@ export default function DailyScreen() {
       <View style={[styles.header, { paddingTop: (Platform.OS === 'web' ? 67 : insets.top) + 16 }]}>
         <TouchableOpacity
           onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel={t(lang, 'a11y_back')}
           style={styles.backBtn}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
@@ -523,6 +529,8 @@ export default function DailyScreen() {
         <View style={styles.headerRight}>
           <TouchableOpacity
             onPress={toggleDailyMode}
+            accessibilityRole="button"
+            accessibilityLabel={t(lang, 'a11y_toggle_daily_mode')}
             style={[styles.modeToggleBtn, { backgroundColor: D.whiteFaint, borderColor: D.border }]}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >

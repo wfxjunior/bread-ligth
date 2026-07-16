@@ -22,6 +22,8 @@ import {
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { BibleProvider } from '@/context/BibleContext';
+import { AchievementProvider } from '@/context/AchievementContext';
+import { MedalUnlockSheet } from '@/components/MedalUnlockSheet';
 import { ThemeProvider, useTheme } from '@/context/ThemeContext';
 import { LanguageProvider } from '@/context/LanguageContext';
 import { PremiumProvider } from '@/context/PremiumContext';
@@ -126,11 +128,14 @@ export default function RootLayout() {
                   <LanguageProvider>
                     <ThemeProvider>
                       <PremiumProvider>
+                        <AchievementProvider>
                         <BibleProvider>
                           <AudioProvider>
                             <RootLayoutNav />
+                          <MedalUnlockSheet />
                           </AudioProvider>
                         </BibleProvider>
+                        </AchievementProvider>
                       </PremiumProvider>
                     </ThemeProvider>
                   </LanguageProvider>

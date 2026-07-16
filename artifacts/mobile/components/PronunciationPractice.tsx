@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useLanguage } from '@/context/LanguageContext';
 import { t } from '@/constants/i18n';
+import { publishAchievementEvent } from '@/context/AchievementContext';
 import { evaluatePronunciation, type PronunciationResult } from '@/utils/pronunciationFeedback';
 
 const _domain  = process.env.EXPO_PUBLIC_DOMAIN;
@@ -114,6 +115,7 @@ export default function PronunciationPractice({ visible, verseText, verseRef, on
 
       setResult(evaluatePronunciation(verseText, data.text, durationMs));
       setStage('result');
+      publishAchievementEvent({ type: 'pronunciation_session_completed' });
     } catch {
       restorePlaybackAudioMode();
       setErrorMsg(t(lang, 'practice_error'));
@@ -140,7 +142,9 @@ export default function PronunciationPractice({ visible, verseText, verseRef, on
               <Text style={[styles.title, { color: colors.foreground }]}>{t(lang, 'practice_title')}</Text>
               {!!verseRef && <Text style={[styles.ref, { color: colors.mutedForeground }]}>{verseRef}</Text>}
             </View>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel={t(lang, 'a11y_close')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <Feather name="x" size={20} color={colors.mutedForeground} />
             </TouchableOpacity>
           </View>

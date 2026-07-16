@@ -16,6 +16,7 @@ import { useColors } from '@/hooks/useColors';
 import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useLanguage } from '@/context/LanguageContext';
 import { BIBLE_DATA, FEATURED_PASSAGES, searchBible } from '@/constants/bibleData';
+import { fontSize as ts } from '@/constants/design';
 
 const RECENT_KEY = '@bibliaeN:recentSearches';
 const MAX_RECENT = 8;
@@ -95,7 +96,7 @@ export default function SearchScreen() {
             autoCorrect={false}
           />
           {query.length > 0 && (
-            <TouchableOpacity onPress={() => setQuery('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity onPress={() => setQuery('')} accessibilityRole="button" accessibilityLabel={tl('a11y_clear_search')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <Feather name="x-circle" size={16} color={colors.mutedForeground} />
             </TouchableOpacity>
           )}
@@ -257,7 +258,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   headerTitle: {
-    fontSize: 26,
+    fontSize: ts.heading,
     fontFamily: 'Inter_700Bold',
     fontWeight: '700' as const,
   },

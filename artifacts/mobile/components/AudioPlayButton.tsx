@@ -3,6 +3,7 @@ import { ActivityIndicator, Platform, StyleProp, TouchableOpacity, ViewStyle } f
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
+import { useLanguage } from '@/context/LanguageContext';
 import { useAudio } from '@/context/AudioContext';
 
 interface AudioPlayButtonProps {
@@ -21,6 +22,7 @@ interface AudioPlayButtonProps {
  */
 export function AudioPlayButton({ text, id, size = 16, color, activeColor, style }: AudioPlayButtonProps) {
   const colors = useColors();
+  const { t } = useLanguage();
   const { currentItem, isPlaying, isLoading, playSingle, togglePlayPause } = useAudio();
 
   const isThis = currentItem?.id === id;
@@ -36,6 +38,8 @@ export function AudioPlayButton({ text, id, size = 16, color, activeColor, style
   return (
     <TouchableOpacity
       onPress={handlePress}
+      accessibilityRole="button"
+      accessibilityLabel={t(active ? 'a11y_stop_listening' : 'a11y_listen')}
       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       style={style}
       activeOpacity={0.65}

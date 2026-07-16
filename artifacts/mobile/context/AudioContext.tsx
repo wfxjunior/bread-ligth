@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import * as Speech from 'expo-speech';
 import { Audio, InterruptionModeIOS, InterruptionModeAndroid } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { publishAchievementEvent } from '@/context/AchievementContext';
 import * as Haptics from 'expo-haptics';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Crypto from 'expo-crypto';
@@ -232,6 +233,7 @@ function sanitizeForSpeech(text: string): string {
 }
 
 export type PlaybackStatus = 'idle' | 'loading' | 'playing' | 'paused';
+export type RepeatMode = 'off' | 'verse' | 'chapter';
 
 interface AudioContextValue {
   queue: AudioQueueItem[];
@@ -247,6 +249,9 @@ interface AudioContextValue {
   rate: number;
   hasNext: boolean;
   hasPrevious: boolean;
+  repeatMode: RepeatMode;
+  /** Cycles repeat off → verse → chapter → off. */
+  cycleRepeat: () => void;
   usingFallback: boolean;
   voice: AudioVoice;
   readingLanguage: ReadingLanguage;
@@ -300,6 +305,13 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [prefetchWifiOnly, setPrefetchWifiOnlyState] = useState(false);
   const prefetchWifiOnlyRef = useRef(false);
   const [usingFallback, setUsingFallback] = useState(false);
+  // Repeat mode — 'off' plays through once, 'verse' loops the current item
+  // (pronunciation practice), 'chapter' loops the whole queue. Kept in a ref
+  // too so the advance() closure always reads the current choice.
+  const [repeatMode, setRepeatMode] = useState<RepeatMode>('off');
+  const repeatModeRef = useRef<RepeatMode>('off');
+  useEffect(() => { repeatModeRef.current = repeatMode; }, [repeatMode]);
+
   const [offlineCacheBytes, setOfflineCacheBytes] = useState(0);
   const [cacheEntries, setCacheEntries] = useState<TtsCacheIndex>({});
   const [cacheMaxBytes, setCacheMaxBytesState] = useState(DEFAULT_TTS_CACHE_MAX_BYTES);
@@ -317,6 +329,23 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   // fetched/loaded (status 'loading') — createAsync's shouldPlay:true would
   // otherwise start playback regardless of the pause tap that raced it.
   const pausePendingRef    = useRef(false);
+  // Listening-time tracking: accumulate real playback deltas (≤2s each, so
+  // seeks/skips don't count) and flush to the achievement engine every 10s of
+  // actual listening — keeps engine updates rare and farming unattractive.
+  const lastPosMsRef = useRef(0);
+  const pendingListenMsRef = useRef(0);
+  const trackListening = (posMs: number) => {
+    const delta = posMs - lastPosMsRef.current;
+    lastPosMsRef.current = posMs;
+    if (delta > 0 && delta <= 2000) {
+      pendingListenMsRef.current += delta;
+      if (pendingListenMsRef.current >= 10000) {
+        const secs = Math.floor(pendingListenMsRef.current / 1000);
+        pendingListenMsRef.current -= secs * 1000;
+        publishAchievementEvent({ type: 'audio_progressed', seconds: secs });
+      }
+    }
+  };
   // Dedupes concurrent prefetch downloads for the same voice+text so rapid
   // track advances (or a slow prefetch overlapping the next one) never fire
   // two downloads for the same clip.
@@ -556,13 +585,22 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     setCurrentIndex(index);
     setStatus('loading');
     setPosition(0);
+    lastPosMsRef.current = 0;
     setDuration(0);
 
     const advance = () => {
       if (generationRef.current !== gen) return;
+      // Repeat-verse: replay the same item indefinitely.
+      if (repeatModeRef.current === 'verse') {
+        loadAndPlay(indexRef.current);
+        return;
+      }
       const nextIdx = indexRef.current + 1;
       if (nextIdx < queueRef.current.length) {
         loadAndPlay(nextIdx);
+      } else if (repeatModeRef.current === 'chapter' && queueRef.current.length > 0) {
+        // Repeat-chapter: loop back to the top of the queue.
+        loadAndPlay(0);
       } else {
         setStatus('idle');
         setPosition(0);
@@ -601,6 +639,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         }
         sound.setOnPlaybackStatusUpdate(st => {
           if (!st.isLoaded || generationRef.current !== gen) return;
+          trackListening(st.positionMillis ?? 0);
           setPosition(st.positionMillis ?? 0);
           setDuration(st.durationMillis ?? 0);
           if (st.didJustFinish) {
@@ -664,6 +703,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         }
         sound.setOnPlaybackStatusUpdate(st => {
           if (!st.isLoaded || generationRef.current !== gen) return;
+          trackListening(st.positionMillis ?? 0);
           setPosition(st.positionMillis ?? 0);
           setDuration(st.durationMillis ?? 0);
           if (st.didJustFinish) {
@@ -764,6 +804,10 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }, 400);
   }, [usingFallback]);
 
+  const cycleRepeat = useCallback(() => {
+    setRepeatMode(prev => (prev === 'off' ? 'verse' : prev === 'verse' ? 'chapter' : 'off'));
+  }, []);
+
   const setVoice = useCallback((v: AudioVoice) => {
     setVoiceState(v);
     voiceRef.current = v;
@@ -786,6 +830,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     position, duration, rate, voice,
     hasNext:     currentIndex >= 0 && currentIndex < queue.length - 1,
     hasPrevious: currentIndex > 0,
+    repeatMode, cycleRepeat,
     usingFallback,
     readingLanguage,
     prefetchWifiOnly, setPrefetchWifiOnly,

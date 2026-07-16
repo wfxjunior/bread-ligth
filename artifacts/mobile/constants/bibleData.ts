@@ -12,31 +12,143 @@ export interface BibleBook {
   chapters: Record<number, BibleVerse[]>;
 }
 
-import { johnBook } from './bible/john';
-import { proverbsBook } from './bible/proverbs';
-import { genesisBook } from './bible/genesis';
-import { philippiansBook } from './bible/philippians';
-import { romansBook } from './bible/romans';
-import { firstCorinthiansBook } from './bible/1corinthians';
-import { matthewBook } from './bible/matthew';
-import { psalmsBook } from './bible/psalms';
-import { PLACEHOLDER_BOOKS } from './bible/placeholders';
+// ── Full Bible, 66 books ──────────────────────────────────────────────────
+// Text auto-generated from public-domain sources: World English Bible (WEB, EN)
+// + João Ferreira de Almeida (Almeida, PT). See docs for provenance.
+import bk_genesis from './bible/genesis';
+import bk_exodus from './bible/exodus';
+import bk_leviticus from './bible/leviticus';
+import bk_numbers from './bible/numbers';
+import bk_deuteronomy from './bible/deuteronomy';
+import bk_joshua from './bible/joshua';
+import bk_judges from './bible/judges';
+import bk_ruth from './bible/ruth';
+import bk_1samuel from './bible/1samuel';
+import bk_2samuel from './bible/2samuel';
+import bk_1kings from './bible/1kings';
+import bk_2kings from './bible/2kings';
+import bk_1chronicles from './bible/1chronicles';
+import bk_2chronicles from './bible/2chronicles';
+import bk_ezra from './bible/ezra';
+import bk_nehemiah from './bible/nehemiah';
+import bk_esther from './bible/esther';
+import bk_job from './bible/job';
+import bk_psalms from './bible/psalms';
+import bk_proverbs from './bible/proverbs';
+import bk_ecclesiastes from './bible/ecclesiastes';
+import bk_songofsolomon from './bible/songofsolomon';
+import bk_isaiah from './bible/isaiah';
+import bk_jeremiah from './bible/jeremiah';
+import bk_lamentations from './bible/lamentations';
+import bk_ezekiel from './bible/ezekiel';
+import bk_daniel from './bible/daniel';
+import bk_hosea from './bible/hosea';
+import bk_joel from './bible/joel';
+import bk_amos from './bible/amos';
+import bk_obadiah from './bible/obadiah';
+import bk_jonah from './bible/jonah';
+import bk_micah from './bible/micah';
+import bk_nahum from './bible/nahum';
+import bk_habakkuk from './bible/habakkuk';
+import bk_zephaniah from './bible/zephaniah';
+import bk_haggai from './bible/haggai';
+import bk_zechariah from './bible/zechariah';
+import bk_malachi from './bible/malachi';
+import bk_matthew from './bible/matthew';
+import bk_mark from './bible/mark';
+import bk_luke from './bible/luke';
+import bk_john from './bible/john';
+import bk_acts from './bible/acts';
+import bk_romans from './bible/romans';
+import bk_1corinthians from './bible/1corinthians';
+import bk_2corinthians from './bible/2corinthians';
+import bk_galatians from './bible/galatians';
+import bk_ephesians from './bible/ephesians';
+import bk_philippians from './bible/philippians';
+import bk_colossians from './bible/colossians';
+import bk_1thessalonians from './bible/1thessalonians';
+import bk_2thessalonians from './bible/2thessalonians';
+import bk_1timothy from './bible/1timothy';
+import bk_2timothy from './bible/2timothy';
+import bk_titus from './bible/titus';
+import bk_philemon from './bible/philemon';
+import bk_hebrews from './bible/hebrews';
+import bk_james from './bible/james';
+import bk_1peter from './bible/1peter';
+import bk_2peter from './bible/2peter';
+import bk_1john from './bible/1john';
+import bk_2john from './bible/2john';
+import bk_3john from './bible/3john';
+import bk_jude from './bible/jude';
+import bk_revelation from './bible/revelation';
 
-// The 8 books above have their full chapter-by-chapter text transcribed.
-// PLACEHOLDER_BOOKS fills in the remaining 58 canonical books with a "coming
-// soon" stand-in chapter so the bookshelf can show every real book while the
-// rest of the text is added over time — spread first so the fully-written
-// books below always take precedence.
 export const BIBLE_DATA: Record<string, BibleBook> = {
-  ...PLACEHOLDER_BOOKS,
-  genesis: genesisBook,
-  psalms: psalmsBook,
-  proverbs: proverbsBook,
-  matthew: matthewBook,
-  john: johnBook,
-  romans: romansBook,
-  philippians: philippiansBook,
-  '1corinthians': firstCorinthiansBook,
+  'genesis': bk_genesis,
+  'exodus': bk_exodus,
+  'leviticus': bk_leviticus,
+  'numbers': bk_numbers,
+  'deuteronomy': bk_deuteronomy,
+  'joshua': bk_joshua,
+  'judges': bk_judges,
+  'ruth': bk_ruth,
+  '1samuel': bk_1samuel,
+  '2samuel': bk_2samuel,
+  '1kings': bk_1kings,
+  '2kings': bk_2kings,
+  '1chronicles': bk_1chronicles,
+  '2chronicles': bk_2chronicles,
+  'ezra': bk_ezra,
+  'nehemiah': bk_nehemiah,
+  'esther': bk_esther,
+  'job': bk_job,
+  'psalms': bk_psalms,
+  'proverbs': bk_proverbs,
+  'ecclesiastes': bk_ecclesiastes,
+  'songofsolomon': bk_songofsolomon,
+  'isaiah': bk_isaiah,
+  'jeremiah': bk_jeremiah,
+  'lamentations': bk_lamentations,
+  'ezekiel': bk_ezekiel,
+  'daniel': bk_daniel,
+  'hosea': bk_hosea,
+  'joel': bk_joel,
+  'amos': bk_amos,
+  'obadiah': bk_obadiah,
+  'jonah': bk_jonah,
+  'micah': bk_micah,
+  'nahum': bk_nahum,
+  'habakkuk': bk_habakkuk,
+  'zephaniah': bk_zephaniah,
+  'haggai': bk_haggai,
+  'zechariah': bk_zechariah,
+  'malachi': bk_malachi,
+  'matthew': bk_matthew,
+  'mark': bk_mark,
+  'luke': bk_luke,
+  'john': bk_john,
+  'acts': bk_acts,
+  'romans': bk_romans,
+  '1corinthians': bk_1corinthians,
+  '2corinthians': bk_2corinthians,
+  'galatians': bk_galatians,
+  'ephesians': bk_ephesians,
+  'philippians': bk_philippians,
+  'colossians': bk_colossians,
+  '1thessalonians': bk_1thessalonians,
+  '2thessalonians': bk_2thessalonians,
+  '1timothy': bk_1timothy,
+  '2timothy': bk_2timothy,
+  'titus': bk_titus,
+  'philemon': bk_philemon,
+  'hebrews': bk_hebrews,
+  'james': bk_james,
+  '1peter': bk_1peter,
+  '2peter': bk_2peter,
+  '1john': bk_1john,
+  '2john': bk_2john,
+  '3john': bk_3john,
+  'jude': bk_jude,
+  'revelation': bk_revelation,
 };
 
 export interface FeaturedPassage {
