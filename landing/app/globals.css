@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────
+   Bread&Light — design tokens (single source of truth)
+   Semantic names; components never hardcode hex values.
+   ───────────────────────────────────────────────────────────── */
+@theme {
+  /* Surfaces */
+  --color-cream: #F7F2E8;        /* background-primary (dominant) */
+  --color-ivory: #FCFAF5;        /* background-secondary */
+  --color-surface-warm: #F1EADF; /* warm surface */
+  --color-surface-dark: #2D211B; /* immersive dark */
+  --color-leather: #4A3427;      /* leather brown */
+
+  /* Brand */
+  --color-burgundy: #5A1F24;        /* primary CTA / emphasis */
+  --color-burgundy-hover: #45171B;
+  --color-gold: #B38A3F;            /* antique gold — accents/dots/large only */
+  --color-gold-ink: #7A5A1E;        /* darker gold for small gold TEXT on light (WCAG AA) */
+
+  /* Text */
+  --color-ink: #1E1E1C;         /* text-primary */
+  --color-muted: #74695D;       /* text-secondary */
+  --color-onDark: #EFE7D8;      /* text on dark sections */
+  --color-onDarkMuted: #B9A98F;
+
+  /* Lines */
+  --color-line: #DDD4C7;        /* border-subtle */
+
+  /* Type families */
+  --font-serif: "Cormorant Garamond", "EB Garamond", Georgia, "Times New Roman", serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* Motion */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Minimal reset / base */
+:root {
+  color-scheme: light;
+}
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+body {
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-synthesis-weight: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Headings default to the editorial serif */
+h1, h2, h3, .font-serif {
+  font-family: var(--font-serif);
+  letter-spacing: -0.01em;
+}
+
+/* Accessible, visible focus for keyboard users only */
+:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+:focus:not(:focus-visible) { outline: none; }
+
+/* Scroll-reveal: default hidden state, revealed by IntersectionObserver.
+   Falls back to visible if JS/observer never runs, and disabled under
+   reduced-motion so nothing is ever stuck invisible. */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.6s var(--ease-out-soft),
+    transform 0.6s var(--ease-out-soft);
+  will-change: opacity, transform;
+}
+[data-reveal].is-visible {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] { opacity: 1; transform: none; transition: none; }
+}
+
+/* Selection uses a warm tint */
+::selection { background: color-mix(in srgb, var(--color-gold) 30%, transparent); }
