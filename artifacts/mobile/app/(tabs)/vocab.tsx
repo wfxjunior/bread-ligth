@@ -16,6 +16,7 @@ import { useBible, type VocabWord } from '@/context/BibleContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { dueWords } from '@/constants/srs';
 import FlashCard from '@/components/FlashCard';
+import { fontSize as ts } from '@/constants/design';
 
 type Filter = 'all' | 'learning' | 'mastered';
 
@@ -257,7 +258,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   headerTitle: {
-    fontSize: 26,
+    fontSize: ts.heading,
     fontFamily: 'Inter_700Bold',
     fontWeight: '700' as const,
   },

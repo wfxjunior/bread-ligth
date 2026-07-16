@@ -38,6 +38,7 @@ import type { Atmosphere, AccentColor, ReadingSpace } from '@/constants/colors';
 import { LinearGradient } from 'expo-linear-gradient';
 import SettingsDrawer from '@/components/SettingsDrawer';
 import { router } from 'expo-router';
+import { fontSize as ts } from '@/constants/design';
 
 const ACCENT_COLORS: { id: AccentColor; hex: string; label: string }[] = [
   { id: 'royal-blue', hex: '#1B3A6B', label: 'Azul Real' },
@@ -1563,7 +1564,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: ts.heading,
     fontFamily: 'Inter_700Bold',
     letterSpacing: -0.2,
   },

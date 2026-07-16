@@ -29,6 +29,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useBible, type Bookmark, type DevotionalPlan, type PlanVerseEntry } from '@/context/BibleContext';
 import { CURATED_PLANS, type CuratedPlanVerse } from '@/constants/devotionalPlans';
 import AddVerseModal from '@/components/AddVerseModal';
+import { fontSize as ts } from '@/constants/design';
 
 type PlanRow = {
   id: string;
@@ -295,7 +296,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   backBtn: { padding: 2, marginBottom: 3 },
-  headerTitle: { fontSize: 22, fontFamily: 'Inter_700Bold', fontWeight: '700' as const },
+  headerTitle: { fontSize: ts.heading, fontFamily: 'Inter_700Bold', fontWeight: '700' as const },
   headerSub: { fontSize: 13, fontFamily: 'Inter_400Regular', marginTop: 1 },
   newBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 9 },
   newBtnText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },

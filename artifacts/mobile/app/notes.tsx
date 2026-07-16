@@ -23,6 +23,7 @@ import { useTabBarHeight } from '@/hooks/useTabBarHeight';
 import { useLanguage } from '@/context/LanguageContext';
 import { useBible, type Note } from '@/context/BibleContext';
 import NoteEditorModal from '@/components/NoteEditorModal';
+import { fontSize as ts } from '@/constants/design';
 
 function formatDate(ts: number, lang: 'pt' | 'en') {
   return new Date(ts).toLocaleDateString(lang === 'pt' ? 'pt-BR' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -155,7 +156,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   backBtn: { padding: 2, marginBottom: 3 },
-  headerTitle: { fontSize: 22, fontFamily: 'Inter_700Bold', fontWeight: '700' as const },
+  headerTitle: { fontSize: ts.heading, fontFamily: 'Inter_700Bold', fontWeight: '700' as const },
   headerSub: { fontSize: 13, fontFamily: 'Inter_400Regular', marginTop: 1 },
   newBtn: {
     flexDirection: 'row',

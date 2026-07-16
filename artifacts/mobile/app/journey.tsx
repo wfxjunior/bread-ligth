@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useLanguage } from '@/context/LanguageContext';
 import { useBible } from '@/context/BibleContext';
+import { fontSize as ts } from '@/constants/design';
 
 type ActivityItem = {
   id: string;
@@ -149,7 +150,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   backBtn: { padding: 2 },
-  headerTitle: { fontSize: 22, fontFamily: 'Inter_700Bold', fontWeight: '700' as const },
+  headerTitle: { fontSize: ts.heading, fontFamily: 'Inter_700Bold', fontWeight: '700' as const },
   headerSub: { fontSize: 13, fontFamily: 'Inter_400Regular', marginTop: 1 },
 
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
