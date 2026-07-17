@@ -1,8 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { Providers } from "@/components/layout/Providers";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import { siteConfig } from "@/lib/config";
 
 // Primary (English) metadata for crawlers. The visible UI localizes at runtime
@@ -67,19 +64,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body>
-        <a
-          href="#top"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-burgundy focus:px-4 focus:py-2 focus:text-sm focus:text-[#F7F2E8]"
-        >
-          Skip to content
-        </a>
-        <Providers>
-          <Header />
-          <main>{children}</main>
-          <Footer />
-        </Providers>
-      </body>
+      {/* Public chrome (Header/Footer/i18n provider) lives in app/(site)/layout.tsx;
+          the /admin area renders its own isolated shell. */}
+      <body>{children}</body>
     </html>
   );
 }

@@ -33,6 +33,17 @@
 
   /* Motion */
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Admin-only status colors — muted, WCAG-AA on white cards.
+     Additive tokens: the public site never references them. */
+  --color-status-green: #3E6B4F;
+  --color-status-green-soft: #E8F0EA;
+  --color-status-amber: #8A6110;
+  --color-status-amber-soft: #F5EDDC;
+  --color-status-red: #8C3A32;
+  --color-status-red-soft: #F5E4E1;
+  --color-status-blue: #3A5A78;
+  --color-status-blue-soft: #E4EBF2;
 }
 
 /* Minimal reset / base */
