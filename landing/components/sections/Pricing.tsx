@@ -64,12 +64,16 @@ export function Pricing() {
       {/* Card */}
       <Reveal delay={140} className="mt-10">
         <div className="mx-auto max-w-md overflow-hidden rounded-3xl border border-line bg-white shadow-[0_24px_60px_-30px_rgba(45,33,27,0.4)]">
-          <div className="relative border-b border-line p-8 text-center">
-            {yearly && (
-              <span className="absolute right-5 top-5 rounded-full bg-gold/15 px-3 py-1 font-sans text-xs font-semibold text-gold">
-                {t.pricing.save.replace("{pct}", String(pricing.yearlySavingsPct))}
-              </span>
-            )}
+          <div className="border-b border-line p-8 text-center">
+            {/* In-flow, centered savings pill — never collides with the title.
+                Rendered invisibly on Monthly so the card height never jumps
+                when toggling billing periods. */}
+            <span
+              aria-hidden={!yearly}
+              className={`mb-3 inline-block rounded-full bg-gold/15 px-3.5 py-1 font-sans text-xs font-semibold tracking-wide text-gold-ink ${yearly ? "" : "invisible"}`}
+            >
+              {t.pricing.save.replace("{pct}", String(pricing.yearlySavingsPct))}
+            </span>
             <h3 className="font-serif text-2xl text-ink">{t.pricing.planName}</h3>
             <div className="mt-5 flex items-end justify-center gap-1">
               <span className="font-serif text-5xl font-semibold text-ink">
