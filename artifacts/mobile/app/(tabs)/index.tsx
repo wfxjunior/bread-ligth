@@ -1354,6 +1354,32 @@ export default function HomeScreen() {
             <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
           </TouchableOpacity>
         )}
+
+        {/* ── Prayer Journey entry — calm, one line, same card language ── */}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); router.push('/prayer'); }}
+          accessibilityRole="button"
+          style={[styles.progressSummary, {
+            backgroundColor: colors.card,
+            borderColor:     colors.border,
+            borderRadius:    colors.radius + 2,
+            marginTop:       10,
+          }]}
+        >
+          <View style={[styles.progressHeroBadge, { backgroundColor: colors.space.accent + '18' }]}>
+            <Feather name="heart" size={17} color={colors.space.accent} />
+          </View>
+          <View style={styles.progressSummaryText}>
+            <Text style={[styles.progressHeroValue, { color: colors.foreground, fontSize: 15 }]} numberOfLines={1}>
+              {t('pr_home_entry')}
+            </Text>
+            <Text style={[styles.progressHeroSub, { color: colors.mutedForeground }]} numberOfLines={1}>
+              {t('pr_home_entry_sub')}
+            </Text>
+          </View>
+          <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+        </TouchableOpacity>
       </View>
 
       <ProgressModal

@@ -28,6 +28,7 @@ import { ThemeProvider, useTheme } from '@/context/ThemeContext';
 import { LanguageProvider } from '@/context/LanguageContext';
 import { PremiumProvider } from '@/context/PremiumContext';
 import { AudioProvider } from '@/context/AudioContext';
+import { PrayerProvider } from '@/context/PrayerContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -73,6 +74,8 @@ function RootLayoutNav() {
           options={{ headerShown: false, presentation: 'modal', animation: 'slide_from_bottom' }}
         />
         <Stack.Screen name="journey" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="prayer" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="prayer-detail" options={{ headerShown: false, presentation: 'card' }} />
         <Stack.Screen name="notes" options={{ headerShown: false, presentation: 'card' }} />
         <Stack.Screen name="devotional-plans" options={{ headerShown: false, presentation: 'card' }} />
       </Stack>
@@ -130,10 +133,12 @@ export default function RootLayout() {
                       <PremiumProvider>
                         <AchievementProvider>
                         <BibleProvider>
+                          <PrayerProvider>
                           <AudioProvider>
                             <RootLayoutNav />
                           <MedalUnlockSheet />
                           </AudioProvider>
+                          </PrayerProvider>
                         </BibleProvider>
                         </AchievementProvider>
                       </PremiumProvider>
