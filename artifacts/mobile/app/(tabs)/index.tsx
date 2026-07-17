@@ -1098,6 +1098,29 @@ export default function HomeScreen() {
         </View>
       )}
 
+      {/* ── Prayer Journey strip — always visible near the top ── */}
+      <View style={[styles.section, { marginTop: 8 }]}>
+        <TouchableOpacity
+          onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); router.push('/prayer'); }}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={t('pr_home_entry')}
+          style={[styles.continueStrip, {
+            backgroundColor: colors.primary + '0E',
+            borderColor:     colors.primary + '28',
+            borderRadius:    colors.radius,
+          }]}
+        >
+          <Feather name="heart" size={13} color={colors.primary} />
+          <Text style={[styles.continueName, { color: colors.primary }]}>{t('pr_home_entry')}</Text>
+          <Text style={[styles.continueLabel, { color: colors.mutedForeground }]} numberOfLines={1}>
+            {t('pr_home_entry_sub')}
+          </Text>
+          <View style={{ flex: 1 }} />
+          <Feather name="chevron-right" size={14} color={colors.primary} />
+        </TouchableOpacity>
+      </View>
+
       {/* ── Featured passages ── */}
       <FeaturedPassagesCarousel />
 
