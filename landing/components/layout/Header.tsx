@@ -19,16 +19,18 @@ export function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Root-anchored (/#...) so navigation works from ANY page — on /support or
+  // /privacy a bare "#pricing" would silently point at the current page.
   const nav = [
-    { href: "#features", label: t.nav.features },
-    { href: "#how", label: t.nav.how },
-    { href: "#experience", label: t.nav.experience },
-    { href: "#pricing", label: t.nav.pricing },
-    { href: "#faq", label: t.nav.faq },
+    { href: "/#features", label: t.nav.features },
+    { href: "/#how", label: t.nav.how },
+    { href: "/#experience", label: t.nav.experience },
+    { href: "/#pricing", label: t.nav.pricing },
+    { href: "/#faq", label: t.nav.faq },
     { href: "/support", label: t.nav.support },
   ];
 
-  const ctaHref = siteConfig.launched ? "#download" : "#waitlist";
+  const ctaHref = siteConfig.launched ? "/#download" : "/#waitlist";
   const ctaLabel = siteConfig.launched ? t.cta.download : t.cta.waitlist;
 
   return (
@@ -40,7 +42,7 @@ export function Header() {
       }`}
     >
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5 sm:px-8">
-        <a href="#top" className="font-serif text-xl font-semibold tracking-tight text-ink" aria-label="Bread&Light — home">
+        <a href="/" className="font-serif text-xl font-semibold tracking-tight text-ink" aria-label="Bread&Light — home">
           Bread<span className="text-gold">&amp;</span>Light
         </a>
 
