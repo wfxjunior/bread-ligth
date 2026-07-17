@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useI18n } from "@/lib/i18n/context";
 import { track } from "@/lib/analytics";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
@@ -44,8 +45,11 @@ export function MobileMenu({
         <IconMenu className="h-6 w-6" />
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-[60] lg:hidden" role="dialog" aria-modal="true" aria-label={t.nav.menu}>
+      {/* Portaled to <body>: the header's backdrop-blur creates a CSS
+          containing block that would otherwise trap this fixed overlay inside
+          the 64px bar — the sheet showed clipped, overlapping and blurred. */}
+      {open && createPortal(
+        <div className="fixed inset-0 z-[70] lg:hidden" role="dialog" aria-modal="true" aria-label={t.nav.menu}>
           <button
             type="button"
             aria-label={t.nav.close}
@@ -95,7 +99,8 @@ export function MobileMenu({
               </ButtonLink>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );

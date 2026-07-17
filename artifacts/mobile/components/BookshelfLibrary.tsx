@@ -45,19 +45,6 @@ const GOLD_SOFT   = 'rgba(217,181,98,0.55)';
 const GOLD_FAINT  = 'rgba(217,181,98,0.22)';
 const RIBBON_RED  = '#7A1626';
 
-// ── Per-book flavour text: a short tagline (PT) evoking the book's theme,
-// a thematic line-art glyph, and its traditional era — the details that make
-// a shelf feel like a real, well-loved library rather than a plain list. ────
-const TAGLINE: Record<string, string> = {
-  genesis:        'No Princípio, Deus',
-  psalms:         'Cânticos da Alma',
-  proverbs:       'Sabedoria para a Vida',
-  matthew:        'O Rei e Seu Reino',
-  john:           'O Verbo se Fez Carne',
-  romans:         'O Evangelho da Graça',
-  philippians:    'Alegria em Toda Circunstância',
-  '1corinthians': 'O Amor Edifica',
-};
 
 const ERA: Record<string, string> = {
   genesis:        'EST. A.C.',
@@ -313,13 +300,8 @@ function LeatherBook({
                   <MaterialCommunityIcons name={icon} size={height * 0.1} color={GOLD_SOFT} />
                 </View>
               )}
-              {/* subtitle: in PT mode show the tagline (or English name for reference);
-                  in EN mode show the tagline (or Portuguese name for reference) */}
-              <Text style={styles.titlePt} numberOfLines={2}>
-                {lang === 'pt'
-                  ? (TAGLINE[meta.bookId] ?? book.englishName)
-                  : (TAGLINE[meta.bookId] ?? book.name)}
-              </Text>
+              {/* No tagline below the name — covers stay uniform and aligned
+                  across the whole shelf (owner decision). */}
             </View>
 
             {/* footer */}
@@ -642,14 +624,6 @@ const styles = StyleSheet.create({
   },
   emblemWrap: {
     marginTop: 1,
-  },
-  titlePt: {
-    fontFamily: 'Lora_400Regular_Italic',
-    fontSize: 10,
-    lineHeight: 13,
-    color: 'rgba(233,214,168,0.55)',
-    textAlign: 'center',
-    marginTop: 2,
   },
   footer: {
     width: '100%',
