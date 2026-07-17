@@ -14,7 +14,7 @@ export function Hero() {
   const ctaHref = siteConfig.launched ? "#download" : "#waitlist";
 
   return (
-    <section id="top" className="relative overflow-hidden bg-cream pt-28 pb-20 sm:pt-36 sm:pb-28">
+    <section id="top" className="bl-grain relative overflow-hidden bg-cream pt-28 pb-20 sm:pt-36 sm:pb-28">
       {/* soft ambient warmth, non-decorative-motion */}
       <div
         aria-hidden
