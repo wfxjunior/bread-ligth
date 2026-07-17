@@ -20,3 +20,4 @@ export * from "./admins";
 //   export type Post = typeof postsTable.$inferSelect;
 
 export * from "./recognitions";
+export * from "./prayers";
