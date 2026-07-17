@@ -26,14 +26,18 @@ export type BookCategory =
   | 'pentateuch' | 'history' | 'poetry' | 'majorProphets' | 'minorProphets'
   | 'gospels' | 'acts' | 'paulineLetters' | 'generalLetters' | 'revelation';
 
+// NOTE: no browns here — the shelf itself is walnut wood, so brown covers
+// (the old pentateuch/acts tones) disappeared into the background. Those two
+// categories moved to deep petrol and mulberry, which sit beautifully under
+// gold foil and read instantly against the wood.
 export const CATEGORY_INFO: Record<BookCategory, { base: string; deep: string; labelPt: string }> = {
-  pentateuch:      { base: '#5C3E22', deep: '#22140A', labelPt: 'Pentateuco'        },
+  pentateuch:      { base: '#1F4D51', deep: '#0A2124', labelPt: 'Pentateuco'        },
   history:         { base: '#2C4636', deep: '#0F1B14', labelPt: 'Históricos'        },
   poetry:          { base: '#601D2E', deep: '#280C15', labelPt: 'Poesia'            },
   majorProphets:   { base: '#1B2C4C', deep: '#0A1224', labelPt: 'Profetas Maiores' },
   minorProphets:   { base: '#254631', deep: '#0E1C14', labelPt: 'Profetas Menores'  },
   gospels:         { base: '#571A25', deep: '#240A0F', labelPt: 'Evangelhos'        },
-  acts:            { base: '#513519', deep: '#22150A', labelPt: 'Atos'              },
+  acts:            { base: '#5B1F3C', deep: '#260C18', labelPt: 'Atos'              },
   paulineLetters:  { base: '#1C3151', deep: '#0A1526', labelPt: 'Cartas de Paulo'   },
   generalLetters:  { base: '#432B4C', deep: '#1C1122', labelPt: 'Cartas Gerais'     },
   revelation:      { base: '#1C1814', deep: '#080605', labelPt: 'Apocalipse'        },
@@ -286,11 +290,13 @@ function LeatherBook({
                 by its name first, the way a real bound volume does */}
             <View style={styles.hero}>
               <OrnateDivider width={dividerW} />
+              {/* One line, auto-shrunk: every cover title sits on the same
+                  baseline no matter how long the book name is. */}
               <Text
                 style={[styles.titleEn, { fontSize: titleSize }]}
-                numberOfLines={2}
+                numberOfLines={1}
                 adjustsFontSizeToFit
-                minimumFontScale={0.55}
+                minimumFontScale={0.5}
               >
                 {lang === 'pt' ? book.name.toUpperCase() : book.englishName.toUpperCase()}
               </Text>
