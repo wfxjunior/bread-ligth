@@ -119,9 +119,9 @@ export default function PrayerJourneyScreen() {
   };
 
   // ── UI pieces ──────────────────────────────────────────────────────────────
-  const StatCard = ({ icon, value, label, tint }: { icon: string; value: number | string; label: string; tint?: string }) => (
+  // Calm by subtraction: stat cards are number + label only — no icons.
+  const StatCard = ({ value, label }: { value: number | string; label: string }) => (
     <View style={[st.statCard, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
-      <Feather name={icon as never} size={15} color={tint ?? colors.primary} />
       <Text style={[st.statValue, { color: colors.foreground }]}>{value}</Text>
       <Text style={[st.statLabel, { color: colors.mutedForeground }]} numberOfLines={1}>{label}</Text>
     </View>
@@ -149,8 +149,8 @@ export default function PrayerJourneyScreen() {
         </View>
         <View style={st.rowRight}>
           {p.favorite && <Feather name="star" size={12} color={colors.secondaryAccent} />}
+          {/* Status pill: text only — the words carry the meaning */}
           <View style={[st.statusPill, { backgroundColor: colors.selection }]}>
-            <Feather name={sMeta.icon as never} size={11} color={colors.primary} />
             <Text style={[st.statusPillText, { color: colors.primary }]}>{t(sMeta.labelKey)}</Text>
           </View>
         </View>
@@ -178,10 +178,10 @@ export default function PrayerJourneyScreen() {
 
         {/* ── Stats ── */}
         <View style={st.statsGrid}>
-          <StatCard icon="heart" value={stats.active} label={t('pr_stat_active')} />
-          <StatCard icon="check-circle" value={stats.answered} label={t('pr_stat_answered')} />
-          <StatCard icon="star" value={stats.favorites} label={t('pr_stat_favorites')} tint={colors.secondaryAccent} />
-          <StatCard icon="sunrise" value={stats.streak > 0 ? `${stats.streak} ${t('pr_days')}` : '—'} label={t('pr_stat_streak')} />
+          <StatCard value={stats.active} label={t('pr_stat_active')} />
+          <StatCard value={stats.answered} label={t('pr_stat_answered')} />
+          <StatCard value={stats.favorites} label={t('pr_stat_favorites')} />
+          <StatCard value={stats.streak > 0 ? `${stats.streak} ${t('pr_days')}` : '—'} label={t('pr_stat_streak')} />
         </View>
 
         {/* ── Gentle nudge (never guilt) ── */}
@@ -191,7 +191,6 @@ export default function PrayerJourneyScreen() {
             activeOpacity={0.85}
             style={[st.nudge, { backgroundColor: colors.selection, borderRadius: colors.radius }]}
           >
-            <Feather name="wind" size={13} color={colors.primary} />
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={[st.nudgeText, { color: colors.foreground }]} numberOfLines={1}>{t('pr_gentle_nudge')}</Text>
               <Text style={[st.nudgeSub, { color: colors.mutedForeground }]} numberOfLines={1}>{nudge.title} · {t('pr_gentle_trust')}</Text>
@@ -224,7 +223,6 @@ export default function PrayerJourneyScreen() {
                     <Text style={[st.carouselTitle, { color: colors.foreground }]} numberOfLines={2}>{p.title}</Text>
                     <Text style={[st.rowSub, { color: colors.mutedForeground }]} numberOfLines={1}>{createdAgoLabel(p)}</Text>
                     <View style={[st.statusPill, { backgroundColor: colors.selection, alignSelf: 'flex-start', marginTop: 8 }]}>
-                      <Feather name={STATUS_META[p.status].icon as never} size={11} color={colors.primary} />
                       <Text style={[st.statusPillText, { color: colors.primary }]}>{t(STATUS_META[p.status].labelKey)}</Text>
                     </View>
                   </TouchableOpacity>
@@ -442,10 +440,10 @@ function CreatePrayerModal({ visible, onClose, onCreate }: {
               />
 
               <Text style={[st.fieldLabel, { color: colors.mutedForeground }]}>{t('pr_field_category')}</Text>
+              {/* Text-only chips — the selected state (filled) is signal enough */}
               <View style={st.chipRow}>
                 {CATEGORY_ORDER.map((c) => (
                   <TouchableOpacity key={c} onPress={() => { haptic(); setCategory(c); setScripture(null); }} style={chip(category === c)}>
-                    <Feather name={CATEGORY_META[c].icon as never} size={12} color={category === c ? colors.primaryForeground : colors.mutedForeground} />
                     <Text style={chipText(category === c)}>{t(CATEGORY_META[c].labelKey)}</Text>
                   </TouchableOpacity>
                 ))}
@@ -458,7 +456,6 @@ function CreatePrayerModal({ visible, onClose, onCreate }: {
                   const sel = scripture?.bookId === s.bookId && scripture?.chapter === s.chapter;
                   return (
                     <TouchableOpacity key={s.label} onPress={() => { haptic(); setScripture(sel ? null : { bookId: s.bookId, chapter: s.chapter }); }} style={chip(sel)}>
-                      <Feather name="book-open" size={12} color={sel ? colors.primaryForeground : colors.mutedForeground} />
                       <Text style={chipText(sel)}>{s.label}</Text>
                     </TouchableOpacity>
                   );
@@ -477,7 +474,6 @@ function CreatePrayerModal({ visible, onClose, onCreate }: {
               <Text style={[st.fieldLabel, { color: colors.mutedForeground }]}>{t('pr_field_privacy')}</Text>
               <View style={st.chipRow}>
                 <View style={chip(true)}>
-                  <Feather name="lock" size={12} color={colors.primaryForeground} />
                   <Text style={chipText(true)}>{t('pr_privacy_private')}</Text>
                 </View>
                 {/* Future-ready: family / prayer-group sharing */}
@@ -525,7 +521,7 @@ const st = StyleSheet.create({
   subtitle: { fontSize: 14, marginTop: 4, lineHeight: 20 },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, marginTop: 16 },
   statCard: { flexBasis: '48%', flexGrow: 1, borderWidth: 1, padding: 12, gap: 4 },
-  statValue: { fontSize: 20, fontWeight: '700', marginTop: 2 },
+  statValue: { fontSize: 22, fontWeight: '700', marginTop: 2 },
   statLabel: { fontSize: 12 },
   nudge: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 16, marginTop: 12, padding: 12 },
   nudgeText: { fontSize: 13, fontWeight: '600' },
