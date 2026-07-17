@@ -27,7 +27,9 @@ export function Hero() {
       <div className="mx-auto grid w-full max-w-6xl items-center gap-14 px-5 sm:px-8 lg:grid-cols-[1.05fr_0.95fr]">
         {/* Copy */}
         <div className="max-w-xl">
-          <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-line bg-ivory px-3 py-1 font-sans text-xs font-medium text-muted">
+          {/* Eyebrow pill — desktop only; on mobile it read as boilerplate and
+              pushed the headline down. */}
+          <p className="mb-5 hidden items-center gap-2 rounded-full border border-line bg-ivory px-3 py-1 font-sans text-xs font-medium text-muted sm:inline-flex">
             <span className="h-1.5 w-1.5 rounded-full bg-gold" />
             {t.hero.eyebrow}
           </p>
@@ -38,11 +40,12 @@ export function Hero() {
             {t.hero.subtitle}
           </p>
 
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <ButtonLink href={ctaHref} size="lg" onClick={() => track("cta_primary_click", { source: "hero" })}>
+          {/* CTAs: full-width equal buttons stacked on mobile, inline on desktop */}
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <ButtonLink href={ctaHref} size="lg" className="w-full sm:w-auto" onClick={() => track("cta_primary_click", { source: "hero" })}>
               {siteConfig.launched ? t.cta.download : t.cta.waitlist}
             </ButtonLink>
-            <ButtonLink href="#experience" size="lg" variant="secondary">
+            <ButtonLink href="#experience" size="lg" variant="secondary" className="w-full sm:w-auto">
               {t.cta.explore}
               <IconArrow className="h-4 w-4" />
             </ButtonLink>
