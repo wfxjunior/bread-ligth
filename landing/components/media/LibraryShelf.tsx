@@ -13,43 +13,62 @@ const REAL_SRC = "/library/breadlight-library.webp";
 
 // Leather-bound "books" — canonical order, varied like a real collection.
 // height/width in px at the base scale; the shelf container scales fluidly.
-const BOOKS: { name: string; leather: string; h: number; w: number }[] = [
+// Only the book name appears on each spine — never verses, chapter
+// references or decorative quotations. `mobileHidden` trims the collection
+// on narrow screens so spacing stays even without shrinking the books.
+const BOOKS: { name: string; leather: string; h: number; w: number; mobileHidden?: boolean }[] = [
   { name: "Genesis", leather: "#6B4A32", h: 176, w: 34 },
   { name: "Exodus", leather: "#4A3427", h: 168, w: 28 },
   { name: "Psalms", leather: "#5A1F24", h: 188, w: 38 },
-  { name: "Proverbs", leather: "#7A4B28", h: 160, w: 26 },
+  { name: "Proverbs", leather: "#7A4B28", h: 160, w: 26, mobileHidden: true },
   { name: "Isaiah", leather: "#3C4A3A", h: 182, w: 32 },
   { name: "Matthew", leather: "#5A1F24", h: 172, w: 30 },
   { name: "John", leather: "#6B4A32", h: 190, w: 36 },
-  { name: "Acts", leather: "#4A3427", h: 164, w: 28 },
+  { name: "Acts", leather: "#4A3427", h: 164, w: 28, mobileHidden: true },
   { name: "Romans", leather: "#3A3550", h: 178, w: 32 },
-  { name: "Hebrews", leather: "#6B4A32", h: 158, w: 26 },
-  { name: "James", leather: "#7A4B28", h: 170, w: 24 },
+  { name: "Hebrews", leather: "#6B4A32", h: 158, w: 26, mobileHidden: true },
+  { name: "James", leather: "#7A4B28", h: 170, w: 24, mobileHidden: true },
   { name: "Revelation", leather: "#5A1F24", h: 186, w: 34 },
 ];
 
-function Spine({ name, leather, h, w }: (typeof BOOKS)[number]) {
+// Fine leather grain — a tiny SVG turbulence tile, overlaid at low opacity so
+// each spine reads as material rather than flat color. Inline data URI keeps
+// the component dependency-free and cache-friendly.
+const GRAIN =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='64' height='64' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E\")";
+
+function Spine({ name, leather, h, w, mobileHidden }: (typeof BOOKS)[number]) {
   return (
     <div
-      className="group/spine relative flex shrink-0 items-center justify-center rounded-t-[3px] rounded-b-[2px] transition-transform duration-300 ease-[var(--ease-out-soft)] hover:-translate-y-2"
+      className={`group/spine relative shrink-0 items-center justify-center overflow-hidden rounded-t-[5px] rounded-b-[3px] transition-transform duration-300 ease-[var(--ease-out-soft)] hover:-translate-y-2 ${mobileHidden ? "hidden sm:flex" : "flex"}`}
       style={{
         width: w,
         height: h,
-        // Leather body with cylindrical light: dark edges → lit centre → dark edge.
-        background: `linear-gradient(90deg,
-          rgba(0,0,0,0.38) 0%, rgba(0,0,0,0.12) 10%,
-          rgba(255,255,255,0.10) 42%, rgba(255,255,255,0.06) 55%,
-          rgba(0,0,0,0.16) 88%, rgba(0,0,0,0.40) 100%), ${leather}`,
+        // Rounded leather spine: dark edges → lit centre → dark edge, with a
+        // gentle top sheen where shelf light falls.
+        background: `linear-gradient(180deg, rgba(255,255,255,0.08), transparent 12%),
+          linear-gradient(90deg,
+          rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.14) 12%,
+          rgba(255,255,255,0.11) 40%, rgba(255,255,255,0.05) 58%,
+          rgba(0,0,0,0.18) 86%, rgba(0,0,0,0.44) 100%), ${leather}`,
         boxShadow:
           "0 14px 22px -10px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -2px 3px rgba(0,0,0,0.4)",
       }}
     >
-      {/* Raised hubs — the horizontal ridges of an antique leather spine */}
-      <span aria-hidden className="pointer-events-none absolute inset-x-0 top-[16%] h-[3px] bg-black/25 shadow-[0_1px_0_rgba(255,255,255,0.08)]" />
-      <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-[18%] h-[3px] bg-black/25 shadow-[0_1px_0_rgba(255,255,255,0.08)]" />
-      {/* Gold-foil title, embossed */}
+      {/* Leather grain texture */}
       <span
-        className="whitespace-nowrap font-serif text-[11px] tracking-wide"
+        aria-hidden
+        className="pointer-events-none absolute inset-0 mix-blend-overlay"
+        style={{ backgroundImage: GRAIN, opacity: 0.35 }}
+      />
+      {/* Raised hubs — the horizontal ridges of an antique leather spine */}
+      <span aria-hidden className="pointer-events-none absolute inset-x-0 top-[14%] h-[3px] bg-black/25 shadow-[0_1px_0_rgba(255,255,255,0.10)]" />
+      <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-[16%] h-[3px] bg-black/25 shadow-[0_1px_0_rgba(255,255,255,0.10)]" />
+      {/* Gold-foil title — book name only, centered on one shared axis.
+          The hubs sit at 14%/16%, leaving an identical title field on every
+          spine regardless of its height, so all names align visually. */}
+      <span
+        className="whitespace-nowrap text-center font-serif text-[11px] leading-none tracking-[0.06em]"
         style={{
           writingMode: "vertical-rl",
           color: "#E4C077",
