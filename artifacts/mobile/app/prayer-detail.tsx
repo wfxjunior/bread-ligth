@@ -222,7 +222,6 @@ export default function PrayerDetailScreen() {
                 accessibilityState={{ selected: sel }}
                 style={[st.statusBtn, { borderColor: colors.border, backgroundColor: sel ? colors.primary : colors.card, borderRadius: colors.radius }]}
               >
-                <Feather name={meta.icon as never} size={14} color={sel ? colors.primaryForeground : colors.mutedForeground} />
                 <Text style={[st.statusBtnText, { color: sel ? colors.primaryForeground : colors.foreground }]}>{t(meta.labelKey)}</Text>
               </TouchableOpacity>
             );
@@ -262,7 +261,6 @@ export default function PrayerDetailScreen() {
               accessibilityRole="button"
               style={[st.shareBtn, { borderColor: colors.border, borderRadius: colors.radius }]}
             >
-              <Feather name="share-2" size={13} color={colors.primary} />
               <Text style={[st.shareBtnText, { color: colors.primary }]}>{t('pr_share_testimony')}</Text>
             </TouchableOpacity>
           </View>
@@ -323,7 +321,6 @@ export default function PrayerDetailScreen() {
             accessibilityRole="button"
             style={[st.quietBtn, { borderColor: colors.border, borderRadius: colors.radius }]}
           >
-            <Feather name={prayer.status === 'archived' ? 'rotate-ccw' : 'archive'} size={13} color={colors.mutedForeground} />
             <Text style={[st.quietBtnText, { color: colors.mutedForeground }]}>
               {t(prayer.status === 'archived' ? 'pr_unarchive' : 'pr_archive')}
             </Text>
@@ -333,7 +330,6 @@ export default function PrayerDetailScreen() {
             accessibilityRole="button"
             style={[st.quietBtn, { borderColor: colors.border, borderRadius: colors.radius }]}
           >
-            <Feather name="trash-2" size={13} color={colors.destructive} />
             <Text style={[st.quietBtnText, { color: colors.destructive }]}>{t('pr_delete')}</Text>
           </TouchableOpacity>
         </View>
