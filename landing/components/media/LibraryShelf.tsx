@@ -16,9 +16,12 @@ const REAL_SRC = "/library/breadlight-library.webp";
 // Only the book name appears on each spine — never verses, chapter
 // references or decorative quotations. `mobileHidden` trims the collection
 // on narrow screens so spacing stays even without shrinking the books.
-const BOOKS: { name: string; leather: string; h: number; w: number; mobileHidden?: boolean }[] = [
-  { name: "Genesis", leather: "#6B4A32", h: 176, w: 34 },
-  { name: "Exodus", leather: "#4A3427", h: 168, w: 28 },
+const BOOKS: { name: string; leather: string; h: number; w: number; mobileHidden?: boolean; ink?: string }[] = [
+  // Genesis is bound in vellum (pale parchment) — historically authentic and
+  // it lifts immediately off the dark walnut background where the old brown
+  // blended in. Its title is stamped in dark ink instead of gold foil.
+  { name: "Genesis", leather: "#E6D9BC", ink: "#5A3A22", h: 176, w: 34 },
+  { name: "Exodus", leather: "#7A2E28", h: 168, w: 28 },
   { name: "Psalms", leather: "#5A1F24", h: 188, w: 38 },
   { name: "Proverbs", leather: "#7A4B28", h: 160, w: 26, mobileHidden: true },
   { name: "Isaiah", leather: "#3C4A3A", h: 182, w: 32 },
@@ -37,7 +40,8 @@ const BOOKS: { name: string; leather: string; h: number; w: number; mobileHidden
 const GRAIN =
   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='64' height='64' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E\")";
 
-function Spine({ name, leather, h, w, mobileHidden }: (typeof BOOKS)[number]) {
+function Spine({ name, leather, h, w, mobileHidden, ink }: (typeof BOOKS)[number]) {
+  const isLight = Boolean(ink); // vellum-bound volume: dark ink title, softer hubs
   return (
     <div
       className={`group/spine relative shrink-0 items-center justify-center overflow-hidden rounded-t-[5px] rounded-b-[3px] transition-transform duration-300 ease-[var(--ease-out-soft)] hover:-translate-y-2 ${mobileHidden ? "hidden sm:flex" : "flex"}`}
@@ -62,8 +66,8 @@ function Spine({ name, leather, h, w, mobileHidden }: (typeof BOOKS)[number]) {
         style={{ backgroundImage: GRAIN, opacity: 0.35 }}
       />
       {/* Raised hubs — the horizontal ridges of an antique leather spine */}
-      <span aria-hidden className="pointer-events-none absolute inset-x-0 top-[14%] h-[3px] bg-black/25 shadow-[0_1px_0_rgba(255,255,255,0.10)]" />
-      <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-[16%] h-[3px] bg-black/25 shadow-[0_1px_0_rgba(255,255,255,0.10)]" />
+      <span aria-hidden className={`pointer-events-none absolute inset-x-0 top-[14%] h-[3px] ${isLight ? "bg-black/10" : "bg-black/25"} shadow-[0_1px_0_rgba(255,255,255,0.10)]`} />
+      <span aria-hidden className={`pointer-events-none absolute inset-x-0 bottom-[16%] h-[3px] ${isLight ? "bg-black/10" : "bg-black/25"} shadow-[0_1px_0_rgba(255,255,255,0.10)]`} />
       {/* Gold-foil title — book name only, centered on one shared axis.
           The hubs sit at 14%/16%, leaving an identical title field on every
           spine regardless of its height, so all names align visually. */}
@@ -71,8 +75,10 @@ function Spine({ name, leather, h, w, mobileHidden }: (typeof BOOKS)[number]) {
         className="whitespace-nowrap text-center font-serif text-[11px] leading-none tracking-[0.06em]"
         style={{
           writingMode: "vertical-rl",
-          color: "#E4C077",
-          textShadow: "0 1px 1px rgba(0,0,0,0.55), 0 0 1px rgba(228,192,119,0.4)",
+          color: ink ?? "#E4C077",
+          textShadow: isLight
+            ? "0 1px 0 rgba(255,255,255,0.35)"
+            : "0 1px 1px rgba(0,0,0,0.55), 0 0 1px rgba(228,192,119,0.4)",
         }}
       >
         {name}
