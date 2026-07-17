@@ -1098,34 +1098,40 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* ── Prayer Journey strip — always visible near the top ── */}
-      <View style={[styles.section, { marginTop: 8 }]}>
+      {/* ── Prayer Journey card — Apple-calm: soft icon circle, stacked
+             title/subtitle, generous padding ── */}
+      <View style={[styles.section, { marginTop: 14 }]}>
         <TouchableOpacity
           onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); router.push('/prayer'); }}
           activeOpacity={0.85}
           accessibilityRole="button"
           accessibilityLabel={t('pr_home_entry')}
-          style={[styles.continueStrip, {
-            backgroundColor: colors.primary + '0E',
-            borderColor:     colors.primary + '28',
-            borderRadius:    colors.radius,
+          style={[styles.prayerCard, {
+            backgroundColor: colors.card,
+            borderColor:     colors.border,
+            borderRadius:    colors.radius + 2,
           }]}
         >
-          <Feather name="heart" size={13} color={colors.primary} />
-          <Text style={[styles.continueName, { color: colors.primary }]}>{t('pr_home_entry')}</Text>
-          <Text style={[styles.continueLabel, { color: colors.mutedForeground }]} numberOfLines={1}>
-            {t('pr_home_entry_sub')}
-          </Text>
-          <View style={{ flex: 1 }} />
-          <Feather name="chevron-right" size={14} color={colors.primary} />
+          <View style={[styles.prayerCardIcon, { backgroundColor: colors.primary + '12' }]}>
+            <Feather name="heart" size={16} color={colors.primary} />
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={[styles.prayerCardTitle, { color: colors.foreground }]} numberOfLines={1}>
+              {t('pr_home_entry')}
+            </Text>
+            <Text style={[styles.prayerCardSub, { color: colors.mutedForeground }]} numberOfLines={1}>
+              {t('pr_home_entry_sub')}
+            </Text>
+          </View>
+          <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
         </TouchableOpacity>
       </View>
 
       {/* ── Featured passages ── */}
       <FeaturedPassagesCarousel />
 
-      {/* ── Library ── */}
-      <View style={[styles.section, { marginTop: 8 }]}>
+      {/* ── Library — extra air above the shelf so the cards breathe ── */}
+      <View style={[styles.section, { marginTop: 26 }]}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>{t('library_section_title')}</Text>
           <View style={styles.sectionRight}>
@@ -1566,13 +1572,26 @@ const styles = StyleSheet.create({
   continueStrip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 9,
     paddingHorizontal: 14,
-    paddingVertical: 11,
+    paddingVertical: 12,
     borderWidth: 1,
   },
   continueLabel: { fontSize: 12, fontFamily: 'Inter_400Regular' },
   continueName:  { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
+
+  // Prayer Journey card — Apple-calm two-line entry
+  prayerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    borderWidth: 1,
+  },
+  prayerCardIcon:  { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  prayerCardTitle: { fontSize: 15, fontFamily: 'Inter_600SemiBold', letterSpacing: -0.1 },
+  prayerCardSub:   { fontSize: 12.5, fontFamily: 'Inter_400Regular', marginTop: 2 },
 
   // Section right cluster (count + toggle)
   sectionRight: {
