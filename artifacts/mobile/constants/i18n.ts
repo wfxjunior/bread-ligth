@@ -604,6 +604,7 @@ const strings = {
   home_daily_verse_badge:   { pt: 'Versículo do dia', en: 'Verse of the day' },
   open_action:              { pt: 'Abrir', en: 'Open' },
   continue_label:           { pt: 'Continuar', en: 'Continue' },
+  continue_listening_label: { pt: 'Continuar ouvindo', en: 'Continue listening' },
   library_section_title:    { pt: 'BIBLIOTECA', en: 'LIBRARY' },
   book_count_singular:      { pt: 'livro', en: 'book' },
   book_count_plural:        { pt: 'livros', en: 'books' },
