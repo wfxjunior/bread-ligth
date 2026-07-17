@@ -8,6 +8,7 @@ import ttsRouter       from "./tts";
 import transcribeRouter from "./transcribe";
 import billingRouter    from "./billing";
 import recognitionsRouter from "./recognitions";
+import prayersRouter from "./prayers";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use(ttsRouter);
 router.use(transcribeRouter);
 router.use(billingRouter);
 router.use(recognitionsRouter);
+router.use(prayersRouter);
 
 export default router;

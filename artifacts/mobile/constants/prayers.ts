@@ -38,6 +38,8 @@ export interface Prayer {
   favorite: boolean;
   reminder: PrayerReminder;
   createdAt: string; // ISO
+  /** Bumped on every mutation — the last-write-wins key for cloud sync. */
+  updatedAt: string; // ISO
   answeredAt: string | null;
   lastPrayedAt: string | null;
   /** Optional passage this prayer rests on, e.g. { bookId: 'psalms', chapter: 23 } */
