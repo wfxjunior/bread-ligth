@@ -735,6 +735,9 @@ export default function SettingsScreen() {
   const { atmosphere, setAtmosphere, accentColor, setAccentColor, readingSpace, setReadingSpace } = useTheme();
   const { lang, setLang, t: tl } = useLanguage();
   const audio = useAudio();
+  // Offline-audio list lives in a bottom sheet so a large cache never
+  // stretches the Settings screen itself.
+  const [cacheListOpen, setCacheListOpen] = useState(false);
   const { isPremium: userIsPremium } = usePremium();
   const { user, isSignedIn } = useUser();
   const { signOut } = useAuth();
@@ -1387,50 +1390,24 @@ export default function SettingsScreen() {
               })}
             </View>
           </View>
-          {/* ── Cached items list ── */}
-          <View style={[styles.innerSection, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
-            <Text style={[styles.innerLabel, { color: colors.mutedForeground }]}>
-              {tl('offline_audio_cached_items')}
-              {Object.keys(audio.cacheEntries).length > 0
-                ? ` (${Object.keys(audio.cacheEntries).length})`
-                : ''}
-            </Text>
-            {Object.keys(audio.cacheEntries).length === 0 ? (
-              <Text style={[styles.cachedItemEmpty, { color: colors.mutedForeground }]}>
-                {tl('offline_audio_no_items')}
-              </Text>
-            ) : (
-              <View style={{ marginTop: 10 }}>
-                {Object.entries(audio.cacheEntries)
-                  .sort((a, b) => b[1].lastAccess - a[1].lastAccess)
-                  .map(([key, entry], i, arr) => (
-                    <View
-                      key={key}
-                      style={[
-                        styles.cachedItemRow,
-                        i < arr.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
-                      ]}
-                    >
-                      <Feather name="headphones" size={13} color={colors.mutedForeground} />
-                      <Text style={[styles.cachedItemLabel, { color: colors.foreground }]} numberOfLines={1}>
-                        {entry.label || (lang === 'pt' ? 'Capítulo desconhecido' : 'Unknown chapter')}
-                      </Text>
-                      <Text style={[styles.cachedItemSize, { color: colors.mutedForeground }]}>
-                        {formatEntrySize(entry.size)}
-                      </Text>
-                      <TouchableOpacity
-                        onPress={() => handleDeleteCacheEntry(key, entry.label)}
-                        accessibilityRole="button"
-                        accessibilityLabel={tl('a11y_clear_cache_item')}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                      >
-                        <Feather name="x" size={14} color={colors.mutedForeground} />
-                      </TouchableOpacity>
-                    </View>
-                  ))}
+          {/* ── Cached items — compact opener; the full list lives in a
+                 bottom sheet so a big cache never stretches this screen ── */}
+          <SettingsRow
+            icon="headphones"
+            label={tl('offline_audio_cached_items')}
+            sub={Object.keys(audio.cacheEntries).length === 0 ? tl('offline_audio_no_items') : undefined}
+            right={
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>
+                  {Object.keys(audio.cacheEntries).length > 0 ? String(Object.keys(audio.cacheEntries).length) : ''}
+                </Text>
+                {Object.keys(audio.cacheEntries).length > 0 && (
+                  <Feather name="chevron-right" size={15} color={colors.mutedForeground} />
+                )}
               </View>
-            )}
-          </View>
+            }
+            onPress={Object.keys(audio.cacheEntries).length > 0 ? () => setCacheListOpen(true) : undefined}
+          />
 
           <SettingsRow
             icon="trash-2"
@@ -1555,6 +1532,77 @@ export default function SettingsScreen() {
         onClose={() => setDrawerVisible(false)}
         onScrollToSection={scrollToSection}
       />
+
+      {/* ── Offline-audio list: bottom sheet ── */}
+      <Modal
+        visible={cacheListOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setCacheListOpen(false)}
+      >
+        <View style={styles.cacheSheetBackdrop}>
+          <TouchableOpacity
+            style={{ flex: 1 }}
+            activeOpacity={1}
+            onPress={() => setCacheListOpen(false)}
+            accessibilityLabel={tl('a11y_close')}
+          />
+          <View style={[styles.cacheSheet, { backgroundColor: colors.background, paddingBottom: insets.bottom + 16 }]}>
+            <View style={[styles.cacheSheetHandle, { backgroundColor: colors.border }]} />
+            <View style={styles.cacheSheetHeader}>
+              <Text style={[styles.cacheSheetTitle, { color: colors.foreground }]}>
+                {tl('offline_audio_cached_items')} ({Object.keys(audio.cacheEntries).length})
+              </Text>
+              <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>
+                {formatCacheSize(audio.offlineCacheBytes)}
+              </Text>
+            </View>
+            <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
+              {Object.entries(audio.cacheEntries)
+                .sort((a, b) => b[1].lastAccess - a[1].lastAccess)
+                .map(([key, entry], i, arr) => (
+                  <View
+                    key={key}
+                    style={[
+                      styles.cachedItemRow,
+                      i < arr.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+                    ]}
+                  >
+                    <Feather name="headphones" size={13} color={colors.mutedForeground} />
+                    <Text style={[styles.cachedItemLabel, { color: colors.foreground }]} numberOfLines={1}>
+                      {entry.label || (lang === 'pt' ? 'Capítulo desconhecido' : 'Unknown chapter')}
+                    </Text>
+                    <Text style={[styles.cachedItemSize, { color: colors.mutedForeground }]}>
+                      {formatEntrySize(entry.size)}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => handleDeleteCacheEntry(key, entry.label)}
+                      accessibilityRole="button"
+                      accessibilityLabel={tl('a11y_clear_cache_item')}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      <Feather name="x" size={14} color={colors.mutedForeground} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              {Object.keys(audio.cacheEntries).length === 0 && (
+                <Text style={[styles.cachedItemEmpty, { color: colors.mutedForeground, paddingVertical: 20, textAlign: 'center' }]}>
+                  {tl('offline_audio_no_items')}
+                </Text>
+              )}
+            </ScrollView>
+            <TouchableOpacity
+              onPress={() => setCacheListOpen(false)}
+              accessibilityRole="button"
+              style={[styles.cacheSheetClose, { borderColor: colors.border, borderRadius: colors.radius }]}
+            >
+              <Text style={{ color: colors.foreground, fontFamily: 'Inter_600SemiBold', fontSize: 14 }}>
+                {tl('a11y_close')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -1763,5 +1811,13 @@ const styles = StyleSheet.create({
   cachedItemEmpty: { fontSize: 13, fontFamily: 'Inter_400Regular', marginTop: 8, opacity: 0.7 },
   cachedItemRow:   { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
   cachedItemLabel: { flex: 1, fontSize: 13, fontFamily: 'Inter_400Regular' },
+
+  // Offline-audio bottom sheet
+  cacheSheetBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+  cacheSheet:         { borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingHorizontal: 20, paddingTop: 10 },
+  cacheSheetHandle:   { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, marginBottom: 10 },
+  cacheSheetHeader:   { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 },
+  cacheSheetTitle:    { fontSize: 16, fontFamily: 'Inter_700Bold', letterSpacing: -0.2 },
+  cacheSheetClose:    { alignItems: 'center', borderWidth: 1, paddingVertical: 12, marginTop: 12 },
   cachedItemSize:  { fontSize: 12, fontFamily: 'Inter_400Regular', opacity: 0.75 },
 });
