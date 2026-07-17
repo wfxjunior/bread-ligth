@@ -21,10 +21,10 @@ export function ProductStory() {
         </Reveal>
         <Reveal delay={120}>
           <div className="mx-auto mt-10 grid max-w-xl gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl border border-line bg-cream p-5 text-left">
+            <div className="rounded-2xl border border-line bg-white p-5 text-left shadow-[var(--shadow-xs)]">
               <p className="font-serif text-xl text-burgundy">{t.story.bread}</p>
             </div>
-            <div className="rounded-2xl border border-line bg-cream p-5 text-left">
+            <div className="rounded-2xl border border-line bg-white p-5 text-left shadow-[var(--shadow-xs)]">
               <p className="font-serif text-xl text-burgundy">{t.story.light}</p>
             </div>
           </div>
