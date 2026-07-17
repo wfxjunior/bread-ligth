@@ -983,6 +983,38 @@ export default function HomeScreen() {
     });
   };
 
+  // ── Continue listening ── parses the audio engine's persisted resume
+  // marker ("chapter:<bookId>:<chapter>:<lang>") back into a book reference.
+  // Hidden while that same chapter queue is actively playing.
+  const audio = useAudio();
+  const listenResume = React.useMemo(() => {
+    const st = audio.audioResume;
+    if (!st) return null;
+    const m = st.queueKey.match(/^chapter:([^:]+):(\d+):/);
+    if (!m) return null;
+    const book = BIBLE_DATA[m[1]];
+    if (!book) return null;
+    return { bookId: m[1], chapter: Number(m[2]), verse: st.itemId, book };
+  }, [audio.audioResume]);
+  const showListenResume =
+    !!listenResume &&
+    !(audio.queueKey === audio.audioResume?.queueKey && audio.status !== 'idle');
+
+  const handleContinueListening = () => {
+    if (!listenResume) return;
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
+    router.push({
+      pathname: '/chapter',
+      params: {
+        bookId:          listenResume.bookId,
+        chapter:         String(listenResume.chapter),
+        bookName:        listenResume.book.name,
+        englishBookName: listenResume.book.englishName,
+        resumeVerse:     listenResume.verse,
+      },
+    });
+  };
+
   return (
     <View style={[styles.root, { backgroundColor: colors.space.gradient[0] }]}>
       {/* Reading Space atmosphere — subtle gradient behind the whole home screen */}
@@ -1037,6 +1069,31 @@ export default function HomeScreen() {
             </Text>
             <View style={{ flex: 1 }} />
             <Feather name="chevron-right" size={14} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* ── Continue listening strip ── */}
+      {showListenResume && listenResume && (
+        <View style={[styles.section, { marginTop: readingProgress ? 8 : 18 }]}>
+          <TouchableOpacity
+            onPress={handleContinueListening}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={`${t('continue_listening_label')} — ${listenResume.book.englishName} ${listenResume.chapter}`}
+            style={[styles.continueStrip, {
+              backgroundColor: colors.accent + '0E',
+              borderColor:     colors.accent + '28',
+              borderRadius:    colors.radius,
+            }]}
+          >
+            <Feather name="headphones" size={13} color={colors.accent} />
+            <Text style={[styles.continueLabel, { color: colors.mutedForeground }]}>{t('continue_listening_label')}</Text>
+            <Text style={[styles.continueName, { color: colors.accent }]}>
+              {listenResume.book.englishName} {listenResume.chapter} · v.{listenResume.verse}
+            </Text>
+            <View style={{ flex: 1 }} />
+            <Feather name="chevron-right" size={14} color={colors.accent} />
           </TouchableOpacity>
         </View>
       )}

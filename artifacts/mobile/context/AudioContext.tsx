@@ -17,6 +17,24 @@ const VOICE_KEY = '@bibliaeN:audioVoice';
 const READING_LANG_KEY = '@bibliaeN:readingLanguage';
 const PREFETCH_WIFI_ONLY_KEY = '@bibliaeN:prefetchWifiOnly';
 
+// ── Cross-session listening resume ───────────────────────────────────────
+// Remembers which chapter queue item was last playing so the app can offer
+// "Continue listening" after a restart (closing the app mid-chapter is the
+// common commute case). Only chapter queues are recorded — devotionals are
+// day-scoped and single-verse plays are too short to be worth resuming.
+const AUDIO_RESUME_KEY = '@bibliaeN:audioResume';
+const AUDIO_RESUME_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // stale after a week
+
+export interface AudioResumeState {
+  /** The queue this marker belongs to, e.g. "chapter:john:3:en". */
+  queueKey: string;
+  /** Index into that queue (position of the verse in the chapter). */
+  index: number;
+  /** The queue item's id — for chapter queues this is the verse number. */
+  itemId: string;
+  savedAt: number;
+}
+
 // ── On-device TTS audio cache ────────────────────────────────────────────
 // Bible reading is often done in low-connectivity moments (commuting,
 // travel). This mirrors the server-side cache (routes/tts.ts) but persists
@@ -278,6 +296,9 @@ interface AudioContextValue {
   setCacheMaxBytes: (bytes: number) => void;
   evictionNotice: { bytes: number; at: number } | null;
   dismissEvictionNotice: () => void;
+  /** Where the listener left off in a chapter queue, if anywhere (survives app restarts). */
+  audioResume: AudioResumeState | null;
+  clearAudioResume: () => void;
 }
 
 const AudioCtx = createContext<AudioContextValue | null>(null);
@@ -317,6 +338,10 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [cacheMaxBytes, setCacheMaxBytesState] = useState(DEFAULT_TTS_CACHE_MAX_BYTES);
   const [evictionNotice, setEvictionNotice] = useState<{ bytes: number; at: number } | null>(null);
   const cacheMaxBytesRef = useRef(DEFAULT_TTS_CACHE_MAX_BYTES);
+  const [audioResume, setAudioResume] = useState<AudioResumeState | null>(null);
+  // Mirror of the queueKey state for use inside loadAndPlay, which may run
+  // before the state-sync effect after playQueue sets both.
+  const queueKeyRef = useRef<string | null>(null);
 
   const soundRef      = useRef<Audio.Sound | null>(null);
   const queueRef       = useRef<AudioQueueItem[]>([]);
@@ -402,6 +427,18 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }).catch(() => {});
     loadEvictionNotice().then(setEvictionNotice).catch(() => {});
 
+    AsyncStorage.getItem(AUDIO_RESUME_KEY)
+      .then(raw => {
+        if (!raw) return;
+        const st = JSON.parse(raw) as AudioResumeState;
+        if (st?.queueKey && typeof st.index === 'number' && Date.now() - st.savedAt < AUDIO_RESUME_MAX_AGE_MS) {
+          setAudioResume(st);
+        } else {
+          AsyncStorage.removeItem(AUDIO_RESUME_KEY).catch(() => {});
+        }
+      })
+      .catch(() => {});
+
     return () => {
       Speech.stop();
       soundRef.current?.unloadAsync().catch(() => {});
@@ -478,6 +515,22 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     })().catch(() => {});
   }, [handleEviction]);
 
+  // Records "the listener is on item N of this chapter queue" every time a
+  // queue item starts. Cheap (one small AsyncStorage write per verse) and
+  // idempotent — a fresh play of the same chapter simply overwrites it.
+  const persistAudioResume = useCallback((index: number, itemId: string) => {
+    const qk = queueKeyRef.current;
+    if (!qk || !qk.startsWith('chapter:')) return;
+    const state: AudioResumeState = { queueKey: qk, index, itemId, savedAt: Date.now() };
+    setAudioResume(state);
+    AsyncStorage.setItem(AUDIO_RESUME_KEY, JSON.stringify(state)).catch(() => {});
+  }, []);
+
+  const clearAudioResume = useCallback(() => {
+    setAudioResume(null);
+    AsyncStorage.removeItem(AUDIO_RESUME_KEY).catch(() => {});
+  }, []);
+
   const cleanupSound = useCallback(async () => {
     if (soundRef.current) {
       const s = soundRef.current;
@@ -501,6 +554,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     setCurrentIndex(-1);
     setQueue([]);
     setQueueKey(null);
+    queueKeyRef.current = null;
   }, [cleanupSound]);
 
   const speakFallback = useCallback((item: AudioQueueItem, gen: number, onEnd: () => void) => {
@@ -587,6 +641,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     setPosition(0);
     lastPosMsRef.current = 0;
     setDuration(0);
+    persistAudioResume(index, item.id);
 
     const advance = () => {
       if (generationRef.current !== gen) return;
@@ -604,6 +659,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       } else {
         setStatus('idle');
         setPosition(0);
+        // The queue finished naturally — there's nothing left to resume.
+        if (queueKeyRef.current?.startsWith('chapter:')) clearAudioResume();
       }
     };
 
@@ -721,7 +778,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }
 
     speakFallback(item, gen, advance);
-  }, [cleanupSound, speakFallback, prefetchQueueAhead]);
+  }, [cleanupSound, speakFallback, prefetchQueueAhead, persistAudioResume, clearAudioResume]);
 
   const playQueue = useCallback((items: AudioQueueItem[], startIndex = 0, key?: string) => {
     if (!items.length) return;
@@ -730,6 +787,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     queueRef.current = items;
     setQueue(items);
     setQueueKey(key ?? null);
+    queueKeyRef.current = key ?? null;
     loadAndPlay(Math.max(0, Math.min(startIndex, items.length - 1)));
   }, [loadAndPlay]);
 
@@ -837,6 +895,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     playQueue, playSingle, togglePlayPause, pause, resume, stop, next, previous, seekToRatio, setRate, setVoice, setReadingLanguage,
     offlineCacheBytes, cacheEntries, refreshOfflineCacheSize, clearOfflineCache, deleteCacheEntry,
     cacheMaxBytes, setCacheMaxBytes, evictionNotice, dismissEvictionNotice,
+    audioResume, clearAudioResume,
   };
 
   return <AudioCtx.Provider value={value}>{children}</AudioCtx.Provider>;

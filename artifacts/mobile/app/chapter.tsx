@@ -85,7 +85,15 @@ const ACTIONS = [
   { icon: 'mic'       as const, key: 'practice' as const, labelKey: 'action_practice' as const },
 ];
 
-type Params = { bookId: string; chapter: string; bookName: string; englishBookName: string };
+type Params = {
+  bookId: string;
+  chapter: string;
+  bookName: string;
+  englishBookName: string;
+  /** When set (verse number), chapter audio starts from this verse on open —
+   *  used by Home's "Continue listening" card to resume a previous session. */
+  resumeVerse?: string;
+};
 
 const MODE_LABELS: { key: DisplayMode; label: string }[] = [
   { key: 'both', label: 'EN+PT' },
@@ -236,6 +244,18 @@ export default function ChapterScreen() {
       chapterQueueKey,
     );
   }, [verses, audio, chapterQueueKey, isChapterAudioActive, activeVerseNum, book, chapterNum, currentBookId]);
+
+  // Resume a previous listening session: when opened via Home's "Continue
+  // listening" card, start chapter audio from the saved verse. Consumed once
+  // per screen mount so later chapter navigation never re-triggers it.
+  const resumeVerseConsumedRef = useRef(false);
+  useEffect(() => {
+    if (resumeVerseConsumedRef.current) return;
+    const rv = params.resumeVerse ? Number(params.resumeVerse) : NaN;
+    if (isNaN(rv) || verses.length === 0) return;
+    resumeVerseConsumedRef.current = true;
+    if (!isChapterAudioActive) handleSpeak(rv);
+  }, [verses, params.resumeVerse, isChapterAudioActive, handleSpeak]);
 
   // ── Continuous listening: once the reader has pressed play, keep reading
   // into the next chapter (and next book, at a book's end) automatically.
