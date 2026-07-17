@@ -40,14 +40,21 @@ export const billingService = {
 
   async getPlanStatus(clerkUserId: string): Promise<PlanStatus> {
     // Check premium override first — lets admins test Premium without Stripe.
+    // Two paths: the admins table (premium_override flag), or the
+    // PREMIUM_COMP_EMAILS env var (comma-separated owner/founder emails) so
+    // the owner can grant themselves Premium without touching the database.
     const clerkUser = await clerkClient.users.getUser(clerkUserId);
-    const email = clerkUser.primaryEmailAddress?.emailAddress;
+    const email = clerkUser.primaryEmailAddress?.emailAddress?.toLowerCase();
     if (email) {
+      const compList = (process.env.PREMIUM_COMP_EMAILS ?? "")
+        .split(",")
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean);
       const [adminRow] = await db
         .select()
         .from(admins)
         .where(eq(admins.email, email));
-      if (adminRow?.premiumOverride) {
+      if (adminRow?.premiumOverride || compList.includes(email)) {
         return {
           plan: "premium",
           status: "active",
