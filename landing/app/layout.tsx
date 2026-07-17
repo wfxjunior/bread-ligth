@@ -101,7 +101,7 @@ const jsonLd = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#F7F2E8",
+  themeColor: "#F7F3EB",
   width: "device-width",
   initialScale: 1,
 };

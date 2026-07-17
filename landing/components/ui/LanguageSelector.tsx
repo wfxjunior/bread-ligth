@@ -50,7 +50,7 @@ export function LanguageSelector({ onDark = false }: { onDark?: boolean }) {
         <ul
           role="listbox"
           aria-label={t.nav.language}
-          className="absolute right-0 z-50 mt-2 min-w-[9rem] overflow-hidden rounded-xl border border-line bg-ivory p-1 shadow-[0_16px_40px_-16px_rgba(45,33,27,0.4)]"
+          className="absolute right-0 z-50 mt-2 min-w-[9rem] overflow-hidden rounded-xl border border-line bg-white p-1 shadow-[0_16px_40px_-16px_rgba(45,33,27,0.4)]"
         >
           {locales.map((l) => (
             <li key={l}>

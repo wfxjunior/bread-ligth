@@ -5,10 +5,19 @@
    Semantic names; components never hardcode hex values.
    ───────────────────────────────────────────────────────────── */
 @theme {
-  /* Surfaces */
-  --color-cream: #F7F2E8;        /* background-primary (dominant) */
-  --color-ivory: #FCFAF5;        /* background-secondary */
-  --color-surface-warm: #F1EADF; /* warm surface */
+  /* Surfaces — a calm warm off-white scale. The warmth (R−B spread) was
+     reduced ~20–25% from the original cream so the interface reads lighter and
+     more editorial while staying unmistakably Bread&Light (never gray). Pure
+     white is reserved for cards, so they lift cleanly off these backgrounds.
+       white   #FFFFFF  → cards / popovers (see --color-card)
+       ivory   → lightest section background
+       cream   → dominant page background ("paper")
+       warm    → deepest inset / well surface */
+  --color-white: #FFFFFF;        /* cards / elevated surfaces */
+  --color-card: #FFFFFF;         /* semantic alias for card backgrounds */
+  --color-cream: #F7F3EB;        /* background-primary (dominant) — was #F7F2E8 */
+  --color-ivory: #FCFBF7;        /* background-secondary (lightest) — was #FCFAF5 */
+  --color-surface-warm: #F1EBE3; /* warm inset surface — was #F1EADF */
   --color-surface-dark: #2D211B; /* immersive dark */
   --color-leather: #4A3427;      /* leather brown */
 
@@ -25,7 +34,8 @@
   --color-onDarkMuted: #B9A98F;
 
   /* Lines */
-  --color-line: #DDD4C7;        /* border-subtle */
+  --color-line: #E2DBD0;        /* border-subtle — lightened for calmer breathing */
+  --color-line-strong: #D3C9BB; /* for the rare divider needing more presence */
 
   /* Type families — self-hosted via next/font (see app/fonts.ts). The CSS
      variables are populated by next/font at build time; the named fallbacks

@@ -63,7 +63,7 @@ export function Pricing() {
 
       {/* Card */}
       <Reveal delay={140} className="mt-10">
-        <div className="mx-auto max-w-md overflow-hidden rounded-3xl border border-line bg-ivory shadow-[0_24px_60px_-30px_rgba(45,33,27,0.4)]">
+        <div className="mx-auto max-w-md overflow-hidden rounded-3xl border border-line bg-white shadow-[0_24px_60px_-30px_rgba(45,33,27,0.4)]">
           <div className="relative border-b border-line p-8 text-center">
             {yearly && (
               <span className="absolute right-5 top-5 rounded-full bg-gold/15 px-3 py-1 font-sans text-xs font-semibold text-gold">
