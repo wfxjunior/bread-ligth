@@ -14,9 +14,11 @@ export function StoreBadges({ onDark = false, className = "" }: { onDark?: boole
   const { t } = useI18n();
   const live = siteConfig.launched;
 
-  const shell = `inline-flex h-12 items-center gap-3 rounded-xl border px-4 transition-colors ${
+  // Mobile: two equal centered cards filling the row; desktop: natural width.
+  const shell = `inline-flex h-12 w-full items-center justify-center gap-3 rounded-xl border px-4 transition-colors sm:w-auto sm:justify-start ${
     onDark ? "border-white/20 text-onDark" : "border-line text-ink"
   }`;
+  const wrap = `grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center`;
 
   const Inner = ({ icon, top, bottom }: { icon: React.ReactNode; top: string; bottom: string }) => (
     <>
@@ -30,7 +32,7 @@ export function StoreBadges({ onDark = false, className = "" }: { onDark?: boole
 
   if (!live) {
     return (
-      <div className={`flex flex-wrap items-center gap-3 ${className}`}>
+      <div className={`${wrap} ${className}`}>
         <span className={`${shell} cursor-default opacity-70`} aria-disabled>
           <Inner icon={<IconApple className="h-6 w-6" />} top={t.store.comingSoon} bottom={t.store.appStoreShort} />
         </span>
@@ -42,7 +44,7 @@ export function StoreBadges({ onDark = false, className = "" }: { onDark?: boole
   }
 
   return (
-    <div className={`flex flex-wrap items-center gap-3 ${className}`}>
+    <div className={`${wrap} ${className}`}>
       <a href={siteConfig.appStoreUrl} onClick={() => track("app_store_click")} className={`${shell} hover:border-burgundy`} aria-label={t.store.appStore}>
         <Inner icon={<IconApple className="h-6 w-6" />} top={t.store.comingSoon} bottom={t.store.appStoreShort} />
       </a>
