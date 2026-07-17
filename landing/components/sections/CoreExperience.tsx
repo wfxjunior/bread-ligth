@@ -33,12 +33,12 @@ export function CoreExperience() {
 
       <div className="mt-14 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
         {items.map(({ key, Icon, title, body }, i) => (
-          <Reveal key={key} delay={(i % 3) * 80} className="bg-ivory">
+          <Reveal key={key} delay={(i % 3) * 70} className="group bg-ivory transition-colors duration-300 ease-[var(--ease-out-soft)] hover:bg-white">
             <div className="flex h-full flex-col gap-3 p-7">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-surface-warm text-burgundy">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-surface-warm text-burgundy transition-colors duration-300 ease-[var(--ease-out-soft)] group-hover:bg-burgundy group-hover:text-[#F7F2E8]">
                 <Icon className="h-6 w-6" />
               </span>
-              <h3 className="font-serif text-xl text-ink">{title}</h3>
+              <h3 className="mt-1 font-serif text-xl text-ink">{title}</h3>
               <p className="font-sans text-[0.95rem] leading-relaxed text-muted">{body}</p>
             </div>
           </Reveal>
