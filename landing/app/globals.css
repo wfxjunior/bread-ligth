@@ -15,9 +15,9 @@
        warm    → deepest inset / well surface */
   --color-white: #FFFFFF;        /* cards / elevated surfaces */
   --color-card: #FFFFFF;         /* semantic alias for card backgrounds */
-  --color-cream: #F7F3EB;        /* background-primary (dominant) — was #F7F2E8 */
-  --color-ivory: #FCFBF7;        /* background-secondary (lightest) — was #FCFAF5 */
-  --color-surface-warm: #F1EBE3; /* warm inset surface — was #F1EADF */
+  --color-cream: #FAF7F1;        /* background-primary (dominant) — lightened again per owner */
+  --color-ivory: #FDFCF9;        /* background-secondary (lightest) */
+  --color-surface-warm: #F3EFE8; /* warm inset surface */
   --color-surface-dark: #2D211B; /* immersive dark */
   --color-leather: #4A3427;      /* leather brown */
 

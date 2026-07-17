@@ -14,7 +14,7 @@ export function Hero() {
   const ctaHref = siteConfig.launched ? "#download" : "#waitlist";
 
   return (
-    <section id="top" className="bl-grain relative overflow-hidden bg-cream pt-28 pb-20 sm:pt-36 sm:pb-28">
+    <section id="top" className="bl-grain relative overflow-hidden bg-cream pt-24 pb-16 sm:pt-28 sm:pb-20">
       {/* soft ambient warmth, non-decorative-motion */}
       <div
         aria-hidden
@@ -55,11 +55,11 @@ export function Hero() {
           <StoreBadges className="mt-4" />
         </div>
 
-        {/* Device composition */}
-        <div className="relative mx-auto w-full max-w-[300px] sm:max-w-[330px]">
+        {/* Device composition — sized to sit fully above the fold, caption included */}
+        <div className="relative mx-auto w-full max-w-[270px] sm:max-w-[290px]">
           <div
             aria-hidden
-            className="absolute -inset-6 -z-10 rounded-[2.6rem] bg-[radial-gradient(closest-side,rgba(74,52,39,0.14),transparent)]"
+            className="absolute -inset-10 -z-10 rounded-[3rem] bg-[radial-gradient(closest-side,rgba(74,52,39,0.22),transparent_72%)]"
           />
           <DeviceFrame>
             <Screenshot src="/screenshots/home-screen.webp" label={t.preview.screens.home} priority />

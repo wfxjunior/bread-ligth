@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Learn languages through Scripture.",
     start_url: "/",
     display: "standalone",
-    background_color: "#F7F3EB",
-    theme_color: "#F7F3EB",
+    background_color: "#FAF7F1",
+    theme_color: "#FAF7F1",
     icons: [
       { src: "/icons/favicon.svg", sizes: "any", type: "image/svg+xml" },
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
