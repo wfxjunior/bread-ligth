@@ -228,9 +228,8 @@ function DailyPill() {
                 color={liked ? '#E8294B' : colors.mutedForeground}
               />
             </Animated.View>
-            <Text style={[styles.pillHeartCount, { color: liked ? '#E8294B' : colors.mutedForeground }]}>
-              {'125k'}
-            </Text>
+            {/* No count: the heart is a personal amen, not a social metric —
+                and we never display numbers that aren't real. */}
           </TouchableOpacity>
 
           {/* Subtle listen button — launches the shared player experience */}
@@ -250,29 +249,32 @@ function DailyPill() {
           </TouchableOpacity>
 
           <View style={{ flex: 1 }} />
-          {/* Font-size selector */}
-          <View style={[styles.pillSizeRow, { borderColor: colors.border, borderRadius: colors.radius }]}>
-            {SIZES.map((s, i) => (
-              <TouchableOpacity
-                key={s}
-                onPress={() => pickSize(s)}
-                style={[
-                  styles.pillSizeBtn,
-                  i < 2 && { borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: colors.border },
-                  size === s && { backgroundColor: colors.accent + '22' },
-                ]}
-                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-              >
-                <Text style={[styles.pillSizeTxt, {
-                  fontSize:    SIZE_LABEL[s],
-                  color:       size === s ? colors.accent : colors.mutedForeground,
-                  fontFamily:  size === s ? 'Inter_700Bold' : 'Inter_400Regular',
-                }]}>
-                  A
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          {/* Font-size selector — only while the card is expanded, so the
+              collapsed footer stays quiet and never overflows on phones */}
+          {expanded && (
+            <View style={[styles.pillSizeRow, { borderColor: colors.border, borderRadius: colors.radius }]}>
+              {SIZES.map((s, i) => (
+                <TouchableOpacity
+                  key={s}
+                  onPress={() => pickSize(s)}
+                  style={[
+                    styles.pillSizeBtn,
+                    i < 2 && { borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: colors.border },
+                    size === s && { backgroundColor: colors.accent + '22' },
+                  ]}
+                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                >
+                  <Text style={[styles.pillSizeTxt, {
+                    fontSize:    SIZE_LABEL[s],
+                    color:       size === s ? colors.accent : colors.mutedForeground,
+                    fontFamily:  size === s ? 'Inter_700Bold' : 'Inter_400Regular',
+                  }]}>
+                    A
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
 
           {/* Expand toggle */}
           <TouchableOpacity onPress={toggle} accessibilityRole="button" accessibilityLabel={tl('a11y_expand')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -1065,7 +1067,7 @@ export default function HomeScreen() {
             <Feather name="bookmark" size={13} color={colors.primary} />
             <Text style={[styles.continueLabel, { color: colors.mutedForeground }]}>{t('continue_label')}</Text>
             <Text style={[styles.continueName, { color: colors.primary }]}>
-              {readingProgress.englishBookName} {readingProgress.chapter}
+              {lang === 'pt' ? readingProgress.bookName : readingProgress.englishBookName} {readingProgress.chapter}
             </Text>
             <View style={{ flex: 1 }} />
             <Feather name="chevron-right" size={14} color={colors.primary} />
