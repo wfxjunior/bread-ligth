@@ -47,16 +47,18 @@ const ATMOSPHERES: Record<Atmosphere, AtmosphereBase> = {
     isDark: false,
     premium: true,
   },
-  // Traditional Bible paper with subtle texture — the app's default
+  // Near-white paper with a whisper of warmth — the app's default.
+  // Lightened from the original #FAF8F4 so the default feels airy and
+  // Apple-clean while cards (#FFFFFF) still lift subtly off the page.
   classic: {
-    background:      '#FAF8F4',
-    surface:         '#EEEBE6',
-    card:            '#FEFDFB',
+    background:      '#FCFBF8',
+    surface:         '#F2F0EB',
+    card:            '#FFFFFF',
     foreground:      '#392E28',
     mutedForeground: '#7E6F67',
-    divider:         '#E7E2DA',
+    divider:         '#EAE6DF',
     secondaryAccent: '#9C7A4A',
-    selection:       'rgba(107,30,42,0.12)',
+    selection:       'rgba(107,30,42,0.10)',
     portugueseText:  '#5C4A40',
     isDark: false,
     premium: false,
