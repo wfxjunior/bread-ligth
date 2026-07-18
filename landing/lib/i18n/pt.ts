@@ -121,7 +121,7 @@ export const pt: Dict = {
   preview: {
     eyebrow: "Por dentro",
     title: "Feito para ser calmo na mão.",
-    subtitle: "Deslize pela experiência.",
+    subtitle: "O coração da experiência, num relance.",
     screens: {
       home: "Início",
       library: "Biblioteca",

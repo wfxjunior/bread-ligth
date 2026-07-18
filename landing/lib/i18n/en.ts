@@ -119,7 +119,7 @@ export const en = {
   preview: {
     eyebrow: "A look inside",
     title: "Designed to feel calm in the hand.",
-    subtitle: "Swipe through the experience.",
+    subtitle: "The heart of the experience, at a glance.",
     screens: {
       home: "Home",
       library: "Library",
