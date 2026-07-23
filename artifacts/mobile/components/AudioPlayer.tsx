@@ -4,8 +4,12 @@ import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import { useLanguage } from '@/context/LanguageContext';
-import { useAudio, type AudioQueueItem, MIN_RATE, MAX_RATE } from '@/context/AudioContext';
+import { useAudio, type AudioQueueItem } from '@/context/AudioContext';
 import { GestureSlider } from './GestureSlider';
+
+// Podcast-style preset speeds. 0.7 is the language learner's slow-listening
+// speed; 1.0 is the default. Values within the engine's 0.5–2.0 range.
+const RATE_PRESETS = [0.7, 1.0, 1.2, 1.5, 1.7, 2.0] as const;
 
 interface PlayerPalette {
   card?: string;
@@ -136,21 +140,31 @@ export default function AudioPlayer({ items, queueKey, startIndex = 0, title, co
 
       {!compact && (
         <View style={styles.speedRow}>
-          <Feather name="fast-forward" size={10} color={p.mutedForeground} />
-          <View style={styles.speedSlider}>
-            <GestureSlider
-              value={(audio.rate - MIN_RATE) / (MAX_RATE - MIN_RATE)}
-              onDrag={(ratio) => audio.setRate(MIN_RATE + ratio * (MAX_RATE - MIN_RATE))}
-              onDragEnd={(ratio) => audio.setRate(MIN_RATE + ratio * (MAX_RATE - MIN_RATE))}
-              trackColor={p.border}
-              fillColor={p.primary}
-              thumbColor={p.primary}
-              height={3}
-              thumbSize={12}
-              hapticStep={0.04}
-            />
-          </View>
-          <Text style={[styles.speedLabel, { color: p.mutedForeground }]}>{audio.rate.toFixed(2)}x</Text>
+          {/* Preset speed chips (podcast-style) — predictable values instead
+              of a free slider that lands on odd rates like 0.88x. 0.7 is the
+              language learner's slow-listening speed. */}
+          {RATE_PRESETS.map((r) => {
+            const active = Math.abs(audio.rate - r) < 0.01;
+            return (
+              <TouchableOpacity
+                key={r}
+                onPress={() => { if (Platform.OS !== 'web') Haptics.selectionAsync(); audio.setRate(r); }}
+                accessibilityRole="button"
+                accessibilityLabel={`${r}x`}
+                accessibilityState={{ selected: active }}
+                style={[styles.speedChip, {
+                  borderColor: active ? p.primary : p.border,
+                  backgroundColor: active ? p.primary : 'transparent',
+                }]}
+                hitSlop={{ top: 6, bottom: 6 }}
+              >
+                <Text style={[styles.speedChipText, { color: active ? p.primaryForeground : p.mutedForeground }]}>
+                  {r === 1 ? '1.0' : String(r)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+          <View style={{ flex: 1 }} />
 
           {/* Repeat toggle: off → verse → chapter. Active modes tint primary;
               verse mode shows a "1" to distinguish single-verse looping. */}
@@ -209,12 +223,19 @@ const styles = StyleSheet.create({
   },
   progressCol: { flex: 1, gap: 4 },
   title: { fontSize: 11, fontFamily: 'Inter_600SemiBold' },
+  speedChip: {
+    borderWidth: 1,
+    borderRadius: 7,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginRight: 5,
+  },
+  speedChipText: { fontSize: 10.5, fontFamily: 'Inter_600SemiBold' },
   speedRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  speedSlider: { flex: 1 },
   repeatBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -225,5 +246,4 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_700Bold',
     marginLeft: 1,
   },
-  speedLabel: { fontSize: 10, fontFamily: 'Inter_600SemiBold', width: 34, textAlign: 'right' },
 });
