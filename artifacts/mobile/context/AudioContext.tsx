@@ -276,6 +276,10 @@ interface AudioContextValue {
   prefetchWifiOnly: boolean;
   setPrefetchWifiOnly: (value: boolean) => void;
   playQueue: (items: AudioQueueItem[], startIndex?: number, queueKey?: string) => void;
+  /** Pre-downloads the first clips of a future queue into the on-device cache
+   *  so the eventual play starts instantly with the premium voice (used by
+   *  the devotional screen the moment its text arrives). Fire-and-forget. */
+  prefetchTexts: (items: AudioQueueItem[]) => void;
   playSingle: (text: string, id?: string) => void;
   togglePlayPause: () => void;
   pause: () => void;
@@ -621,6 +625,42 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Warms the device cache for a queue BEFORE the user presses play — the
+  // devotional's long paragraphs take seconds to synthesize server-side, and
+  // pre-downloading them removes both the wait and the robotic-fallback risk
+  // on replays. Respects the Wi-Fi-only prefetch preference; every failure is
+  // silent (normal cache-on-play still applies at play time).
+  const prefetchTexts = useCallback((items: AudioQueueItem[]) => {
+    if (!TTS_BASE || items.length === 0) return;
+    (async () => {
+      if (prefetchWifiOnlyRef.current) {
+        const state = await Network.getNetworkStateAsync().catch(() => null);
+        if (state?.type === Network.NetworkStateType.CELLULAR) return;
+      }
+      const activeVoice = voiceRef.current;
+      for (const item of items.slice(0, 2)) {
+        const cleanText = sanitizeForSpeech(item.text);
+        const key = await ttsCacheKeyFor(activeVoice, cleanText).catch(() => null);
+        if (!key || prefetchInFlightRef.current.has(key)) continue;
+        const cached = await getCachedTtsUri(activeVoice, cleanText).catch(() => null);
+        if (cached) continue;
+        prefetchInFlightRef.current.add(key);
+        try {
+          const remoteUri = `${TTS_BASE}?text=${encodeURIComponent(cleanText)}&voice=${activeVoice}`;
+          await downloadAndCacheTts(remoteUri, activeVoice, cleanText, cacheMaxBytesRef.current, item.cacheLabel ?? item.id, handleEviction);
+          loadTtsCacheIndex().then(idx => {
+            setCacheEntries({ ...idx });
+            setOfflineCacheBytes(Object.values(idx).reduce((s, e) => s + e.size, 0));
+          }).catch(() => {});
+        } catch {
+          // Offline/server hiccup — play time will retry or stream.
+        } finally {
+          prefetchInFlightRef.current.delete(key);
+        }
+      }
+    })();
+  }, [handleEviction]);
+
   const loadAndPlay = useCallback(async (index: number) => {
     const items = queueRef.current;
     const item  = items[index];
@@ -825,7 +865,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     else if (status === 'paused') resume();
     else if (currentIndex >= 0) {
       pausePendingRef.current = false;
-      loadAndPlay(currentIndex);
+      // After a queue finishes naturally the index rests on the last item —
+      // tapping play again should repeat from the top, not replay only the
+      // final paragraph/verse.
+      const atEnd = indexRef.current >= queueRef.current.length - 1;
+      loadAndPlay(atEnd ? 0 : currentIndex);
     }
   }, [status, pause, resume, currentIndex, loadAndPlay]);
 
@@ -892,7 +936,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     usingFallback,
     readingLanguage,
     prefetchWifiOnly, setPrefetchWifiOnly,
-    playQueue, playSingle, togglePlayPause, pause, resume, stop, next, previous, seekToRatio, setRate, setVoice, setReadingLanguage,
+    playQueue, playSingle, prefetchTexts, togglePlayPause, pause, resume, stop, next, previous, seekToRatio, setRate, setVoice, setReadingLanguage,
     offlineCacheBytes, cacheEntries, refreshOfflineCacheSize, clearOfflineCache, deleteCacheEntry,
     cacheMaxBytes, setCacheMaxBytes, evictionNotice, dismissEvictionNotice,
     audioResume, clearAudioResume,

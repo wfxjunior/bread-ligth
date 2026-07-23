@@ -154,6 +154,19 @@ function DevotionalModal({
   const isDevAudioActive = audio.queueKey === devotionalQueueKey;
   const activeParagraphIdx = isDevAudioActive && audio.currentItem ? Number(audio.currentItem.id) : -1;
 
+  // Warm the audio cache the moment the devotional text is ready — the long
+  // paragraphs take seconds to synthesize, so downloading ahead makes the
+  // play button instant and keeps replays on the premium voice.
+  const prefetchedKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!hasText || paragraphs.length === 0) return;
+    if (prefetchedKeyRef.current === devotionalQueueKey) return;
+    prefetchedKeyRef.current = devotionalQueueKey;
+    audio.prefetchTexts(
+      paragraphs.map((p, i) => ({ id: String(i), text: p, cacheLabel: `Devotional – ${todayKey()}` })),
+    );
+  }, [hasText, paragraphs, devotionalQueueKey, audio]);
+
   const handleLangSwitch = (l: 'pt' | 'en') => {
     onLangChange(l);
     if (l === 'en' && !textEn && !loadingEn && !errorEn) onRequestEnglish();
